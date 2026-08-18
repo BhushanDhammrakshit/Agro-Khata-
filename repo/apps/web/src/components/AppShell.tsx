@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import type { AuthUser, CompanyChoice } from "@/lib/api";
 import { useAppUser } from "@/lib/AppUserContext";
 
 /* ─── icons ─────────────────────────────────────────────────────────────── */
