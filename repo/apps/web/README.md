@@ -16,6 +16,19 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+The web app proxies browser requests from `/api` to the NestJS service. Set the
+server-only API base URL on the web service (including the `/api` suffix):
+
+```dotenv
+API_URL=http://localhost:3001/api
+```
+
+On Render, use the public URL of the API service, for example
+`https://your-api-service.onrender.com/api`. Do not configure the browser to
+call a separate API origin directly: the same-origin proxy ensures the
+authentication cookie is available to Next.js route guards and server
+components.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

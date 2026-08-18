@@ -4,7 +4,11 @@ import type {
   Item, Expense, Driver, Vehicle,
 } from "./api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
+const API_URL = (
+  process.env.API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:3001/api"
+).replace(/\/$/, "");
 
 async function serverGet<T>(path: string): Promise<T> {
   const cookieStore = await cookies();

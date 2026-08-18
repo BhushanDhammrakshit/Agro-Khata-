@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
+// Keep browser requests on the web origin. Next rewrites /api to the backend,
+// allowing its httpOnly authentication cookie to belong to the web hostname.
+const API_URL = "/api";
 
 export class ApiError extends Error {
   constructor(
