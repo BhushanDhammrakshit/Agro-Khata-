@@ -24,7 +24,7 @@ jobs:
           node-version: '24.x'
 
       - name: npm install, build, and test
-        working-directory: apps/api
+        working-directory: repo/apps/api
         run: |
           npm install
           npm run build --if-present
@@ -34,7 +34,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: apps/api
+          path: repo/apps/api
 
   deploy:
     runs-on: ubuntu-latest
