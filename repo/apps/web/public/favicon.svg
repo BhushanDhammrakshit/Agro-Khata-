@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Background Container -->
+  <rect width="512" height="512" rx="112" fill="#0D2818"/>
+  
+  <!-- Ledger Lines (Khata Base) -->
+  <rect x="136" y="320" width="240" height="24" rx="12" fill="#E2E8F0" opacity="0.3"/>
+  <rect x="136" y="368" width="180" height="24" rx="12" fill="#E2E8F0" opacity="0.3"/>
+
+  <!-- Sprout / Growth Bar Graph -->
+  <path d="M160 270 V 220 C 160 180, 200 160, 220 160 C 220 200, 190 270, 160 270 Z" fill="#2ECC71"/>
+  <path d="M352 270 V 170 C 352 120, 292 100, 262 100 C 262 160, 302 270, 352 270 Z" fill="#27AE60"/>
+  
+  <!-- Central Growth Arrow / Currency Notch -->
+  <path d="M256 380 V 160 M 216 200 L 256 160 L 296 200" stroke="#F1C40F" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

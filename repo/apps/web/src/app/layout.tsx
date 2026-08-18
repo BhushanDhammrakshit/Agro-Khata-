@@ -20,6 +20,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 export const metadata: Metadata = {
   title: "AgroKhata",
   description: "Vendor bill and farmer purchase management for agro businesses.",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

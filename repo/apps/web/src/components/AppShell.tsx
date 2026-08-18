@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAppUser } from "@/lib/AppUserContext";
@@ -197,10 +198,12 @@ function Sidebar({
 
   return (
     <aside className={`flex ${collapsed ? "w-14" : "w-60"} shrink-0 flex-col border-r border-slate-200 bg-white transition-[width] duration-200 max-sm:w-64 max-sm:fixed max-sm:inset-y-0 max-sm:left-0 max-sm:z-40 max-sm:shadow-2xl max-sm:transition-transform max-sm:duration-200 ${mobileOpen ? "max-sm:translate-x-0" : "max-sm:-translate-x-full"}`}>
-      {/* Logo + collapse toggle */}
-      <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-2 py-4 lg:px-3">
+      {/* Logo + collapse toggle — stacked instead of side-by-side when collapsed so the toggle never overflows off the narrow rail */}
+      <div className={`flex items-center gap-2 border-b border-slate-200 px-2 py-4 lg:px-3 ${effectiveCollapsed ? "flex-col justify-center" : "justify-between"}`}>
         <div className="flex min-w-0 items-center gap-2">
-          <p className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-sm font-bold text-white">A</p>
+          <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white">
+            <Image src="/AgroKhata.jpeg" alt="AgroKhata" fill className="object-contain p-0.5" />
+          </span>
           {!effectiveCollapsed && <p className="truncate text-lg font-semibold text-emerald-700">AgroKhata</p>}
         </div>
         <button onClick={onToggleCollapse} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}

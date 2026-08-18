@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
@@ -66,7 +67,9 @@ export default function RegisterPage() {
     <div className="flex min-h-screen flex-col bg-slate-50">
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-6 p-6">
         <div className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-lg font-bold text-white shadow-md">A</div>
+          <div className="relative mx-auto mb-3 h-20 w-20 overflow-hidden rounded-2xl bg-white shadow-md">
+            <Image src="/AgroKhata.jpeg" alt="AgroKhata" fill className="object-contain p-1" />
+          </div>
           <h1 className="text-xl font-semibold text-slate-900">{dict.register.heading}</h1>
         </div>
 
