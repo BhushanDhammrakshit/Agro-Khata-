@@ -13,10 +13,11 @@ export class SuperadminAuthController {
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: SuperadminLoginDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, admin } = await this.superadminAuthService.login(dto.email, dto.password);
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie(COOKIE_NAME, accessToken, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: isProd ? 'none' : 'lax',
+      secure: isProd,
       maxAge: 8 * 60 * 60 * 1000,
     });
     return { admin };

@@ -53,10 +53,12 @@ export class AuthController {
   }
 
   private setAccessTokenCookie(res: Response, accessToken: string) {
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      // 'none' is required for cross-site cookies (separate frontend/API domains in prod).
+      sameSite: isProd ? 'none' : 'lax',
+      secure: isProd,
       maxAge: 12 * 60 * 60 * 1000,
     });
   }
