@@ -3,6 +3,9 @@ import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { CompanyLookupDto } from './dto/company-lookup.dto';
+import { PasswordLoginDto } from './dto/password-login.dto';
+import { SetPasswordDto } from './dto/set-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../common/decorators/current-user.decorator';
@@ -20,20 +23,42 @@ export class AuthController {
   @Post('otp/request')
   @HttpCode(HttpStatus.OK)
   requestOtp(@Body() dto: RequestOtpDto) {
-    return this.authService.requestOtp(dto.phone);
+    return this.authService.requestOtp(dto.phone, dto.tenantId);
+  }
+
+  @Post('companies')
+  @HttpCode(HttpStatus.OK)
+  listCompanies(@Body() dto: CompanyLookupDto) {
+    return this.authService.listCompanies(dto.phone);
+  }
+
+  @Post('password/login')
+  @HttpCode(HttpStatus.OK)
+  async passwordLogin(@Body() dto: PasswordLoginDto, @Res({ passthrough: true }) res: Response) {
+    const { accessToken, user } = await this.authService.passwordLogin(
+      dto.phone,
+      dto.tenantId,
+      dto.password,
+    );
+    this.setAccessTokenCookie(res, accessToken);
+    return { user };
   }
 
   @Post('otp/verify')
   @HttpCode(HttpStatus.OK)
   async verifyOtp(@Body() dto: VerifyOtpDto, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, user } = await this.authService.verifyOtp(dto.phone, dto.otp);
+    const { accessToken, user } = await this.authService.verifyOtp(dto.phone, dto.otp, dto.tenantId);
+    this.setAccessTokenCookie(res, accessToken);
+    return { user };
+  }
+
+  private setAccessTokenCookie(res: Response, accessToken: string) {
     res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       maxAge: 12 * 60 * 60 * 1000,
     });
-    return { user };
   }
 
   @Post('logout')
@@ -56,5 +81,11 @@ export class AuthController {
     @Body() dto: { name?: string; email?: string },
   ) {
     return this.usersService.updateSelf(user.sub, dto);
+  }
+
+  @Patch('password')
+  @UseGuards(JwtAuthGuard)
+  setPassword(@CurrentUser() user: AuthenticatedUser, @Body() dto: SetPasswordDto) {
+    return this.authService.setPassword(user.sub, dto.password);
   }
 }

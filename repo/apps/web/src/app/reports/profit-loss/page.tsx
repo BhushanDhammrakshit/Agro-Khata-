@@ -51,7 +51,7 @@ export default function ProfitLossPage() {
             </div>
           </Card>
 
-          <div className="mt-6 grid grid-cols-2 gap-4">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Card>
               <p className="text-xs text-slate-500">Gross Margin</p>
               <p className={`mt-1 text-2xl font-semibold ${data.revenue > 0 ? "text-emerald-700" : "text-slate-400"}`}>

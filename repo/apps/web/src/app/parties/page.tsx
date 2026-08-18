@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api, ApiError, Party, PartyType } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { inputClass, selectClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
+import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 import { PhoneInput, withPrefix, stripPrefix } from "@/components/PhoneInput";
 
 export default function PartiesPage() {
@@ -45,29 +47,35 @@ export default function PartiesPage() {
     <AppShell title="Parties">
       <div className="flex flex-col gap-6">
         <Card>
-          <form className="flex flex-wrap items-end gap-3" onSubmit={handleCreate}>
-            <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
+          <form className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" onSubmit={handleCreate}>
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Name</label>
               <input required placeholder="e.g. Zepto, Ramesh Patil" value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={inputClass} />
             </div>
-            <div className="flex w-40 flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Type</label>
-              <select value={form.partyType} onChange={(e) => setForm((f) => ({ ...f, partyType: e.target.value as PartyType }))} className={selectClass}>
-                <option value="customer">Customer</option>
-                <option value="supplier">Supplier</option>
-                <option value="both">Both</option>
-              </select>
+              <CustomSelect
+                value={form.partyType}
+                onChange={(val) => setForm((f) => ({ ...f, partyType: val as PartyType }))}
+                options={[
+                  { value: "customer", label: "Customer" },
+                  { value: "supplier", label: "Supplier" },
+                  { value: "both", label: "Both" },
+                ]}
+              />
             </div>
-            <div className="flex w-40 flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Phone</label>
               <PhoneInput value={form.phone} onChange={(v) => setForm((f) => ({ ...f, phone: v }))} />
             </div>
-            <div className="flex w-40 flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">GSTIN (optional)</label>
               <input value={form.gstin} onChange={(e) => setForm((f) => ({ ...f, gstin: e.target.value }))} className={inputClass} />
             </div>
-            <Button type="submit" disabled={creating}>{creating ? "Adding…" : "Add party"}</Button>
+            <div className="flex items-end">
+              <Button type="submit" disabled={creating} className="w-full">{creating ? "Adding…" : "Add party"}</Button>
+            </div>
           </form>
         </Card>
 
@@ -98,7 +106,7 @@ export default function PartiesPage() {
                   <td className={tdClass}>{p.gstin ?? "—"}</td>
                   <td className={tdClass}><Badge tone={p.isActive ? "green" : "slate"}>{p.isActive ? "Active" : "Inactive"}</Badge></td>
                   <td className={tdClass}>
-                    <a href={`/parties/${p.id}`} className="text-sm text-emerald-700 hover:underline">View Ledger</a>
+                    <Link href={`/parties/${p.id}`} className="text-sm text-emerald-700 hover:underline">View Ledger</Link>
                   </td>
                 </tr>
               ))}

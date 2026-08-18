@@ -27,7 +27,7 @@ export const en = {
     heading: "Register your company",
     companySection: "Company details",
     companyName: "Company display name",
-    legalName: "Legal name",
+    legalName: "Legal company name",
     address: "Address",
     contactEmail: "Contact email",
     pan: "PAN",

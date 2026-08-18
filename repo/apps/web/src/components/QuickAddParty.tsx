@@ -16,12 +16,18 @@ export function PartyCombobox({ partyType, parties, value, onChange, onPartyCrea
   const selectedParty = parties.find((p) => p.id === value);
   const [query, setQuery] = useState(selectedParty?.name ?? "");
   const [open, setOpen] = useState(false);
+  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Sync display text when selection changes externally
+  function updateRect() {
+    if (inputRef.current) {
+      const r = inputRef.current.getBoundingClientRect();
+      setRect({ top: r.bottom, left: r.left, width: r.width });
+    }
+  }
+
   useEffect(() => {
     if (value) {
       const p = parties.find((p) => p.id === value);
@@ -29,16 +35,22 @@ export function PartyCombobox({ partyType, parties, value, onChange, onPartyCrea
     }
   }, [value, parties]);
 
-  // Close dropdown on outside click
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+    if (!open) return;
+    function close(e: MouseEvent) {
+      if (inputRef.current && inputRef.current.contains(e.target as Node)) return;
+      setOpen(false);
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+    function reposition() { updateRect(); }
+    document.addEventListener("mousedown", close);
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
+  }, [open]);
 
   const filtered = query.trim()
     ? parties.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
@@ -72,7 +84,7 @@ export function PartyCombobox({ partyType, parties, value, onChange, onPartyCrea
   const label = partyType === "customer" ? "customer" : "supplier";
 
   return (
-    <div ref={containerRef} className="relative">
+    <div className="relative">
       <input
         ref={inputRef}
         type="text"
@@ -83,14 +95,18 @@ export function PartyCombobox({ partyType, parties, value, onChange, onPartyCrea
         onChange={(e) => {
           setQuery(e.target.value);
           onChange(""); // clear selection while typing
+          updateRect();
           setOpen(true);
           setError(null);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => { updateRect(); setOpen(true); }}
       />
 
-      {open && (filtered.length > 0 || showCreate) && (
-        <ul className="absolute z-50 mt-1 max-h-52 w-full overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg text-sm">
+      {open && (filtered.length > 0 || showCreate) && rect && (
+        <ul
+          style={{ position: "fixed", top: rect.top + 4, left: rect.left, width: rect.width, zIndex: 9999 }}
+          className="max-h-52 overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg text-sm"
+        >
           {filtered.map((p) => (
             <li key={p.id}
               onMouseDown={(e) => { e.preventDefault(); select(p); }}

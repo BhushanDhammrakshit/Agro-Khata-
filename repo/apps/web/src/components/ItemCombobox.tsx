@@ -12,35 +12,58 @@ interface Props {
   className?: string;
 }
 
+interface Rect { top: number; left: number; width: number; }
+
 export function ItemCombobox({ items, value, onTextChange, onSelect, placeholder, className }: Props) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [rect, setRect] = useState<Rect | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function updateRect() {
+    if (inputRef.current) {
+      const r = inputRef.current.getBoundingClientRect();
+      setRect({ top: r.bottom, left: r.left, width: r.width });
+    }
+  }
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    if (!open) return;
+    function close(e: MouseEvent) {
+      if (inputRef.current && inputRef.current.contains(e.target as Node)) return;
+      setOpen(false);
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+    function reposition() { updateRect(); }
+    document.addEventListener("mousedown", close);
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
+  }, [open]);
 
   const filtered = value.trim()
     ? items.filter((i) => i.name.toLowerCase().includes(value.toLowerCase()))
     : items;
 
   return (
-    <div ref={containerRef} className="relative">
+    <div className="relative">
       <input
+        ref={inputRef}
         required
         value={value}
         placeholder={placeholder ?? "Item"}
         autoComplete="off"
         className={className}
-        onChange={(e) => { onTextChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
+        onChange={(e) => { onTextChange(e.target.value); updateRect(); setOpen(true); }}
+        onFocus={() => { updateRect(); setOpen(true); }}
       />
-      {open && filtered.length > 0 && (
-        <ul className="absolute z-50 mt-1 max-h-52 w-full min-w-[220px] overflow-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg text-sm">
+      {open && filtered.length > 0 && rect && (
+        <ul
+          style={{ position: "fixed", top: rect.top + 4, left: rect.left, width: Math.max(rect.width, 240), zIndex: 9999 }}
+          className="max-h-52 overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg text-sm"
+        >
           {filtered.map((it) => (
             <li key={it.id}
               onMouseDown={(e) => { e.preventDefault(); onSelect(it); setOpen(false); }}

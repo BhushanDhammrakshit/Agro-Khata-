@@ -72,9 +72,15 @@ export class PartiesService {
     const autoFarmerCode = (dto.partyType === PartyType.SUPPLIER || dto.partyType === PartyType.BOTH)
       ? await this.generateFarmerCode(manager, tenantId)
       : undefined;
+    const invoicePrefix = dto.invoicePrefix ?? (dto.partyType === PartyType.SUPPLIER ? 'PUR-' : 'INV-');
 
     const party = await manager.getRepository(Party).save(
-      manager.getRepository(Party).create({ tenantId, ...rest, ...(autoFarmerCode ? { farmerCode: autoFarmerCode } : {}) }),
+      manager.getRepository(Party).create({
+        tenantId,
+        ...rest,
+        invoicePrefix,
+        ...(autoFarmerCode ? { farmerCode: autoFarmerCode } : {}),
+      }),
     );
     await this.auditLog.record({ action: 'party.created', entityType: 'party', entityId: party.id, after: party });
     return party;
@@ -87,7 +93,7 @@ export class PartiesService {
     const { creditLimit, farmerCode: _ignored, ...rest } = dto;
     await manager.getRepository(Party).update(partyId, {
       ...rest,
-      ...(creditLimit !== undefined ? { creditLimit: creditLimit.toString() } : {}),
+      ...(creditLimit != null ? { creditLimit: creditLimit.toString() } : { creditLimit: undefined }),
     });
     const after = await manager.getRepository(Party).findOneByOrFail({ id: partyId });
     await this.auditLog.record({ action: 'party.updated', entityType: 'party', entityId: partyId, before, after });

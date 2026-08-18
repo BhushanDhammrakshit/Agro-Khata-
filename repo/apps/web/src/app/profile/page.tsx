@@ -10,6 +10,8 @@ export default function ProfilePage() {
   const [email, setEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordSaved, setPasswordSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,6 +33,22 @@ export default function ProfilePage() {
       setSaved(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to save.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handlePasswordSave(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setPasswordSaved(false);
+    try {
+      await api.setPassword(password);
+      setPassword("");
+      setPasswordSaved(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update password.");
     } finally {
       setSaving(false);
     }
@@ -102,9 +120,32 @@ export default function ProfilePage() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="w-full cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? "Saving…" : "Save Changes"}
+          </button>
+        </form>
+
+        <form onSubmit={handlePasswordSave} className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500">Password</h2>
+          <p className="mb-4 text-sm text-slate-500">Set a password to log in to this company without an OTP.</p>
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">New password</label>
+          <input
+            required
+            minLength={8}
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+          />
+          {passwordSaved && <p className="mt-3 text-sm text-emerald-600">Password updated successfully.</p>}
+          <button
+            type="submit"
+            disabled={saving}
+            className="mt-4 w-full cursor-pointer rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Update Password"}
           </button>
         </form>
       </div>

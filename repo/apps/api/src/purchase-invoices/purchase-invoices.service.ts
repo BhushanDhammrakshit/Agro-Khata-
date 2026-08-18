@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { QueryFailedError } from 'typeorm';
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { AuditLogService } from '../common/audit/audit-log.service';
 import { PurchaseInvoice } from '../entities/purchase-invoice.entity';
@@ -72,8 +73,10 @@ export class PurchaseInvoicesService {
     const igstAmount = isGst && dto.isInterState ? totalGst : 0;
     const totalAmount = subTotal + totalGst;
 
-    const invoice = await manager.getRepository(PurchaseInvoice).save(
-      manager.getRepository(PurchaseInvoice).create({
+    let invoice: PurchaseInvoice;
+    try {
+      invoice = await manager.getRepository(PurchaseInvoice).save(
+        manager.getRepository(PurchaseInvoice).create({
         tenantId,
         partyId: dto.partyId,
         invoiceNo: dto.invoiceNo,
@@ -90,6 +93,17 @@ export class PurchaseInvoicesService {
         createdBy: userId,
       }),
     );
+    } catch (err) {
+      if (err instanceof QueryFailedError && (err as any).code === '23505') {
+        throw new BadRequestException('An invoice with this number already exists.');
+      }
+      throw err;
+    }
+
+    // Carry this supplier's purchase invoice sequence forward after a successful save.
+    if (party.nextInvoiceSeq) {
+      await manager.getRepository(Party).increment({ id: party.id }, 'nextInvoiceSeq', 1);
+    }
 
     const itemRepo = manager.getRepository(PurchaseInvoiceItem);
     await itemRepo.save(

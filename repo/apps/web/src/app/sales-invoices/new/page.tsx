@@ -1,12 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError, Party, Item, Driver, Vehicle } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { inputClass, selectClass } from "@/components/ui/styles";
+import { inputClass } from "@/components/ui/styles";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 import { PartyCombobox } from "@/components/QuickAddParty";
 import { ItemCombobox } from "@/components/ItemCombobox";
 
@@ -99,7 +101,7 @@ export default function NewSalesInvoicePage() {
   return (
     <AppShell title="New Sales Invoice">
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
-        <a href="/sales-invoices" className="text-sm font-medium text-slate-600 hover:text-slate-900">← Sales Invoices</a>
+        <Link href="/sales-invoices" className="text-sm font-medium text-slate-600 hover:text-slate-900">← Sales Invoices</Link>
 
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
           <Card>
@@ -161,41 +163,35 @@ export default function NewSalesInvoicePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Driver</label>
-                <select value={driverId} className={selectClass}
-                  onChange={(e) => {
-                    setDriverId(e.target.value);
-                    const d = drivers.find((x) => x.id === e.target.value);
+                <CustomSelect
+                  value={driverId}
+                  onChange={(val) => {
+                    setDriverId(val);
+                    const d = drivers.find((x) => x.id === val);
                     setDriverName(d?.name ?? "");
-                  }}>
-                  <option value="">Select saved driver…</option>
-                  {drivers.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}{d.phone ? ` — ${d.phone}` : ""}
-                    </option>
-                  ))}
-                </select>
-                <a href="/drivers" className="mt-1 inline-block text-xs font-medium text-emerald-700 hover:underline">
+                  }}
+                  placeholder="Select saved driver…"
+                  options={drivers.map((d) => ({ value: d.id, label: d.name + (d.phone ? ` — ${d.phone}` : "") }))}
+                />
+                <Link href="/drivers" className="mt-1 inline-block text-xs font-medium text-emerald-700 hover:underline">
                   + Manage drivers
-                </a>
+                </Link>
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Vehicle</label>
-                <select value={vehicleId} className={selectClass}
-                  onChange={(e) => {
-                    setVehicleId(e.target.value);
-                    const v = vehicles.find((x) => x.id === e.target.value);
+                <CustomSelect
+                  value={vehicleId}
+                  onChange={(val) => {
+                    setVehicleId(val);
+                    const v = vehicles.find((x) => x.id === val);
                     setVehicleNo(v?.vehicleNo ?? "");
-                  }}>
-                  <option value="">Select saved vehicle…</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.vehicleNo}{v.name ? ` — ${v.name}` : ""}{v.loadCapacity ? ` (${v.loadCapacity})` : ""}
-                    </option>
-                  ))}
-                </select>
-                <a href="/vehicles" className="mt-1 inline-block text-xs font-medium text-emerald-700 hover:underline">
+                  }}
+                  placeholder="Select saved vehicle…"
+                  options={vehicles.map((v) => ({ value: v.id, label: v.vehicleNo + (v.name ? ` — ${v.name}` : "") + (v.loadCapacity ? ` (${v.loadCapacity})` : "") }))}
+                />
+                <Link href="/vehicles" className="mt-1 inline-block text-xs font-medium text-emerald-700 hover:underline">
                   + Manage vehicles
-                </a>
+                </Link>
               </div>
               {!vehicleId && (
                 <div>
@@ -219,8 +215,9 @@ export default function NewSalesInvoicePage() {
           <Card>
             <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Line Items</h3>
             <div className="flex flex-col gap-3">
+              <div className="overflow-x-auto">
               {items.map((row, i) => (
-                <div key={i} className={`grid gap-2 ${isGstInvoice ? "grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]" : "grid-cols-[2fr_1fr_1fr_1fr_auto]"}`}>
+                <div key={i} className={`grid gap-2 mb-2 ${isGstInvoice ? "min-w-[540px] grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]" : "min-w-[440px] grid-cols-[2fr_1fr_1fr_1fr_auto]"}`}>
                   <ItemCombobox
                     items={catalog}
                     value={row.itemName}
@@ -238,9 +235,10 @@ export default function NewSalesInvoicePage() {
                   <input required type="number" step="0.001" placeholder="Qty" value={row.qty} onChange={(e) => updateLine(i, { qty: e.target.value })} className={inputClass} />
                   <input required type="number" step="0.01" placeholder="Rate" value={row.rate} onChange={(e) => updateLine(i, { rate: e.target.value })} className={inputClass} />
                   {isGstInvoice && <input type="number" step="0.01" placeholder="GST %" value={row.gstRate} onChange={(e) => updateLine(i, { gstRate: e.target.value })} className={inputClass} />}
-                  <button type="button" onClick={() => setItems((r) => r.filter((_, j) => j !== i))} className="rounded px-2 text-red-600 hover:bg-red-50">✕</button>
+                  <button type="button" onClick={() => setItems((r) => r.filter((_, j) => j !== i))} className="cursor-pointer rounded px-2 text-red-600 hover:bg-red-50">✕</button>
                 </div>
               ))}
+              </div>
               <Button type="button" variant="ghost" onClick={() => setItems((r) => [...r, { ...emptyLine }])} className="self-start">+ Add line</Button>
             </div>
           </Card>

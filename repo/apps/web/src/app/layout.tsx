@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
+import { AppUserProvider } from "@/lib/AppUserContext";
+import { RouteProgress } from "@/components/RouteProgress";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,6 +14,8 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 
 export const metadata: Metadata = {
   title: "AgroKhata",
@@ -25,7 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
-        <LanguageProvider>{children}</LanguageProvider>
+        <RouteProgress />
+        <LanguageProvider>
+          <AppUserProvider>{children}</AppUserProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

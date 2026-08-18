@@ -87,7 +87,7 @@ export default function SuperadminDashboardPage() {
           <form className="grid grid-cols-1 gap-3 sm:grid-cols-2" onSubmit={handleCreate}>
             <input required placeholder="Company display name" value={form.companyName}
               onChange={(e) => update("companyName", e.target.value)} className={inputClass} />
-            <input required placeholder="Legal name" value={form.legalName}
+            <input required placeholder="Legal company name" value={form.legalName}
               onChange={(e) => update("legalName", e.target.value)} className={inputClass} />
             <input required placeholder="Owner name" value={form.ownerName}
               onChange={(e) => update("ownerName", e.target.value)} className={inputClass} />

@@ -4,8 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Tenant } from '../entities/tenant.entity';
 import { User } from '../entities/user.entity';
 import { PlatformAdmin } from '../entities/platform-admin.entity';
+import { AuditLog } from '../entities/audit-log.entity';
 
-const ENTITIES = [Tenant, User, PlatformAdmin];
+const ENTITIES = [Tenant, User, PlatformAdmin, AuditLog];
 export const SUPERADMIN_CONNECTION = 'superadmin';
 
 /**

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { api, ReportInvoiceRow } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/Badge";
@@ -10,7 +11,7 @@ import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 
 function fmt(v: string) { return "₹" + parseFloat(v).toLocaleString("en-IN", { minimumFractionDigits: 2 }); }
 
-export default function OutstandingReportPage() {
+function OutstandingReport() {
   const sp = useSearchParams();
   const [type, setType] = useState<"receivable" | "payable">((sp.get("type") as "receivable" | "payable") ?? "receivable");
   const [rows, setRows] = useState<ReportInvoiceRow[]>([]);
@@ -23,12 +24,13 @@ export default function OutstandingReportPage() {
 
   return (
     <AppShell title="Outstanding Report">
-      <div className="mb-4 flex items-center justify-between gap-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden text-sm">
           {(["receivable", "payable"] as const).map(t => (
             <button key={t} onClick={() => setType(t)}
-              className={`px-4 py-2 font-medium capitalize transition-colors ${type === t ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
-              {t === "receivable" ? "Receivable (from customers)" : "Payable (to suppliers)"}
+              className={`cursor-pointer px-3 py-2 font-medium capitalize transition-colors sm:px-4 ${type === t ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+              <span className="hidden sm:inline">{t === "receivable" ? "Receivable (from customers)" : "Payable (to suppliers)"}</span>
+              <span className="sm:hidden">{t === "receivable" ? "Receivable" : "Payable"}</span>
             </button>
           ))}
         </div>
@@ -48,7 +50,7 @@ export default function OutstandingReportPage() {
             {rows.map(r => (
               <tr key={r.id} className={`hover:bg-slate-50 ${r.is_overdue ? "bg-red-50" : ""}`}>
                 <td className={tdClass}>
-                  <a href={`/${type === "receivable" ? "sales" : "purchase"}-invoices/${r.id}`} className="text-emerald-700 hover:underline">{r.invoice_no}</a>
+                  <Link href={`/${type === "receivable" ? "sales" : "purchase"}-invoices/${r.id}`} className="text-emerald-700 hover:underline">{r.invoice_no}</Link>
                 </td>
                 <td className={tdClass}>{r.invoice_date}</td>
                 <td className={tdClass}>
@@ -65,5 +67,13 @@ export default function OutstandingReportPage() {
         </table>
       </div>
     </AppShell>
+  );
+}
+
+export default function OutstandingReportPage() {
+  return (
+    <Suspense>
+      <OutstandingReport />
+    </Suspense>
   );
 }

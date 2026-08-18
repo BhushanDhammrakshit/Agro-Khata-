@@ -106,25 +106,24 @@ CREATE TRIGGER trg_platform_admins_updated_at BEFORE UPDATE ON platform_admins
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ============================================================================
--- 2. USERS (OTP login, no passwords)
+-- 2. USERS (password login scoped to a company; OTP remains supported)
 -- ============================================================================
 CREATE TABLE users (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id     UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  phone         TEXT NOT NULL,                   -- E.164, globally unique (see note below)
+  phone         TEXT NOT NULL,                   -- E.164, unique within a tenant
   name          TEXT NOT NULL,
   email         TEXT,
+  password_hash TEXT,
   role          user_role NOT NULL DEFAULT 'staff', -- 'owner' | 'staff' | 'viewer'
   is_active     BOOLEAN NOT NULL DEFAULT true,
   last_login_at TIMESTAMPTZ,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  -- MVP simplification: one phone number = one user account system-wide.
-  -- A person working across two tenants would need two distinct phone
-  -- numbers (or Phase-3 multi-tenant-per-user support).
-  CONSTRAINT uq_users_phone UNIQUE (phone)
+  CONSTRAINT uq_users_tenant_phone UNIQUE (tenant_id, phone)
 );
 CREATE INDEX ix_users_tenant ON users(tenant_id);
+CREATE INDEX ix_users_phone ON users(phone);
 CREATE TRIGGER trg_users_updated_at BEFORE UPDATE ON users
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 

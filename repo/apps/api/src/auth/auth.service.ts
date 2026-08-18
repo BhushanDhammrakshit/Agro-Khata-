@@ -5,11 +5,21 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { IsNull } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
+import { DataSource, IsNull } from 'typeorm';
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { OtpService } from './otp.service';
 import { OtpPurpose, OtpRequest } from '../entities/otp-request.entity';
 import { User } from '../entities/user.entity';
+import { Tenant } from '../entities/tenant.entity';
+import { SUPERADMIN_CONNECTION } from '../superadmin/superadmin-database.module';
+
+export interface CompanyChoice {
+  tenantId: string;
+  companyName: string;
+  role: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -17,24 +27,66 @@ export class AuthService {
     private readonly tenantContext: TenantContextService,
     private readonly otpService: OtpService,
     private readonly jwtService: JwtService,
+    @InjectDataSource(SUPERADMIN_CONNECTION) private readonly preAuthDataSource: DataSource,
   ) {}
 
-  /**
-   * Phone numbers are unique system-wide for MVP (see docs/schema.sql), so we
-   * can resolve the owning tenant before a tenant session is established.
-   * This lookup intentionally runs without `app.tenant_id` set.
-   */
-  async requestOtp(phone: string): Promise<{ message: string }> {
+  async listCompanies(phone: string): Promise<CompanyChoice[]> {
+    return this.preAuthDataSource.manager
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .innerJoin(Tenant, 'tenant', 'tenant.id = user.tenant_id AND tenant.is_active = true')
+      .select('user.tenant_id', 'tenantId')
+      .addSelect('tenant.name', 'companyName')
+      .addSelect('user.role', 'role')
+      .where('user.phone = :phone', { phone })
+      .andWhere('user.is_active = true')
+      .orderBy('tenant.name', 'ASC')
+      .getRawMany<CompanyChoice>();
+  }
+
+  async passwordLogin(
+    phone: string,
+    tenantId: string,
+    password: string,
+  ): Promise<{ accessToken: string; user: Partial<User> }> {
     const manager = this.tenantContext.getManager();
-    const user = await manager.getRepository(User).findOne({ where: { phone, isActive: true } });
+    await this.tenantContext.setTenantId(tenantId);
+    const user = await manager
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .addSelect('user.passwordHash')
+      .where('user.phone = :phone', { phone })
+      .andWhere('user.tenantId = :tenantId', { tenantId })
+      .andWhere('user.isActive = true')
+      .getOne();
+
+    if (!user?.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
+      throw new UnauthorizedException('Invalid company, mobile number, or password.');
+    }
+
+    return this.completeLogin(user);
+  }
+
+  async requestOtp(phone: string, tenantId?: string): Promise<{ message: string }> {
+    const manager = this.tenantContext.getManager();
+    const companies = await this.listCompanies(phone);
+    if (!tenantId && companies.length > 1) {
+      throw new BadRequestException('Select a company before requesting an OTP.');
+    }
+    const selectedTenantId = tenantId ?? companies[0]?.tenantId;
+    if (selectedTenantId) {
+      await this.tenantContext.setTenantId(selectedTenantId);
+    }
+    const user = selectedTenantId
+      ? await manager.getRepository(User).findOne({
+          where: { phone, tenantId: selectedTenantId, isActive: true },
+        })
+      : null;
     if (!user) {
       throw new NotFoundException(
         'No account found for this mobile number. Register your company first.',
       );
     }
-
-    // Bind the transaction to this user's tenant so the OTP row insert passes RLS.
-    await this.tenantContext.setTenantId(user.tenantId);
 
     const code = this.otpService.generateCode();
     const otpHash = await this.otpService.hash(code);
@@ -55,14 +107,20 @@ export class AuthService {
     return { message: 'OTP sent.' };
   }
 
-  async verifyOtp(phone: string, code: string): Promise<{ accessToken: string; user: Partial<User> }> {
+  async verifyOtp(phone: string, code: string, tenantId?: string): Promise<{ accessToken: string; user: Partial<User> }> {
     const manager = this.tenantContext.getManager();
-    const user = await manager.getRepository(User).findOne({ where: { phone, isActive: true } });
+    const companies = await this.listCompanies(phone);
+    const selectedTenantId = tenantId ?? (companies.length === 1 ? companies[0].tenantId : undefined);
+    if (!selectedTenantId) {
+      throw new BadRequestException('Select a company before verifying an OTP.');
+    }
+    await this.tenantContext.setTenantId(selectedTenantId);
+    const user = await manager.getRepository(User).findOne({
+      where: { phone, tenantId: selectedTenantId, isActive: true },
+    });
     if (!user) {
       throw new UnauthorizedException('Invalid mobile number or OTP.');
     }
-
-    await this.tenantContext.setTenantId(user.tenantId);
 
     const otpRequest = await manager.getRepository(OtpRequest).findOne({
       where: { phone, consumedAt: IsNull() },
@@ -82,8 +140,18 @@ export class AuthService {
     }
 
     await manager.getRepository(OtpRequest).update(otpRequest.id, { consumedAt: new Date() });
-    await manager.getRepository(User).update(user.id, { lastLoginAt: new Date() });
+    return this.completeLogin(user);
+  }
 
+  async setPassword(userId: string, password: string): Promise<{ message: string }> {
+    const passwordHash = await bcrypt.hash(password, 12);
+    await this.tenantContext.getManager().getRepository(User).update(userId, { passwordHash });
+    return { message: 'Password updated.' };
+  }
+
+  private async completeLogin(user: User): Promise<{ accessToken: string; user: Partial<User> }> {
+    const manager = this.tenantContext.getManager();
+    await manager.getRepository(User).update(user.id, { lastLoginAt: new Date() });
     const payload = { sub: user.id, tenantId: user.tenantId, role: user.role, phone: user.phone };
     const accessToken = await this.jwtService.signAsync(payload);
 

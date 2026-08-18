@@ -7,10 +7,12 @@ import { AuthService } from './auth.service';
 import { OtpService } from './otp.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UsersModule } from '../users/users.module';
+import { SuperadminDatabaseModule } from '../superadmin/superadmin-database.module';
 
 @Module({
   imports: [
     UsersModule,
+    SuperadminDatabaseModule,
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

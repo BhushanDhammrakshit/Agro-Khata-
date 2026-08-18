@@ -23,6 +23,45 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
+// Lightweight in-memory GET cache so reference data (parties, items, drivers,
+// vehicles…) is fetched once on load and reused instantly across pages.
+interface CacheEntry { value: unknown; expires: number; }
+const getCache = new Map<string, CacheEntry>();
+const inflight = new Map<string, Promise<unknown>>();
+const REF_TTL     = 60_000;  // stable reference data: parties, items, etc.
+const LIST_TTL    = 30_000;  // mutable lists: invoices, expenses, KPIs
+const SESSION_TTL = 300_000; // session-scoped data: getMe, getMyTenant
+
+function cachedRequest<T>(path: string, ttl = REF_TTL): Promise<T> {
+  const now = Date.now();
+  const hit = getCache.get(path);
+  if (hit && hit.expires > now) return Promise.resolve(hit.value as T);
+
+  const pending = inflight.get(path);
+  if (pending) return pending as Promise<T>;
+
+  const p = request<T>(path)
+    .then((value) => {
+      getCache.set(path, { value, expires: Date.now() + ttl });
+      inflight.delete(path);
+      return value;
+    })
+    .catch((err) => {
+      // Evict so the next caller triggers a fresh fetch instead of reusing this rejection.
+      inflight.delete(path);
+      throw err;
+    });
+  inflight.set(path, p);
+  return p;
+}
+
+// Drop cached entries whose path starts with any of the given prefixes.
+function invalidate(...prefixes: string[]) {
+  for (const key of getCache.keys()) {
+    if (prefixes.some((p) => key.startsWith(p))) getCache.delete(key);
+  }
+}
+
 export interface TenantSummary {
   id: string;
   name: string;
@@ -38,6 +77,8 @@ export interface TenantSummary {
   bankUpi?: string;
   invoicePrefix?: string;
   termsConditions?: string;
+  logoUrl?: string;
+  signatureUrl?: string;
   defaultLanguage: string;
 }
 
@@ -115,6 +156,22 @@ export interface AuthUser {
   phone: string;
   role: "owner" | "staff" | "viewer";
   tenantId: string;
+}
+
+export interface CompanyChoice {
+  tenantId: string;
+  companyName: string;
+  role: AuthUser["role"];
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  role: AuthUser["role"];
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface AuditLogEntry {
@@ -283,20 +340,33 @@ export interface Expense {
 }
 
 export const api = {
-  requestOtp: (phone: string) => request<{ message: string }>("/auth/otp/request", {
+  listCompanies: (phone: string) => request<CompanyChoice[]>("/auth/companies", {
     method: "POST",
     body: JSON.stringify({ phone }),
   }),
 
-  verifyOtp: (phone: string, otp: string) => request<{ user: AuthUser }>("/auth/otp/verify", {
+  passwordLogin: (phone: string, tenantId: string, password: string) =>
+    request<{ user: AuthUser }>("/auth/password/login", {
+      method: "POST",
+      body: JSON.stringify({ phone, tenantId, password }),
+    }),
+
+  requestOtp: (phone: string, tenantId?: string) => request<{ message: string }>("/auth/otp/request", {
     method: "POST",
-    body: JSON.stringify({ phone, otp }),
+    body: JSON.stringify({ phone, tenantId }),
   }),
 
-  logout: () => request<{ message: string }>("/auth/logout", { method: "POST" }),
-  getMe: () => request<AuthUser>("/auth/me"),
+  verifyOtp: (phone: string, otp: string, tenantId?: string) => request<{ user: AuthUser }>("/auth/otp/verify", {
+    method: "POST",
+    body: JSON.stringify({ phone, otp, tenantId }),
+  }),
+
+  logout: () => request<{ message: string }>("/auth/logout", { method: "POST" }).finally(() => invalidate("/auth/me", "/tenants/me")),
+  getMe: () => cachedRequest<AuthUser>("/auth/me", SESSION_TTL),
   updateMe: (dto: { name?: string; email?: string }) =>
-    request<AuthUser>("/auth/me", { method: "PATCH", body: JSON.stringify(dto) }),
+    request<AuthUser>("/auth/me", { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/auth/me")),
+  setPassword: (password: string) =>
+    request<{ message: string }>("/auth/password", { method: "PATCH", body: JSON.stringify({ password }) }),
 
   registerTenant: (dto: {
     companyName: string;
@@ -307,26 +377,29 @@ export const api = {
     ownerName: string;
     ownerPhone: string;
     ownerEmail?: string;
+    password: string;
   }) => request<{ tenant: TenantSummary; owner: Partial<AuthUser> }>("/tenants/register", {
     method: "POST",
     body: JSON.stringify(dto),
   }),
 
-  getMyTenant: () => request<TenantSummary>("/tenants/me"),
+  getMyTenant: () => cachedRequest<TenantSummary>("/tenants/me", SESSION_TTL),
+  updateMyTenant: (dto: Partial<TenantSummary>) =>
+    request<TenantSummary>("/tenants/me", { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/tenants/me")),
 
   getAuditLogs: () => request<AuditLogEntry[]>("/audit-logs"),
 
   // Parties (customers/suppliers)
-  listParties: (partyType?: PartyType) => request<Party[]>(`/parties${partyType ? `?partyType=${partyType}` : ""}`),
+  listParties: (partyType?: PartyType) => cachedRequest<Party[]>(`/parties${partyType ? `?partyType=${partyType}` : ""}`),
   getParty: (id: string) => request<Party>(`/parties/${id}`),
   getPartyNextNumbers: (id: string) => request<{ invoiceNo: string; poNo: string }>(`/parties/${id}/next-numbers`),
-  createParty: (dto: Partial<Party>) => request<Party>("/parties", { method: "POST", body: JSON.stringify(dto) }),
-  updateParty: (id: string, dto: Partial<Party>) => request<Party>(`/parties/${id}`, { method: "PATCH", body: JSON.stringify(dto) }),
+  createParty: (dto: Partial<Party>) => request<Party>("/parties", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/parties")),
+  updateParty: (id: string, dto: Partial<Party>) => request<Party>(`/parties/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/parties")),
   updateFarmerCode: (id: string, farmerCode: string) =>
-    request<Party>(`/parties/${id}/farmer-code`, { method: "PATCH", body: JSON.stringify({ farmerCode }) }),
+    request<Party>(`/parties/${id}/farmer-code`, { method: "PATCH", body: JSON.stringify({ farmerCode }) }).finally(() => invalidate("/parties")),
 
   // Items
-  listItems: () => request<Item[]>("/items"),
+  listItems: () => cachedRequest<Item[]>("/items"),
   getItem: (id: string) => request<Item>(`/items/${id}`),
   createItem: (dto: {
     name: string;
@@ -337,54 +410,73 @@ export const api = {
     salePrice?: number;
     openingStock?: number;
     lowStockAlertQty?: number;
-  }) => request<Item>("/items", { method: "POST", body: JSON.stringify(dto) }),
+  }) => request<Item>("/items", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/items")),
   updateItem: (id: string, dto: Partial<{
     name: string; uom: string; defaultRate: number; hsnCode: string; gstRate: number;
     salePrice: number; lowStockAlertQty: number; isActive: boolean;
-  }>) => request<Item>(`/items/${id}`, { method: "PATCH", body: JSON.stringify(dto) }),
+  }>) => request<Item>(`/items/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/items")),
 
   // Sales Invoices (to a customer)
   listSalesInvoices: (filters?: { partyId?: string; status?: InvoiceStatus }) => {
     const params = new URLSearchParams(filters as Record<string, string>).toString();
-    return request<Invoice[]>(`/sales-invoices${params ? `?${params}` : ""}`);
+    return cachedRequest<Invoice[]>(`/sales-invoices${params ? `?${params}` : ""}`, LIST_TTL);
   },
   getSalesInvoice: (id: string) => request<Invoice>(`/sales-invoices/${id}`),
-  createSalesInvoice: (dto: CreateInvoiceDto) => request<Invoice>("/sales-invoices", { method: "POST", body: JSON.stringify(dto) }),
-  sendSalesInvoice: (id: string) => request<Invoice>(`/sales-invoices/${id}/send`, { method: "POST" }),
+  createSalesInvoice: (dto: CreateInvoiceDto) =>
+    request<Invoice>("/sales-invoices", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/sales-invoices", "/reports/dashboard")),
+  sendSalesInvoice: (id: string) =>
+    request<Invoice>(`/sales-invoices/${id}/send`, { method: "POST" }).finally(() => invalidate("/sales-invoices")),
   addSalesInvoicePayment: (id: string, dto: CreatePaymentDto) =>
-    request<Invoice>(`/sales-invoices/${id}/payments`, { method: "POST", body: JSON.stringify(dto) }),
+    request<Invoice>(`/sales-invoices/${id}/payments`, { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/sales-invoices", "/reports/dashboard")),
 
   // Purchase Invoices (from a supplier)
   listPurchaseInvoices: (filters?: { partyId?: string; status?: InvoiceStatus }) => {
     const params = new URLSearchParams(filters as Record<string, string>).toString();
-    return request<Invoice[]>(`/purchase-invoices${params ? `?${params}` : ""}`);
+    return cachedRequest<Invoice[]>(`/purchase-invoices${params ? `?${params}` : ""}`, LIST_TTL);
   },
   getPurchaseInvoice: (id: string) => request<Invoice>(`/purchase-invoices/${id}`),
-  createPurchaseInvoice: (dto: CreateInvoiceDto) => request<Invoice>("/purchase-invoices", { method: "POST", body: JSON.stringify(dto) }),
-  sendPurchaseInvoice: (id: string) => request<Invoice>(`/purchase-invoices/${id}/send`, { method: "POST" }),
+  createPurchaseInvoice: (dto: CreateInvoiceDto) =>
+    request<Invoice>("/purchase-invoices", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/purchase-invoices", "/reports/dashboard")),
+  sendPurchaseInvoice: (id: string) =>
+    request<Invoice>(`/purchase-invoices/${id}/send`, { method: "POST" }).finally(() => invalidate("/purchase-invoices")),
   addPurchaseInvoicePayment: (id: string, dto: CreatePaymentDto) =>
-    request<Invoice>(`/purchase-invoices/${id}/payments`, { method: "POST", body: JSON.stringify(dto) }),
+    request<Invoice>(`/purchase-invoices/${id}/payments`, { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/purchase-invoices", "/reports/dashboard")),
 
   // Expenses
-  listExpenses: () => request<Expense[]>("/expenses"),
+  listExpenses: () => cachedRequest<Expense[]>("/expenses", LIST_TTL),
   createExpense: (dto: { category: string; description?: string; amount: number; expenseDate: string; paymentMode: PaymentMode }) =>
-    request<Expense>("/expenses", { method: "POST", body: JSON.stringify(dto) }),
+    request<Expense>("/expenses", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/expenses", "/reports/dashboard")),
 
   // Drivers
-  listDrivers: () => request<Driver[]>("/drivers"),
+  listDrivers: () => cachedRequest<Driver[]>("/drivers"),
   createDriver: (dto: { name: string; licenceNo?: string; phone?: string }) =>
-    request<Driver>("/drivers", { method: "POST", body: JSON.stringify(dto) }),
+    request<Driver>("/drivers", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/drivers")),
   updateDriver: (id: string, dto: Partial<Driver>) =>
-    request<Driver>(`/drivers/${id}`, { method: "PATCH", body: JSON.stringify(dto) }),
+    request<Driver>(`/drivers/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/drivers")),
 
-  listVehicles: () => request<Vehicle[]>("/vehicles"),
+  listVehicles: () => cachedRequest<Vehicle[]>("/vehicles"),
   createVehicle: (dto: { vehicleNo: string; name?: string; loadCapacity?: string }) =>
-    request<Vehicle>("/vehicles", { method: "POST", body: JSON.stringify(dto) }),
+    request<Vehicle>("/vehicles", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/vehicles")),
   updateVehicle: (id: string, dto: Partial<Vehicle>) =>
-    request<Vehicle>(`/vehicles/${id}`, { method: "PATCH", body: JSON.stringify(dto) }),
+    request<Vehicle>(`/vehicles/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/vehicles")),
+
+  // Warm the cache with reference + session data so it's ready across the app on load.
+  prefetch: () => {
+    const noop = () => undefined;
+    cachedRequest<AuthUser>("/auth/me", SESSION_TTL).catch(noop);
+    cachedRequest<TenantSummary>("/tenants/me", SESSION_TTL).catch(noop);
+    cachedRequest<Party[]>("/parties").catch(noop);
+    cachedRequest<Party[]>("/parties?partyType=customer").catch(noop);
+    cachedRequest<Party[]>("/parties?partyType=supplier").catch(noop);
+    cachedRequest<Item[]>("/items").catch(noop);
+    cachedRequest<Driver[]>("/drivers").catch(noop);
+    cachedRequest<Vehicle[]>("/vehicles").catch(noop);
+    cachedRequest<Invoice[]>("/sales-invoices", LIST_TTL).catch(noop);
+    cachedRequest<Invoice[]>("/purchase-invoices", LIST_TTL).catch(noop);
+  },
 
   // Reports
-  getDashboardKpis: () => request<DashboardKpis>("/reports/dashboard"),
+  getDashboardKpis: () => cachedRequest<DashboardKpis>("/reports/dashboard", LIST_TTL),
   getSalesReport: (params?: { from?: string; to?: string; partyId?: string }) =>
     request<ReportInvoiceRow[]>(`/reports/sales${params ? "?" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v !== undefined)) as Record<string,string>).toString() : ""}`),
   getPurchasesReport: (params?: { from?: string; to?: string; partyId?: string }) =>
@@ -400,6 +492,10 @@ export const api = {
     ),
   getPartyLedger: (partyId: string) => request<PartyLedger>(`/reports/party/${partyId}/ledger`),
 
-  updateMyTenant: (dto: Partial<TenantSummary>) =>
-    request<TenantSummary>("/tenants/me", { method: "PATCH", body: JSON.stringify(dto) }),
+  // Team members
+  listUsers: () => request<TeamMember[]>("/users"),
+  inviteUser: (dto: { name: string; phone: string; email?: string; role: AuthUser["role"] }) =>
+    request<TeamMember>("/users", { method: "POST", body: JSON.stringify(dto) }),
+  updateUser: (id: string, dto: { role?: AuthUser["role"]; isActive?: boolean }) =>
+    request<TeamMember>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(dto) }),
 };

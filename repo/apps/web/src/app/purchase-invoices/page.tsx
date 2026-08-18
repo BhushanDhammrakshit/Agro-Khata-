@@ -1,30 +1,26 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { api, ApiError, Invoice } from "@/lib/api";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { serverApi } from "@/lib/server-api";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/Badge";
 import { linkClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 
-export default function PurchaseInvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    api.listPurchaseInvoices().then(setInvoices).catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load invoices."));
-  }, []);
+export default async function PurchaseInvoicesPage() {
+  const invoices = await serverApi.listPurchaseInvoices().catch((err) => {
+    if (err?.status === 401) redirect("/login");
+    return [];
+  });
 
   return (
     <AppShell
       title="Purchase Invoices"
       actions={
-        <a href="/purchase-invoices/new" className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700">
+        <Link href="/purchase-invoices/new" className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700">
           + New invoice
-        </a>
+        </Link>
       }
     >
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
       <div className={tableWrapClass}>
         <table className="w-full border-collapse text-sm">
@@ -41,7 +37,7 @@ export default function PurchaseInvoicesPage() {
           <tbody>
             {invoices?.map((inv) => (
               <tr key={inv.id} className="hover:bg-slate-50">
-                <td className={tdClass}><a href={`/purchase-invoices/${inv.id}`} className={linkClass}>{inv.invoiceNo}</a></td>
+                <td className={tdClass}><Link href={`/purchase-invoices/${inv.id}`} className={linkClass}>{inv.invoiceNo}</Link></td>
                 <td className={tdClass}>{inv.invoiceDate}</td>
                 <td className={tdClass}><Badge tone={INVOICE_STATUS_TONE[inv.status]}>{formatStatusLabel(inv.status)}</Badge></td>
                 <td className={tdClass}>₹{inv.totalAmount}</td>

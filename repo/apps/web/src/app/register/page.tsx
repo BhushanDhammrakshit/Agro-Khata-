@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/styles";
@@ -19,6 +19,8 @@ const initialForm = {
   ownerName: "",
   ownerPhone: "",
   ownerEmail: "",
+  password: "",
+  confirmPassword: "",
 };
 
 export default function RegisterPage() {
@@ -35,6 +37,10 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (form.password !== form.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
     setLoading(true);
     try {
       await api.registerTenant({
@@ -46,8 +52,8 @@ export default function RegisterPage() {
         ownerName: form.ownerName,
         ownerPhone: withPrefix(form.ownerPhone),
         ownerEmail: form.ownerEmail || undefined,
+        password: form.password,
       });
-      await api.requestOtp(withPrefix(form.ownerPhone));
       router.push("/login");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to register company.");
@@ -58,9 +64,6 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
-      <div className="flex justify-end p-4">
-        <LanguageSwitcher />
-      </div>
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-6 p-6">
         <div className="text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-lg font-bold text-white shadow-md">A</div>
@@ -90,6 +93,12 @@ export default function RegisterPage() {
               <PhoneInput required value={form.ownerPhone} onChange={(v) => update("ownerPhone", v)} />
               <input placeholder={dict.register.ownerEmail} type="email" value={form.ownerEmail}
                 onChange={(e) => update("ownerEmail", e.target.value)} className={inputClass} />
+              <input required minLength={8} placeholder="Password (minimum 8 characters)" type="password"
+                autoComplete="new-password" value={form.password}
+                onChange={(e) => update("password", e.target.value)} className={inputClass} />
+              <input required minLength={8} placeholder="Confirm password" type="password"
+                autoComplete="new-password" value={form.confirmPassword}
+                onChange={(e) => update("confirmPassword", e.target.value)} className={inputClass} />
             </fieldset>
 
             {error && <p className="text-sm text-red-600">{error}</p>}
@@ -100,7 +109,7 @@ export default function RegisterPage() {
         </Card>
 
         <p className="text-center text-sm text-slate-600">
-          {dict.register.alreadyRegistered} <a className="font-medium text-emerald-700 hover:underline" href="/login">{dict.register.login}</a>
+          {dict.register.alreadyRegistered} <Link className="font-medium text-emerald-700 hover:underline" href="/login">{dict.register.login}</Link>
         </p>
       </main>
     </div>

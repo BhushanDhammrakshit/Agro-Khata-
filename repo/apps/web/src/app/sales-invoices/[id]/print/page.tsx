@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { api, Invoice, TenantSummary, Party } from "@/lib/api";
 
 export default function PrintInvoicePage({ params }: { params: Promise<{ id: string }> }) {
@@ -53,7 +54,7 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
 
       {/* Back button — hidden on print */}
       <div className="no-print mb-3 flex items-center gap-3 p-4">
-        <a href={`/sales-invoices/${id}`} className="text-sm text-blue-600 hover:underline">← Back to Invoice</a>
+        <Link href={`/sales-invoices/${id}`} className="text-sm text-blue-600 hover:underline">← Back to Invoice</Link>
         <button onClick={() => window.print()}
           className="rounded border border-slate-300 bg-white px-4 py-1.5 text-sm font-medium hover:bg-slate-50">
           🖨 Print

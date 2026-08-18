@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import Link from "next/link";
 import { api, AuthUser, Party, PartyLedger } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
@@ -92,7 +93,7 @@ export default function PartyDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <AppShell title={party?.name ?? "Party Profile"}>
       <div className="mx-auto max-w-3xl">
-        <a href="/parties" className="mb-4 inline-block text-sm font-medium text-slate-600 hover:text-slate-900">← Parties</a>
+        <Link href="/parties" className="mb-4 inline-block text-sm font-medium text-slate-600 hover:text-slate-900">← Parties</Link>
 
         {/* Tabs */}
         <div className="mb-5 flex rounded-lg border border-slate-200 bg-white overflow-hidden text-sm w-fit">

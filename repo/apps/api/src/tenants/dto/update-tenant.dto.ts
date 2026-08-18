@@ -14,5 +14,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsString() bankUpi?: string;
   @IsOptional() @IsString() invoicePrefix?: string;
   @IsOptional() @IsString() termsConditions?: string;
+  @IsOptional() @IsString() logoUrl?: string;
+  @IsOptional() @IsString() signatureUrl?: string;
   @IsOptional() @IsIn(['en', 'mr']) defaultLanguage?: string;
 }

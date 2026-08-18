@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api, Party, ReportInvoiceRow } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/Badge";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
-import { tableWrapClass, thClass, tdClass, selectClass } from "@/components/ui/styles";
+import { tableWrapClass, thClass, tdClass } from "@/components/ui/styles";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 import { downloadCsv } from "@/lib/download";
 
@@ -48,20 +50,21 @@ export default function PurchasesReportPage() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <DateRangeFilter from={from} to={to} onFrom={setFrom} onTo={setTo} />
-          <select value={partyId} onChange={(e) => setPartyId(e.target.value)}
-            className={selectClass + " w-48 py-1.5 text-sm"}>
-            <option value="">All suppliers</option>
-            {parties.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          <CustomSelect
+            value={partyId}
+            onChange={setPartyId}
+            options={[{ value: "", label: "All suppliers" }, ...parties.map((p) => ({ value: p.id, label: p.name }))]}
+            className="w-48"
+          />
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex gap-5 text-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap gap-3 text-sm">
             <span className="text-slate-500">Total: <strong className="text-slate-800">{fmt(String(total))}</strong></span>
             <span className="text-slate-500">Paid: <strong className="text-emerald-700">{fmt(String(paid))}</strong></span>
             <span className="text-slate-500">Pending: <strong className="text-orange-700">{fmt(String(total - paid))}</strong></span>
           </div>
           <button onClick={handleDownload}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            className="cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
             ⬇ Excel
           </button>
         </div>
@@ -75,7 +78,7 @@ export default function PurchasesReportPage() {
             {rows.length === 0 && <tr><td colSpan={7} className={tdClass + " text-center text-slate-400"}>No purchases in this period</td></tr>}
             {rows.map(r => (
               <tr key={r.id} className="hover:bg-slate-50">
-                <td className={tdClass}><a href={`/purchase-invoices/${r.id}`} className="text-emerald-700 hover:underline">{r.invoice_no}</a></td>
+                <td className={tdClass}><Link href={`/purchase-invoices/${r.id}`} className="text-emerald-700 hover:underline">{r.invoice_no}</Link></td>
                 <td className={tdClass}>{r.invoice_date}</td>
                 <td className={tdClass}>{r.party_name}</td>
                 <td className={tdClass}>{fmt(r.total_amount)}</td>
