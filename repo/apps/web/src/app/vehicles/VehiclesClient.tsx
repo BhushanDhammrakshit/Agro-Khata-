@@ -54,7 +54,11 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
             <span>Add Vehicle</span>
             <svg className={`h-4 w-4 text-emerald-600 transition-transform sm:hidden ${formOpen ? "rotate-45" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
           </button>
-          <div ref={formRef} className={`${formOpen ? "" : "hidden"} sm:block`}>
+          <div
+            ref={formRef}
+            className={`grid overflow-hidden transition-[grid-template-rows] duration-[375ms] ease-in-out sm:grid-rows-[1fr] ${formOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          >
+          <div className="min-h-0">
           <form onSubmit={handleCreate} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Vehicle Number *</label>
@@ -77,6 +81,7 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
               </Button>
             </div>
           </form>
+          </div>
           </div>
         </Card>
 

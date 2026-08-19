@@ -53,7 +53,11 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
             <span>Add Item</span>
             <svg className={`h-4 w-4 text-emerald-600 transition-transform sm:hidden ${formOpen ? "rotate-45" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
           </button>
-          <div ref={formRef} className={`${formOpen ? "" : "hidden"} sm:block`}>
+          <div
+            ref={formRef}
+            className={`grid overflow-hidden transition-[grid-template-rows] duration-[375ms] ease-in-out sm:grid-rows-[1fr] ${formOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          >
+          <div className="min-h-0">
           <form className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" onSubmit={handleCreate}>
             <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-1">
               <label className="text-sm font-medium text-slate-700">Item name</label>
@@ -83,6 +87,7 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
               <Button type="submit" disabled={creating} className="w-full">{creating ? "Adding…" : "Add item"}</Button>
             </div>
           </form>
+          </div>
           </div>
         </Card>
 
