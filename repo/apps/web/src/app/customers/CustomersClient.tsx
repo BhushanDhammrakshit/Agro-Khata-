@@ -19,7 +19,6 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
   const [form, setForm] = useState({
     name: "", phone: "", shippingAddress: "",
     gstin: "", pan: "", fssaiNo: "",
-    invoicePrefix: "INV-", nextInvoiceSeq: "1",
     poPrefix: "PO-", nextPoSeq: "1",
   });
 
@@ -41,10 +40,9 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
         gstin: form.gstin || undefined,
         pan: form.pan || undefined,
         fssaiNo: form.fssaiNo || undefined,
-        invoicePrefix: form.invoicePrefix || undefined,
         poPrefix: form.poPrefix || undefined,
       });
-      setForm({ name: "", phone: "", shippingAddress: "", gstin: "", pan: "", fssaiNo: "", invoicePrefix: "INV-", nextInvoiceSeq: "1", poPrefix: "PO-", nextPoSeq: "1" });
+      setForm({ name: "", phone: "", shippingAddress: "", gstin: "", pan: "", fssaiNo: "", poPrefix: "PO-", nextPoSeq: "1" });
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create customer.");
@@ -99,11 +97,6 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
                 placeholder="21521179000840" className={inputClass} />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Invoice Prefix</label>
-              <input value={form.invoicePrefix} onChange={(e) => set("invoicePrefix", e.target.value)}
-                placeholder="INV-" className={inputClass} />
-            </div>
-            <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">PO Prefix</label>
               <input value={form.poPrefix} onChange={(e) => set("poPrefix", e.target.value)}
                 placeholder="PO-" className={inputClass} />
@@ -113,9 +106,7 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
                 {creating ? "Adding…" : "Add Customer"}
               </Button>
             </div>
-          <p className="mt-3 text-xs text-slate-400">
-            Invoice and PO numbers continue automatically from the last used number for each customer.
-          </p>
+          <p className="mt-3 text-xs text-slate-400">Invoice numbers continue automatically across all customers.</p>
           </form>
           </div>
         </Card>
@@ -129,7 +120,6 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
                 <th className={thClass}>Name</th>
                 <th className={thClass}>Phone</th>
                 <th className={thClass}>Shipping Address</th>
-                <th className={thClass}>Next Invoice</th>
                 <th className={thClass}>Next PO</th>
                 <th className={thClass}>Status</th>
                 <th className={thClass}></th>
@@ -137,14 +127,13 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
             </thead>
             <tbody>
               {parties.length === 0 && (
-                <tr><td colSpan={7} className={tdClass + " text-center text-slate-400"}>No customers yet.</td></tr>
+                <tr><td colSpan={6} className={tdClass + " text-center text-slate-400"}>No customers yet.</td></tr>
               )}
               {parties.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50">
                   <td className={tdClass + " font-medium"}>{p.name}</td>
                   <td className={tdClass}>{p.phone ? stripPrefix(p.phone) : "—"}</td>
                   <td className={tdClass}>{p.shippingAddress ?? "—"}</td>
-                  <td className={tdClass}>{(p.invoicePrefix ?? "") + (p.nextInvoiceSeq ?? "")}</td>
                   <td className={tdClass}>{(p.poPrefix ?? "") + (p.nextPoSeq ?? "")}</td>
                   <td className={tdClass}><Badge tone={p.isActive ? "green" : "slate"}>{p.isActive ? "Active" : "Inactive"}</Badge></td>
                   <td className={tdClass}>

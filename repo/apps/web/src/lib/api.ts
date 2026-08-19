@@ -394,7 +394,8 @@ export const api = {
   // Parties (customers/suppliers)
   listParties: (partyType?: PartyType) => cachedRequest<Party[]>(`/parties${partyType ? `?partyType=${partyType}` : ""}`),
   getParty: (id: string) => request<Party>(`/parties/${id}`),
-  getPartyNextNumbers: (id: string) => request<{ invoiceNo: string; poNo: string }>(`/parties/${id}/next-numbers`),
+  getPartyNextNumbers: (id: string, invoiceType: "sales" | "purchase") =>
+    request<{ invoiceNo: string; poNo: string }>(`/parties/${id}/next-numbers?invoiceType=${invoiceType}`),
   createParty: (dto: Partial<Party>) => request<Party>("/parties", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/parties")),
   updateParty: (id: string, dto: Partial<Party>) => request<Party>(`/parties/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/parties")),
   updateFarmerCode: (id: string, farmerCode: string) =>

@@ -100,11 +100,6 @@ export class PurchaseInvoicesService {
       throw err;
     }
 
-    // Carry this supplier's purchase invoice sequence forward after a successful save.
-    if (party.nextInvoiceSeq) {
-      await manager.getRepository(Party).increment({ id: party.id }, 'nextInvoiceSeq', 1);
-    }
-
     const itemRepo = manager.getRepository(PurchaseInvoiceItem);
     await itemRepo.save(
       lines.map((line, index) =>

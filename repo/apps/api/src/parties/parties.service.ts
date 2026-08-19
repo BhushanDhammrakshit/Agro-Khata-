@@ -2,6 +2,9 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { AuditLogService } from '../common/audit/audit-log.service';
 import { Party, PartyType } from '../entities/party.entity';
+import { PurchaseInvoice } from '../entities/purchase-invoice.entity';
+import { SalesInvoice } from '../entities/sales-invoice.entity';
+import { Tenant } from '../entities/tenant.entity';
 import { User, UserRole } from '../entities/user.entity';
 import { CreatePartyDto } from './dto/create-party.dto';
 import { UpdatePartyDto } from './dto/update-party.dto';
@@ -32,10 +35,24 @@ export class PartiesService {
     return party;
   }
 
-  async getNextNumbers(partyId: string) {
+  async getNextNumbers(partyId: string, invoiceType?: 'sales' | 'purchase') {
     const party = await this.findOneOrThrow(partyId);
-    const prefix = party.invoicePrefix ?? 'INV-';
-    const seq = parseInt(party.nextInvoiceSeq ?? '1', 10);
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const type = invoiceType ?? (party.partyType === PartyType.SUPPLIER ? 'purchase' : 'sales');
+    const tenant = type === 'sales'
+      ? await manager.getRepository(Tenant).findOne({ where: { id: tenantId }, select: { invoicePrefix: true } })
+      : null;
+    const prefix = type === 'purchase' ? 'PUR-' : (tenant?.invoicePrefix ?? 'INV-');
+    const invoiceRepository = type === 'purchase'
+      ? manager.getRepository(PurchaseInvoice)
+      : manager.getRepository(SalesInvoice);
+    const invoices = await invoiceRepository.find({ where: { tenantId }, select: { invoiceNo: true } });
+    const seq = invoices.reduce((max, invoice) => {
+      if (!invoice.invoiceNo.startsWith(prefix)) return max;
+      const suffix = invoice.invoiceNo.slice(prefix.length);
+      return /^\d+$/.test(suffix) ? Math.max(max, parseInt(suffix, 10)) : max;
+    }, 0) + 1;
     const poPrefix = party.poPrefix ?? 'PO-';
     const poSeq = parseInt(party.nextPoSeq ?? '1', 10);
     return {

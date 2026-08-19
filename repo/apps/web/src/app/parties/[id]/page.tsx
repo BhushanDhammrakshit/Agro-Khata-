@@ -29,8 +29,6 @@ const PARTY_FIELDS: { key: keyof Party; label: string; type?: string; section: s
   { key: "fssaiNo",         label: "FSSAI No.",            section: "Basic",    placeholder: "21521179000840" },
   { key: "state",           label: "State",               section: "Basic" },
   // farmerCode is rendered separately with owner-only edit
-  { key: "invoicePrefix",   label: "Invoice Prefix",      section: "Invoice",  placeholder: "INV-" },
-  { key: "nextInvoiceSeq",  label: "Next Invoice No.",    section: "Invoice",  type: "number", placeholder: "1" },
   { key: "poPrefix",        label: "PO Prefix",           section: "Invoice",  placeholder: "PO-" },
   { key: "nextPoSeq",       label: "Next PO No.",         section: "Invoice",  type: "number", placeholder: "1" },
   { key: "bankName",        label: "Bank Name",           section: "Bank" },

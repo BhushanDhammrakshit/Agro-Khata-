@@ -59,7 +59,7 @@ export default function NewSalesInvoicePage() {
     setPartyId(id);
     if (!id) return;
     try {
-      const nums = await api.getPartyNextNumbers(id);
+      const nums = await api.getPartyNextNumbers(id, "sales");
       setInvoiceNo(nums.invoiceNo);
       setPoNo(nums.poNo);
     } catch { /* ignore */ }

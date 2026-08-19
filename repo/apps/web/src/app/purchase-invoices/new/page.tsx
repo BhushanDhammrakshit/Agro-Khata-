@@ -49,7 +49,7 @@ export default function NewPurchaseInvoicePage() {
     if (!id) return;
 
     try {
-      const numbers = await api.getPartyNextNumbers(id);
+      const numbers = await api.getPartyNextNumbers(id, "purchase");
       if (requestId !== numberRequestRef.current) return;
       setInvoiceNo(numbers.invoiceNo);
     } catch {

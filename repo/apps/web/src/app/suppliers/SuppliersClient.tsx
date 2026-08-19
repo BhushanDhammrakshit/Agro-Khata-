@@ -18,7 +18,6 @@ export function SuppliersClient({ initialParties }: { initialParties: Party[] })
   const [form, setForm] = useState({
     name: "", address: "",
     bankName: "", bankAccount: "", bankIfsc: "",
-    invoicePrefix: "PUR-",
   });
 
   function load() {
@@ -38,9 +37,8 @@ export function SuppliersClient({ initialParties }: { initialParties: Party[] })
         bankName: form.bankName || undefined,
         bankAccount: form.bankAccount || undefined,
         bankIfsc: form.bankIfsc || undefined,
-        invoicePrefix: form.invoicePrefix || undefined,
       });
-      setForm({ name: "", address: "", bankName: "", bankAccount: "", bankIfsc: "", invoicePrefix: "PUR-" });
+      setForm({ name: "", address: "", bankName: "", bankAccount: "", bankIfsc: "" });
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to create supplier.");
@@ -69,11 +67,6 @@ export function SuppliersClient({ initialParties }: { initialParties: Party[] })
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Name *</label>
               <input required value={form.name} onChange={(e) => set("name", e.target.value)}
                 placeholder="e.g. Ramesh Patil" className={inputClass} />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Invoice Prefix</label>
-              <input value={form.invoicePrefix} onChange={(e) => set("invoicePrefix", e.target.value)}
-                placeholder="PUR-" className={inputClass} />
             </div>
             <div className="flex items-end">
               <p className="text-xs text-slate-400 italic">Farmer code is auto-assigned on save</p>

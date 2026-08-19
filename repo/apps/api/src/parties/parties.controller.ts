@@ -26,8 +26,8 @@ export class PartiesController {
   }
 
   @Get(':id/next-numbers')
-  getNextNumbers(@Param('id') id: string) {
-    return this.partiesService.getNextNumbers(id);
+  getNextNumbers(@Param('id') id: string, @Query('invoiceType') invoiceType?: 'sales' | 'purchase') {
+    return this.partiesService.getNextNumbers(id, invoiceType);
   }
 
   @Post()

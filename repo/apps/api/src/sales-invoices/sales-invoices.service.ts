@@ -98,11 +98,6 @@ export class SalesInvoicesService {
       }),
     );
 
-    // Increment party's next invoice sequence for auto-numbering
-    if (party.nextInvoiceSeq) {
-      await manager.getRepository(Party).increment({ id: party.id }, 'nextInvoiceSeq', 1);
-    }
-
     const itemRepo = manager.getRepository(SalesInvoiceItem);
     await itemRepo.save(
       lines.map((line, index) =>
