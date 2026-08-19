@@ -64,7 +64,7 @@ export function PurchaseInvoiceRowActions({ invoice, compact = false }: Purchase
         >
           {compact ? (
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m15 8 4-4m0 0 4 4m-4-4v13M15 6H7a4 4 0 0 0-4 4v7a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 9-18 9 4-9-4-9Zm0 9h9" />
             </svg>
           ) : shareLabel}
         </button>

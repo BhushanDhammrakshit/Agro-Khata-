@@ -115,8 +115,11 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
                   });
                 } catch { /* user cancelled */ }
               }}
-              className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-              ↗ Share
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 9-18 9 4-9-4-9Zm0 9h9" />
+              </svg>
+              Share
             </button>
           )}
         </div>
