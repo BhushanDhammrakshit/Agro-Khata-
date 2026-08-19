@@ -11,7 +11,7 @@ import { inputClass, tdClass, thClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 import { SalesBillPrintModal } from "./SalesBillPrintModal";
-import { shareInvoicePdf } from "@/lib/share-invoice-pdf";
+import { downloadInvoicePdf, shareInvoicePdf } from "@/lib/invoice-pdf";
 
 function inr(value: string | number) {
   const n = typeof value === "string" ? parseFloat(value) : value;
@@ -42,6 +42,7 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [showBill, setShowBill] = useState(false);
   const [payment, setPayment] = useState({ amount: "", paidDate: "", paymentMode: "bank_transfer" as PaymentMode, referenceNo: "" });
 
@@ -105,6 +106,32 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
           <button onClick={() => setShowBill(true)}
             className="cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             🖨 Print Invoice
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                setDownloading(true);
+                await downloadInvoicePdf("sales", invoice.id);
+              } catch {
+                // Ignore failures to preserve existing UX.
+              } finally {
+                setDownloading(false);
+              }
+            }}
+            disabled={downloading}
+            aria-busy={downloading}
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+            {downloading ? (
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="9" opacity="0.25" />
+                <path strokeLinecap="round" d="M21 12a9 9 0 0 0-9-9" />
+              </svg>
+            ) : (
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+              </svg>
+            )}
+            {downloading ? "Preparing PDF..." : "Download PDF"}
           </button>
           <button
             onClick={async () => {

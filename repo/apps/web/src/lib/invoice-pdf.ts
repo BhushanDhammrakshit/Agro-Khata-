@@ -55,6 +55,15 @@ function renderHtmlInHiddenIframe(html: string, width: number): Promise<{ iframe
   });
 }
 
+/** Y offsets (in canvas px) of every table row's bottom edge, used to avoid slicing a page mid-row. */
+function getRowBoundaries(body: HTMLElement, scale: number): number[] {
+  const bodyTop = body.getBoundingClientRect().top;
+  return Array.from(body.querySelectorAll("tr"))
+    .map((row) => (row.getBoundingClientRect().bottom - bodyTop) * scale)
+    .filter((y) => y > 0)
+    .sort((a, b) => a - b);
+}
+
 /** Rasterizes `html` (the exact same markup used for Print / Save PDF) into a PDF blob so the shared file matches the printed bill. */
 async function renderHtmlToPdfBlob(html: string, orientation: "portrait" | "landscape"): Promise<Blob> {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
@@ -72,27 +81,42 @@ async function renderHtmlToPdfBlob(html: string, orientation: "portrait" | "land
   // Render at the same width the browser would give the content inside that printable area
   // (96 CSS px per 72pt), so the capture isn't rescaled/distorted when embedded in the PDF.
   const contentWidth = Math.round((contentWidthPt * 96) / 72);
+  const scale = 3;
 
   const { iframe, body } = await renderHtmlInHiddenIframe(html, contentWidth);
   try {
-    const canvas = await html2canvas(body, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+    const rowBoundaries = getRowBoundaries(body, scale);
+    const canvas = await html2canvas(body, { scale, useCORS: true, backgroundColor: "#ffffff" });
 
     const pxPerPt = canvas.width / contentWidthPt;
     const contentHeightPx = contentHeightPt * pxPerPt;
-    const totalPages = Math.max(1, Math.ceil(canvas.height / contentHeightPx));
-
     const pdf = new jsPDF({ unit: "pt", format: [pageWidthPt, pageHeightPt], orientation });
 
-    for (let page = 0; page < totalPages; page++) {
-      if (page > 0) pdf.addPage([pageWidthPt, pageHeightPt], orientation);
-      const sliceHeightPx = Math.min(contentHeightPx, canvas.height - page * contentHeightPx);
+    let top = 0;
+    let firstPage = true;
+    while (top < canvas.height - 1) {
+      const maxBottom = top + contentHeightPx;
+      let bottom = Math.min(maxBottom, canvas.height);
+      if (bottom < canvas.height) {
+        // Break the page on the last row edge that fits, so rows aren't cut in half.
+        const fits = rowBoundaries.filter((y) => y > top + 1 && y <= maxBottom);
+        if (fits.length > 0) bottom = fits[fits.length - 1];
+      }
+
+      const sliceHeightPx = bottom - top;
+      if (!firstPage) pdf.addPage([pageWidthPt, pageHeightPt], orientation);
+      firstPage = false;
+
       const sliceCanvas = document.createElement("canvas");
       sliceCanvas.width = canvas.width;
       sliceCanvas.height = sliceHeightPx;
       const ctx = sliceCanvas.getContext("2d")!;
-      ctx.drawImage(canvas, 0, page * contentHeightPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
-      const imgData = sliceCanvas.toDataURL("image/png");
-      pdf.addImage(imgData, "PNG", marginPt, marginPt, contentWidthPt, sliceHeightPx / pxPerPt);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+      ctx.drawImage(canvas, 0, top, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+      pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", marginPt, marginPt, contentWidthPt, sliceHeightPx / pxPerPt);
+
+      top = bottom;
     }
 
     return pdf.output("blob");
@@ -101,27 +125,58 @@ async function renderHtmlToPdfBlob(html: string, orientation: "portrait" | "land
   }
 }
 
-async function buildInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<{ blob: Blob; fileName: string; title: string; totalAmount: string }> {
-  if (kind === "sales") {
-    // Fetch everything that doesn't depend on the invoice in parallel to keep this as fast as
-    // possible — Web Share's user-activation window can expire while this is in flight.
-    const [invoice, tenant, drivers] = await Promise.all([
-      api.getSalesInvoice(invoiceId),
-      api.getMyTenant(),
-      api.listDrivers().catch((): Driver[] => []),
-    ]);
-    const party = await api.getParty(invoice.partyId);
-    const driver = drivers.find((d) => d.id === invoice.driverId);
-    const html = buildSalesBillHtml(invoice, tenant, party, driver);
-    const blob = await renderHtmlToPdfBlob(html, "landscape");
-    return { blob, fileName: sanitizeFileName(`${invoice.invoiceNo}.pdf`), title: `Invoice ${invoice.invoiceNo}`, totalAmount: invoice.totalAmount };
+/**
+ * Asks the server to render the bill with headless Chrome's print pipeline, giving a PDF identical
+ * to Print / Save as PDF. Returns null when that renderer isn't available so the caller can fall
+ * back to rendering locally.
+ */
+async function serverRenderedPdf(kind: InvoiceKind, invoiceId: string): Promise<Blob | null> {
+  try {
+    const res = await fetch(`/invoice-pdf/${kind}/${encodeURIComponent(invoiceId)}`, { credentials: "include" });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return blob.type === "application/pdf" && blob.size > 0 ? blob : null;
+  } catch {
+    return null;
   }
+}
 
-  const [invoice, tenant] = await Promise.all([api.getPurchaseInvoice(invoiceId), api.getMyTenant()]);
-  const party = await api.getParty(invoice.partyId);
-  const html = buildPurchaseBillHtml(invoice, tenant, party);
-  const blob = await renderHtmlToPdfBlob(html, "portrait");
-  return { blob, fileName: sanitizeFileName(`${invoice.invoiceNo}.pdf`), title: `Bill ${invoice.invoiceNo}`, totalAmount: invoice.totalAmount };
+async function buildInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<{ blob: Blob; fileName: string; title: string; totalAmount: string }> {
+  const [serverBlob, invoice] = await Promise.all([
+    serverRenderedPdf(kind, invoiceId),
+    kind === "sales" ? api.getSalesInvoice(invoiceId) : api.getPurchaseInvoice(invoiceId),
+  ]);
+
+  const meta = {
+    fileName: sanitizeFileName(`${invoice.invoiceNo}.pdf`),
+    title: kind === "sales" ? `Invoice ${invoice.invoiceNo}` : `Bill ${invoice.invoiceNo}`,
+    totalAmount: invoice.totalAmount,
+  };
+  if (serverBlob) return { blob: serverBlob, ...meta };
+
+  const [tenant, party, drivers] = await Promise.all([
+    api.getMyTenant(),
+    api.getParty(invoice.partyId),
+    kind === "sales" ? api.listDrivers().catch((): Driver[] => []) : Promise.resolve<Driver[]>([]),
+  ]);
+
+  const html = kind === "sales"
+    ? buildSalesBillHtml(invoice, tenant, party, drivers.find((d) => d.id === invoice.driverId))
+    : buildPurchaseBillHtml(invoice, tenant, party);
+  const blob = await renderHtmlToPdfBlob(html, kind === "sales" ? "landscape" : "portrait");
+  return { blob, ...meta };
+}
+
+export async function downloadInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<void> {
+  try {
+    const { blob, fileName } = await buildInvoicePdf(kind, invoiceId);
+    downloadBlob(blob, fileName);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new Error(error.message);
+    }
+    throw error;
+  }
 }
 
 export async function shareInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<"shared" | "downloaded" | "cancelled"> {
