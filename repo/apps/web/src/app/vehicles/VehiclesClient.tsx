@@ -82,7 +82,32 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <div className={tableWrapClass}>
+        <div className="flex flex-col gap-3 sm:hidden">
+          {vehicles.map((vehicle) => (
+            <article key={vehicle.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">Vehicle number</p>
+                  <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{vehicle.vehicleNo}</p>
+                </div>
+                <Badge tone={vehicle.isActive ? "green" : "slate"}>{vehicle.isActive ? "Active" : "Inactive"}</Badge>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">Name / type</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-slate-700">{vehicle.name ?? "—"}</p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">Load capacity</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-slate-700">{vehicle.loadCapacity ?? "—"}</p>
+                </div>
+              </div>
+            </article>
+          ))}
+          {vehicles.length === 0 && <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">No vehicles added yet.</p>}
+        </div>
+
+        <div className={`${tableWrapClass} hidden sm:block`}>
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>

@@ -8,6 +8,25 @@ import { Button } from "@/components/ui/Button";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
+function formatAmount(value: string) {
+  const amount = Number(value);
+  return Number.isFinite(amount)
+    ? `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : "₹0.00";
+}
+
+function formatDate(value: string) {
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
+  if (!year || !month || !day) return value;
+  return new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "2-digit" }).format(
+    new Date(year, month - 1, day),
+  );
+}
+
+function formatPaymentMode(value: PaymentMode) {
+  return value.replace(/_/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
 export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[] }) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +113,33 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <div className={tableWrapClass}>
+        <div className="flex flex-col gap-3 sm:hidden">
+          {expenses.map((expense) => (
+            <article key={expense.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">Category</p>
+                  <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{expense.category}</p>
+                </div>
+                <p className="shrink-0 text-sm text-slate-400">{formatDate(expense.expenseDate)}</p>
+              </div>
+              <p className="mt-2 line-clamp-2 min-h-5 text-sm text-slate-500">{expense.description ?? "No description"}</p>
+              <div className="mt-5 grid grid-cols-2 gap-4 border-t border-slate-100 pt-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">Amount</p>
+                  <p className="mt-1 whitespace-nowrap text-base font-semibold text-slate-800">{formatAmount(expense.amount)}</p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">Payment mode</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-slate-700">{formatPaymentMode(expense.paymentMode)}</p>
+                </div>
+              </div>
+            </article>
+          ))}
+          {expenses.length === 0 && <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">No expenses yet.</p>}
+        </div>
+
+        <div className={`${tableWrapClass} hidden sm:block`}>
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>

@@ -2,9 +2,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { serverApi } from "@/lib/server-api";
 import { AppShell } from "@/components/AppShell";
+import { InvoiceMobileCard } from "@/components/InvoiceMobileCard";
 import { Badge } from "@/components/ui/Badge";
 import { linkClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
+import { SalesInvoiceRowActions } from "./SalesInvoiceRowActions";
 
 export default async function SalesInvoicesPage() {
   const invoices = await serverApi.listSalesInvoices().catch((err) => {
@@ -22,27 +24,44 @@ export default async function SalesInvoicesPage() {
       }
     >
 
-      <div className={tableWrapClass}>
+      <div className="flex flex-col gap-3 sm:hidden">
+        {invoices?.map((inv) => (
+          <InvoiceMobileCard
+            key={inv.id}
+            invoice={inv}
+            href={`/sales-invoices/${inv.id}`}
+            partyLabel="Customer"
+            actions={<SalesInvoiceRowActions invoice={inv} compact />}
+          />
+        ))}
+        {invoices?.length === 0 && <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">No sales invoices yet.</p>}
+      </div>
+
+      <div className={`${tableWrapClass} hidden sm:block`}>
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
               <th className={thClass}>Invoice No</th>
+              <th className={thClass}>Customer</th>
               <th className={thClass}>Date</th>
               <th className={thClass}>Status</th>
               <th className={thClass}>Total</th>
               <th className={thClass}>Paid</th>
               <th className={thClass}>Balance</th>
+              <th className={thClass}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {invoices?.map((inv) => (
               <tr key={inv.id} className="hover:bg-slate-50">
                 <td className={tdClass}><Link href={`/sales-invoices/${inv.id}`} className={linkClass}>{inv.invoiceNo}</Link></td>
+                <td className={tdClass}>{inv.partyName}</td>
                 <td className={tdClass}>{inv.invoiceDate}</td>
                 <td className={tdClass}><Badge tone={INVOICE_STATUS_TONE[inv.status]}>{formatStatusLabel(inv.status)}</Badge></td>
                 <td className={tdClass}>₹{inv.totalAmount}</td>
                 <td className={tdClass}>₹{inv.paidAmount}</td>
                 <td className={tdClass}>₹{inv.balanceAmount}</td>
+                <td className={tdClass}><SalesInvoiceRowActions invoice={inv} /></td>
               </tr>
             ))}
           </tbody>

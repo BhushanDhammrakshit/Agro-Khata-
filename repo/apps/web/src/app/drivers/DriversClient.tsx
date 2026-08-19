@@ -82,7 +82,32 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <div className={tableWrapClass}>
+        <div className="flex flex-col gap-3 sm:hidden">
+          {drivers.map((driver) => (
+            <article key={driver.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">Driver</p>
+                  <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{driver.name}</p>
+                </div>
+                <Badge tone={driver.isActive ? "green" : "slate"}>{driver.isActive ? "Active" : "Inactive"}</Badge>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">Driving licence</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-slate-700">{driver.licenceNo ?? "—"}</p>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-slate-400">Contact number</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-slate-700">{driver.phone ? stripPrefix(driver.phone) : "—"}</p>
+                </div>
+              </div>
+            </article>
+          ))}
+          {drivers.length === 0 && <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">No drivers added yet.</p>}
+        </div>
+
+        <div className={`${tableWrapClass} hidden sm:block`}>
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>

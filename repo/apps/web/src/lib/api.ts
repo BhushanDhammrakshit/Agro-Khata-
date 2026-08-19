@@ -280,6 +280,7 @@ export interface InvoicePayment {
 export interface Invoice {
   id: string;
   partyId: string;
+  partyName?: string;
   invoiceNo: string;
   invoiceDate: string;
   dueDate?: string;

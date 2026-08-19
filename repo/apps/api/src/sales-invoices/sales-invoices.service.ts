@@ -19,13 +19,22 @@ export class SalesInvoicesService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  async list(partyId?: string, status?: InvoiceStatus): Promise<SalesInvoice[]> {
+  async list(partyId?: string, status?: InvoiceStatus): Promise<(SalesInvoice & { partyName: string })[]> {
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
-    return manager.getRepository(SalesInvoice).find({
-      where: { tenantId, ...(partyId ? { partyId } : {}), ...(status ? { status } : {}) },
-      order: { createdAt: 'DESC' },
-    });
+    const query = manager
+      .getRepository(SalesInvoice)
+      .createQueryBuilder('invoice')
+      .innerJoin(Party, 'party', 'party.id = invoice.partyId AND party.tenantId = invoice.tenantId')
+      .addSelect('party.name', 'partyName')
+      .where('invoice.tenantId = :tenantId', { tenantId })
+      .orderBy('invoice.createdAt', 'DESC');
+
+    if (partyId) query.andWhere('invoice.partyId = :partyId', { partyId });
+    if (status) query.andWhere('invoice.status = :status', { status });
+
+    const { entities, raw } = await query.getRawAndEntities();
+    return entities.map((invoice, index) => ({ ...invoice, partyName: raw[index].partyName as string }));
   }
 
   async findOneOrThrow(id: string): Promise<SalesInvoice & { items: SalesInvoiceItem[]; payments: SalesInvoicePayment[] }> {
