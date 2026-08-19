@@ -23,6 +23,9 @@ bills used only as reference during design) — nothing in `Data/` is pushed her
   the current billing model: `parties` (unified customer/supplier), GST/stock columns on
   `items`, `sales_invoices` / `purchase_invoices` (+ line items + payments), `expenses`,
   `stock_ledger`. **Run this after schema.sql** on any existing database.
+- [docs/migration-003-platform-admins.sql](docs/migration-003-platform-admins.sql) — adds
+  the platform administrator table for databases created before the superadmin panel.
+  It is idempotent and safe to run on databases that already have the table.
 - [docs/wireframes.md](docs/wireframes.md) — original MVP page/screen list (predates this
   restructure; some screens no longer match the current app).
 - [docs/seed.sql](docs/seed.sql) — demo data for the **old** Vendor Bill/Farmer Entry
@@ -32,7 +35,8 @@ bills used only as reference during design) — nothing in `Data/` is pushed her
 ## Getting started
 
 1. Create a Postgres database and run, in order: [docs/schema.sql](docs/schema.sql),
-   then [docs/migration-002-generic-billing.sql](docs/migration-002-generic-billing.sql).
+   [docs/migration-002-generic-billing.sql](docs/migration-002-generic-billing.sql), then
+   [docs/migration-003-platform-admins.sql](docs/migration-003-platform-admins.sql).
 2. Backend: `cd apps/api`, copy `.env.example` to `.env` and fill in DB/JWT values, then
    `npm install` (if not already) and `npm run start:dev`. Runs on `http://localhost:3001`,
    API mounted under `/api`.
