@@ -1,14 +1,10 @@
 "use client";
 
-import { api, ApiError, Invoice, Party, TenantSummary } from "@/lib/api";
+import { api, ApiError, Driver } from "@/lib/api";
+import { buildSalesBillHtml } from "@/lib/bill-templates/sales-bill";
+import { buildPurchaseBillHtml } from "@/lib/bill-templates/purchase-bill";
 
 type InvoiceKind = "sales" | "purchase";
-
-function inr(value: string | number) {
-  const n = typeof value === "string" ? parseFloat(value) : value;
-  if (Number.isNaN(n)) return "INR 0.00";
-  return `INR ${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
 
 function sanitizeFileName(name: string) {
   return name.replace(/[<>:"/\\|?*]+/g, "-").replace(/\s+/g, " ").trim();
@@ -25,160 +21,127 @@ function downloadBlob(blob: Blob, fileName: string) {
   URL.revokeObjectURL(objectUrl);
 }
 
-async function loadInvoiceBundle(kind: InvoiceKind, invoiceId: string): Promise<{ tenant: TenantSummary; invoice: Invoice; party: Party }> {
-  const invoiceLoader = kind === "sales" ? api.getSalesInvoice(invoiceId) : api.getPurchaseInvoice(invoiceId);
-  const [tenant, invoice] = await Promise.all([api.getMyTenant(), invoiceLoader]);
-  const party = await api.getParty(invoice.partyId);
-  return { tenant, invoice, party };
+/**
+ * Renders `html` off-screen in a real (not 0x0/visibility:hidden) iframe sized to match the
+ * content, then resolves once its document (incl. images) is ready. html2canvas needs an
+ * actually-painted layout at the intended width, otherwise it captures a collapsed/mis-scaled
+ * render that ends up stretched and oversized once embedded in the PDF page.
+ */
+function renderHtmlInHiddenIframe(html: string, width: number): Promise<{ iframe: HTMLIFrameElement; body: HTMLElement }> {
+  return new Promise((resolve) => {
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = `position:fixed;top:0;left:-10000px;width:${width}px;height:600px;border:none;`;
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument!;
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    const finish = () => {
+      // Grow the iframe to the full document height so nothing is clipped when captured.
+      iframe.style.height = `${doc.documentElement.scrollHeight}px`;
+      resolve({ iframe, body: doc.body });
+    };
+    const imgs = Array.from(doc.images);
+    if (imgs.length === 0) {
+      setTimeout(finish, 50);
+    } else {
+      let loaded = 0;
+      imgs.forEach((img) => {
+        img.onload = img.onerror = () => { if (++loaded === imgs.length) setTimeout(finish, 50); };
+      });
+      setTimeout(finish, 2000);
+    }
+  });
 }
 
-async function buildPdfBlob(kind: InvoiceKind, invoice: Invoice, tenant: TenantSummary, party: Party) {
-  const { jsPDF } = await import("jspdf");
-  const doc = new jsPDF({ unit: "pt", format: "a4" });
+/** Rasterizes `html` (the exact same markup used for Print / Save PDF) into a PDF blob so the shared file matches the printed bill. */
+async function renderHtmlToPdfBlob(html: string, orientation: "portrait" | "landscape"): Promise<Blob> {
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+    import("html2canvas"),
+    import("jspdf"),
+  ]);
 
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 40;
-  const line = 16;
-  const colItem = margin;
-  const colQty = 300;
-  const colRate = 380;
-  const colTotal = 475;
-  let y = margin;
+  const pageWidthPt = orientation === "landscape" ? 841.89 : 595.28;
+  const pageHeightPt = orientation === "landscape" ? 595.28 : 841.89;
+  // Both bill templates print with `@page { margin: 8mm; }` — mirror that margin here so the
+  // downloaded PDF has the same page layout as the printed one, not edge-to-edge content.
+  const marginPt = 22.68;
+  const contentWidthPt = pageWidthPt - marginPt * 2;
+  const contentHeightPt = pageHeightPt - marginPt * 2;
+  // Render at the same width the browser would give the content inside that printable area
+  // (96 CSS px per 72pt), so the capture isn't rescaled/distorted when embedded in the PDF.
+  const contentWidth = Math.round((contentWidthPt * 96) / 72);
 
-  const ensureSpace = (needed: number) => {
-    if (y + needed <= pageHeight - margin) return;
-    doc.addPage();
-    y = margin;
-  };
+  const { iframe, body } = await renderHtmlInHiddenIframe(html, contentWidth);
+  try {
+    const canvas = await html2canvas(body, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text(tenant.name || tenant.legalName || "Company", margin, y);
-  y += line;
+    const pxPerPt = canvas.width / contentWidthPt;
+    const contentHeightPx = contentHeightPt * pxPerPt;
+    const totalPages = Math.max(1, Math.ceil(canvas.height / contentHeightPx));
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  if (tenant.address) {
-    const addressLines = doc.splitTextToSize(tenant.address, 260);
-    doc.text(addressLines, margin, y);
-    y += addressLines.length * 12;
-  }
+    const pdf = new jsPDF({ unit: "pt", format: [pageWidthPt, pageHeightPt], orientation });
 
-  const title = kind === "sales" ? "Sales Invoice" : "Purchase Invoice";
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text(title, 390, margin);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(`Invoice No: ${invoice.invoiceNo}`, 390, margin + 18);
-  doc.text(`Invoice Date: ${invoice.invoiceDate}`, 390, margin + 32);
-  if (invoice.dueDate) {
-    doc.text(`Due Date: ${invoice.dueDate}`, 390, margin + 46);
-  }
-
-  y = Math.max(y + 12, margin + 70);
-  doc.setDrawColor(200, 208, 218);
-  doc.line(margin, y, 555, y);
-  y += line;
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Bill To", margin, y);
-  y += line;
-  doc.setFont("helvetica", "normal");
-  doc.text(party.name, margin, y);
-  y += line;
-  if (party.address) {
-    const partyAddress = doc.splitTextToSize(party.address, 280);
-    doc.text(partyAddress, margin, y);
-    y += partyAddress.length * 12;
-  }
-  if (party.gstin) {
-    doc.text(`GSTIN: ${party.gstin}`, margin, y);
-    y += line;
-  }
-
-  y += 8;
-  ensureSpace(60);
-
-  doc.setFillColor(245, 247, 250);
-  doc.rect(margin, y - 12, 515, 20, "F");
-  doc.setFont("helvetica", "bold");
-  doc.text("Item", colItem, y);
-  doc.text("Qty", colQty, y);
-  doc.text("Rate", colRate, y);
-  doc.text("Line Total", colTotal, y);
-  y += line;
-
-  doc.setFont("helvetica", "normal");
-  const items = invoice.items ?? [];
-  for (const item of items) {
-    const itemText = doc.splitTextToSize(item.itemName, 240);
-    const rowHeight = Math.max(itemText.length * 12, line);
-    ensureSpace(rowHeight + 8);
-
-    doc.text(itemText, colItem, y);
-    doc.text(item.qty, colQty, y);
-    doc.text(inr(item.rate), colRate, y);
-    doc.text(inr(item.lineTotal), colTotal, y);
-    y += rowHeight;
-    doc.setDrawColor(236, 240, 244);
-    doc.line(margin, y + 2, 555, y + 2);
-    y += 10;
-  }
-
-  y += 6;
-  ensureSpace(120);
-
-  const totalsX = 350;
-  doc.setFont("helvetica", "normal");
-  doc.text("Sub Total", totalsX, y);
-  doc.text(inr(invoice.subTotal), 555, y, { align: "right" });
-  y += line;
-
-  if (invoice.isGstInvoice) {
-    if (parseFloat(invoice.igstAmount) > 0) {
-      doc.text("IGST", totalsX, y);
-      doc.text(inr(invoice.igstAmount), 555, y, { align: "right" });
-      y += line;
-    } else {
-      doc.text("CGST", totalsX, y);
-      doc.text(inr(invoice.cgstAmount), 555, y, { align: "right" });
-      y += line;
-      doc.text("SGST", totalsX, y);
-      doc.text(inr(invoice.sgstAmount), 555, y, { align: "right" });
-      y += line;
+    for (let page = 0; page < totalPages; page++) {
+      if (page > 0) pdf.addPage([pageWidthPt, pageHeightPt], orientation);
+      const sliceHeightPx = Math.min(contentHeightPx, canvas.height - page * contentHeightPx);
+      const sliceCanvas = document.createElement("canvas");
+      sliceCanvas.width = canvas.width;
+      sliceCanvas.height = sliceHeightPx;
+      const ctx = sliceCanvas.getContext("2d")!;
+      ctx.drawImage(canvas, 0, page * contentHeightPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+      const imgData = sliceCanvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", marginPt, marginPt, contentWidthPt, sliceHeightPx / pxPerPt);
     }
+
+    return pdf.output("blob");
+  } finally {
+    document.body.removeChild(iframe);
+  }
+}
+
+async function buildInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<{ blob: Blob; fileName: string; title: string; totalAmount: string }> {
+  if (kind === "sales") {
+    // Fetch everything that doesn't depend on the invoice in parallel to keep this as fast as
+    // possible — Web Share's user-activation window can expire while this is in flight.
+    const [invoice, tenant, drivers] = await Promise.all([
+      api.getSalesInvoice(invoiceId),
+      api.getMyTenant(),
+      api.listDrivers().catch((): Driver[] => []),
+    ]);
+    const party = await api.getParty(invoice.partyId);
+    const driver = drivers.find((d) => d.id === invoice.driverId);
+    const html = buildSalesBillHtml(invoice, tenant, party, driver);
+    const blob = await renderHtmlToPdfBlob(html, "landscape");
+    return { blob, fileName: sanitizeFileName(`${invoice.invoiceNo}.pdf`), title: `Invoice ${invoice.invoiceNo}`, totalAmount: invoice.totalAmount };
   }
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Grand Total", totalsX, y);
-  doc.text(inr(invoice.totalAmount), 555, y, { align: "right" });
-  y += line;
-  doc.setFont("helvetica", "normal");
-  doc.text("Paid", totalsX, y);
-  doc.text(inr(invoice.paidAmount), 555, y, { align: "right" });
-  y += line;
-  doc.setFont("helvetica", "bold");
-  doc.text("Balance", totalsX, y);
-  doc.text(inr(invoice.balanceAmount), 555, y, { align: "right" });
-
-  const fileName = sanitizeFileName(`${invoice.invoiceNo}.pdf`);
-  return { blob: doc.output("blob"), fileName };
+  const [invoice, tenant] = await Promise.all([api.getPurchaseInvoice(invoiceId), api.getMyTenant()]);
+  const party = await api.getParty(invoice.partyId);
+  const html = buildPurchaseBillHtml(invoice, tenant, party);
+  const blob = await renderHtmlToPdfBlob(html, "portrait");
+  return { blob, fileName: sanitizeFileName(`${invoice.invoiceNo}.pdf`), title: `Bill ${invoice.invoiceNo}`, totalAmount: invoice.totalAmount };
 }
 
 export async function shareInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<"shared" | "downloaded" | "cancelled"> {
   try {
-    const { tenant, invoice, party } = await loadInvoiceBundle(kind, invoiceId);
-    const { blob, fileName } = await buildPdfBlob(kind, invoice, tenant, party);
-    const title = kind === "sales" ? `Invoice ${invoice.invoiceNo}` : `Bill ${invoice.invoiceNo}`;
-    const text = `${title} - ${inr(invoice.totalAmount)}`;
+    const { blob, fileName, title, totalAmount } = await buildInvoicePdf(kind, invoiceId);
+    const text = `${title} - ₹${totalAmount}`;
 
     if (typeof navigator !== "undefined" && navigator.share && typeof File !== "undefined") {
       const file = new File([blob], fileName, { type: "application/pdf" });
       if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title, text, files: [file] });
-        return "shared";
+        try {
+          await navigator.share({ title, text, files: [file] });
+          return "shared";
+        } catch (shareError) {
+          if (shareError instanceof DOMException && shareError.name === "AbortError") {
+            return "cancelled";
+          }
+          // The share sheet can fail intermittently (e.g. user-activation expired while the
+          // PDF was being generated) — fall back to a direct download so the user still gets the file.
+        }
       }
     }
 
