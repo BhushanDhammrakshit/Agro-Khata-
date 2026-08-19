@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, Invoice, TenantSummary, Party } from "@/lib/api";
+import { api, Driver, Invoice, TenantSummary, Party } from "@/lib/api";
 
 function esc(v: unknown): string {
   if (v === null || v === undefined) return "";
@@ -25,22 +25,28 @@ function num(v: string | number, dp = 2): string {
 }
 
 const BILL_CSS = `
-.kag-bill { width: 100%; font-family: "Times New Roman", Times, serif; font-size: 13px; color: #000; }
-.kag-bill table { border-collapse: collapse; width: 100%; table-layout: fixed; border: 3px solid #000; }
-.kag-bill td, .kag-bill th { border: 1px solid #000; padding: 2px 6px; vertical-align: top; overflow-wrap: break-word; }
-.kag-bill .tb { border-bottom: 3px solid #000; }
-.kag-bill .tr { border-right: 3px solid #000; }
+.kag-bill { width: 100%; min-width: 920px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #000; }
+.kag-bill table { border-collapse: collapse; width: 100%; table-layout: fixed; border: 2px solid #000; }
+.kag-bill td, .kag-bill th { border: 1px solid #555; padding: 2px 4px; vertical-align: top; overflow-wrap: break-word; }
+.kag-bill .tb { border-bottom: 2px solid #000; }
+.kag-bill .tr { border-right: 2px solid #000; }
 .kag-bill .nb { border: none; }
 .kag-bill .c { text-align: center; }
 .kag-bill .r { text-align: right; }
 .kag-bill .b { font-weight: bold; }
 .kag-bill .mid { vertical-align: middle; }
-.kag-bill .title { font-size: 24px; font-weight: bold; text-align: center; padding: 6px; }
-.kag-bill .item { font-family: Arial, Helvetica, sans-serif; font-weight: bold; }
+.kag-bill .title { font-size: 28px; font-weight: bold; text-align: center; padding: 4px; }
+.kag-bill .vendor { text-align: center; font-size: 14px; line-height: 18px; }
+.kag-bill .shipping { height: 126px; line-height: 18px; }
+.kag-bill .meta { height: 22px; vertical-align: middle; }
+.kag-bill .asn { height: 38px; }
+.kag-bill .items td, .kag-bill .items th { height: 22px; padding: 2px 4px; vertical-align: middle; }
+.kag-bill .dispatch td { height: 22px; vertical-align: middle; }
+.kag-bill .signature { height: 60px; vertical-align: top; padding-top: 4px; }
 .kag-bill .red { color: #ff0000; }
 `;
 
-function buildBillBody(invoice: Invoice, tenant: TenantSummary, party: Party): string {
+function buildBillBody(invoice: Invoice, tenant: TenantSummary, party: Party, driver?: Driver): string {
   const items = invoice.items ?? [];
   const totalQty = items.reduce((s, i) => s + parseFloat(i.qty), 0);
   const totalValue = parseFloat(invoice.totalAmount);
@@ -56,13 +62,13 @@ function buildBillBody(invoice: Invoice, tenant: TenantSummary, party: Party): s
       (item, i) => `
       <tr>
         <td class="c b">${i + 1}</td>
-        <td class="item">${esc(item.itemName)}</td>
-        <td class="c b">${esc(item.uom)}</td>
-        <td class="c b">${num(item.qty, 0)}</td>
+        <td>${esc(item.itemName)}</td>
+        <td class="c">${esc(item.uom)}</td>
+        <td class="c">${num(item.qty, 0)}</td>
         <td></td>
         <td></td>
-        <td class="r b">${num(item.rate)}</td>
-        <td class="r b">${num(item.lineTotal)}</td>
+        <td class="r">${num(item.rate)}</td>
+        <td class="r">${num(item.lineTotal)}</td>
       </tr>`,
     )
     .join("");
@@ -78,8 +84,9 @@ function buildBillBody(invoice: Invoice, tenant: TenantSummary, party: Party): s
   const footerLines = [
     { label: "Vehicle No.-", value: invoice.vehicleNo },
     { label: "Driver Name :", value: invoice.driverName },
-    { label: "Bank Name:- ", value: tenant.bankName },
-    { label: "Account  no :-", value: tenant.bankAccount },
+    { label: "MOB NO.", value: driver?.phone },
+    { label: "Bank Name:-", value: tenant.bankName },
+    { label: "Account no :-", value: tenant.bankAccount },
     { label: "IFSC CODE:-", value: tenant.bankIfsc },
   ];
 
@@ -88,50 +95,49 @@ function buildBillBody(invoice: Invoice, tenant: TenantSummary, party: Party): s
       const last = i === footerLines.length - 1;
       const rightCell =
         i === 0
-          ? `<td colspan="4" rowspan="${footerLines.length}" class="c b tb mid">For  ${esc(vendorName)}</td>`
+          ? `<td colspan="4" rowspan="${footerLines.length}" class="c tb" style="vertical-align:top;padding-top:5px;">For&nbsp; ${esc(vendorName)}</td>`
           : "";
-      return `<tr><td colspan="4" class="b tr${last ? " tb" : ""}">${esc(row.label)} ${esc(row.value)}</td>${rightCell}</tr>`;
+      return `<tr class="dispatch"><td colspan="4" class="tr${last ? " tb" : ""}">${esc(row.label)} ${esc(row.value)}</td>${rightCell}</tr>`;
     })
     .join("");
 
   return `<div class="kag-bill"><table><colgroup>
-    <col style="width:6%" /><col style="width:25%" /><col style="width:12%" />
-    <col style="width:11%" /><col style="width:11%" /><col style="width:11%" />
-    <col style="width:9%" /><col style="width:15%" />
+    <col style="width:8%" /><col style="width:30%" /><col style="width:11%" />
+    <col style="width:9%" /><col style="width:8%" /><col style="width:7%" />
+    <col style="width:13%" /><col style="width:14%" />
   </colgroup><tbody>
 
     <tr><td colspan="8" class="title tb">Invoice${titleSuffix ? " : " + esc(titleSuffix) : ""}</td></tr>
 
-    <tr><td colspan="8" class="b" style="border-bottom:none;">Vendor Name : ${esc(vendorName)}</td></tr>
-    <tr><td colspan="8" class="c b" style="border-top:none;border-bottom:none;">${
+    <tr><td colspan="8" class="vendor b" style="border-bottom:none;">Vendor Name : ${esc(vendorName)}</td></tr>
+    <tr><td colspan="8" class="vendor b" style="border-top:none;border-bottom:none;">${
       tenant.address ? "Vendor Address :-" + esc(tenant.address) : ""
     }</td></tr>
-    <tr><td colspan="8" class="tb" style="border-top:none;padding:0;">
+    <tr><td colspan="8" class="vendor tb" style="border-top:none;padding:0 4px;">
       <table style="border:none;width:100%;table-layout:auto;"><tbody><tr>
-        <td class="nb b" style="padding:2px 6px;">${tenant.contactPhone ? "Contact No. : " + esc(tenant.contactPhone) : ""}</td>
-        <td class="nb b red r" style="padding:2px 6px;">${
+        <td class="nb b" style="padding:1px 4px;text-align:center;">${tenant.contactPhone ? "Contact No. : " + esc(tenant.contactPhone) : ""}</td>
+        <td class="nb b red r" style="padding:1px 4px;width:34%;">${
           tenant.pan ? "PAN: " + esc(tenant.pan) : tenant.gstin ? "GSTIN: " + esc(tenant.gstin) : ""
         }</td>
       </tr></tbody></table>
     </td></tr>
 
     <tr>
-      <td colspan="4" rowspan="6" class="tr tb">
+      <td colspan="4" rowspan="5" class="shipping tr tb">
         <div class="b">Shipping Address :</div>
         <div class="b">${esc(party.name)}</div>
         ${party.shippingAddress || party.address ? `<div class="b">${esc(party.shippingAddress ?? party.address)}</div>` : ""}
         ${partyIds ? `<div class="b">${partyIds}</div>` : ""}
       </td>
-      <td colspan="3" class="b">Invioce Number</td>
-      <td class="c">${esc(invoice.invoiceNo)}</td>
+      <td colspan="3" class="b meta">Invoice No</td>
+      <td class="c b meta">${esc(invoice.invoiceNo)}</td>
     </tr>
-    <tr><td colspan="3" class="b">Invoice Date</td><td class="c">${dmy(invoice.invoiceDate)}</td></tr>
-    <tr><td colspan="3" class="b">PO NO</td><td class="c">${esc(invoice.poNo)}</td></tr>
-    <tr><td colspan="3" class="b">&nbsp;</td><td class="c">${dmy(invoice.poDate)}</td></tr>
-    <tr><td colspan="3" class="b">PO Date</td><td class="c"></td></tr>
-    <tr><td colspan="3" class="b tb">ASN NO</td><td class="c tb">${esc(invoice.asnNo)}</td></tr>
+    <tr><td colspan="3" class="b meta">Invoice Date</td><td class="c b meta">${dmy(invoice.invoiceDate)}</td></tr>
+    <tr><td colspan="3" class="b meta">PO NO</td><td class="c b meta">${esc(invoice.poNo)}</td></tr>
+    <tr><td colspan="3" class="b meta">PO Date</td><td class="c b meta">${dmy(invoice.poDate)}</td></tr>
+    <tr><td colspan="3" class="b tb asn">ASN NO</td><td class="c b tb asn">${esc(invoice.asnNo)}</td></tr>
 
-    <tr>
+    <tr class="items">
       <th class="c">No.</th>
       <th class="c">Product Description</th>
       <th class="c">UOM</th>
@@ -142,7 +148,7 @@ function buildBillBody(invoice: Invoice, tenant: TenantSummary, party: Party): s
       <th class="c">Total Value</th>
     </tr>
     ${itemRows}
-    <tr>
+    <tr class="items">
       <td class="tb"></td><td class="tb"></td><td class="tb"></td>
       <td class="c b tb">${num(totalQty, 0)}</td>
       <td class="tb"></td><td class="tb"></td><td class="tb"></td>
@@ -151,14 +157,14 @@ function buildBillBody(invoice: Invoice, tenant: TenantSummary, party: Party): s
 
     ${footerRows}
 
-    <tr><td colspan="8" class="c b" style="padding:4px 6px;">
+    <tr><td colspan="8" class="c b signature">
       Receivers , Signature with Stamp<br />Subject to  Jurisdiction
     </td></tr>
 
   </tbody></table></div>`;
 }
 
-function buildBillHtml(invoice: Invoice, tenant: TenantSummary, party: Party): string {
+function buildBillHtml(invoice: Invoice, tenant: TenantSummary, party: Party, driver?: Driver): string {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -170,7 +176,7 @@ function buildBillHtml(invoice: Invoice, tenant: TenantSummary, party: Party): s
     ${BILL_CSS}
   </style>
 </head>
-<body>${buildBillBody(invoice, tenant, party)}</body>
+<body>${buildBillBody(invoice, tenant, party, driver)}</body>
 </html>`;
 }
 
@@ -198,12 +204,21 @@ export function SalesBillPrintModal({ invoiceId, onClose }: { invoiceId: string;
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [tenant, setTenant]   = useState<TenantSummary | null>(null);
   const [party, setParty]     = useState<Party | null>(null);
+  const [driver, setDriver]   = useState<Driver | undefined>();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([api.getSalesInvoice(invoiceId), api.getMyTenant()])
-      .then(([inv, ten]) => { setInvoice(inv); setTenant(ten); return api.getParty(inv.partyId); })
-      .then(setParty)
+      .then(async ([inv, ten]) => {
+        setInvoice(inv);
+        setTenant(ten);
+        const [invoiceParty, drivers] = await Promise.all([
+          api.getParty(inv.partyId),
+          api.listDrivers().catch(() => []),
+        ]);
+        setParty(invoiceParty);
+        setDriver(drivers.find((item) => item.id === inv.driverId));
+      })
       .catch(() => null)
       .finally(() => setLoading(false));
   }, [invoiceId]);
@@ -216,7 +231,7 @@ export function SalesBillPrintModal({ invoiceId, onClose }: { invoiceId: string;
 
   function handlePrint() {
     if (!invoice || !tenant || !party) return;
-    printViaIframe(buildBillHtml(invoice, tenant, party));
+    printViaIframe(buildBillHtml(invoice, tenant, party, driver));
   }
 
   return (
@@ -253,7 +268,7 @@ export function SalesBillPrintModal({ invoiceId, onClose }: { invoiceId: string;
           {invoice && tenant && party && (
             <>
               <style>{BILL_CSS}</style>
-              <div dangerouslySetInnerHTML={{ __html: buildBillBody(invoice, tenant, party) }} />
+              <div dangerouslySetInnerHTML={{ __html: buildBillBody(invoice, tenant, party, driver) }} />
             </>
           )}
         </div>
