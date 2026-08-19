@@ -26,6 +26,13 @@ bills used only as reference during design) — nothing in `Data/` is pushed her
 - [docs/migration-003-platform-admins.sql](docs/migration-003-platform-admins.sql) — adds
   the platform administrator table for databases created before the superadmin panel.
   It is idempotent and safe to run on databases that already have the table.
+- [docs/migration-004-tenant-branding.sql](docs/migration-004-tenant-branding.sql) — adds
+  invoice-branding columns (GSTIN, bank details, invoice prefix, T&C, signature image) to
+  `tenants` that the `Tenant` entity expects but schema.sql never defined. Idempotent.
+- [docs/migration-005-drivers-vehicles-and-fixes.sql](docs/migration-005-drivers-vehicles-and-fixes.sql)
+  — adds missing `parties`/`sales_invoices` columns (PAN, FSSAI no., shipping address,
+  invoice/PO numbering, driver/vehicle/PO reference fields) and creates the `drivers` and
+  `vehicles` tables, which had full app modules but no schema definition. Idempotent.
 - [docs/wireframes.md](docs/wireframes.md) — original MVP page/screen list (predates this
   restructure; some screens no longer match the current app).
 - [docs/seed.sql](docs/seed.sql) — demo data for the **old** Vendor Bill/Farmer Entry
@@ -35,8 +42,10 @@ bills used only as reference during design) — nothing in `Data/` is pushed her
 ## Getting started
 
 1. Create a Postgres database and run, in order: [docs/schema.sql](docs/schema.sql),
-   [docs/migration-002-generic-billing.sql](docs/migration-002-generic-billing.sql), then
-   [docs/migration-003-platform-admins.sql](docs/migration-003-platform-admins.sql).
+   [docs/migration-002-generic-billing.sql](docs/migration-002-generic-billing.sql),
+   [docs/migration-003-platform-admins.sql](docs/migration-003-platform-admins.sql),
+   [docs/migration-004-tenant-branding.sql](docs/migration-004-tenant-branding.sql), then
+   [docs/migration-005-drivers-vehicles-and-fixes.sql](docs/migration-005-drivers-vehicles-and-fixes.sql).
 2. Backend: `cd apps/api`, copy `.env.example` to `.env` and fill in DB/JWT values, then
    `npm install` (if not already) and `npm run start:dev`. Runs on `http://localhost:3001`,
    API mounted under `/api`.
