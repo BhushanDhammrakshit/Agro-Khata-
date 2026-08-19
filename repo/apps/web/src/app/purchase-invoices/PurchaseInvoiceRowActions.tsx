@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BillPrintModal } from "./[id]/BillPrintModal";
+import { shareInvoicePdf } from "@/lib/share-invoice-pdf";
 
 interface PurchaseInvoiceRowActionsProps {
   invoice: {
@@ -14,24 +15,26 @@ interface PurchaseInvoiceRowActionsProps {
 
 export function PurchaseInvoiceRowActions({ invoice, compact = false }: PurchaseInvoiceRowActionsProps) {
   const [showBill, setShowBill] = useState(false);
-  const [shareLabel, setShareLabel] = useState("Share");
+  const [shareLabel, setShareLabel] = useState("Share PDF");
+  const [isSharing, setIsSharing] = useState(false);
 
   async function handleShare() {
-    const url = `${window.location.origin}/purchase-invoices/${invoice.id}`;
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `Bill ${invoice.invoiceNo}`,
-          text: `Bill ${invoice.invoiceNo} - ₹${invoice.totalAmount}`,
-          url,
-        });
-        return;
+      setIsSharing(true);
+      setShareLabel("Preparing...");
+      const result = await shareInvoicePdf("purchase", invoice.id);
+      if (result === "shared") {
+        setShareLabel("Shared");
+      } else if (result === "downloaded") {
+        setShareLabel("PDF downloaded");
+      } else {
+        setShareLabel("Share PDF");
       }
-      await navigator.clipboard.writeText(url);
-      setShareLabel("Link copied");
-      window.setTimeout(() => setShareLabel("Share"), 2000);
     } catch {
-      // The user cancelled sharing or clipboard access was unavailable.
+      setShareLabel("Share failed");
+    } finally {
+      setIsSharing(false);
+      window.setTimeout(() => setShareLabel("Share PDF"), 2000);
     }
   }
 
@@ -56,16 +59,25 @@ export function PurchaseInvoiceRowActions({ invoice, compact = false }: Purchase
         <button
           type="button"
           onClick={handleShare}
+          disabled={isSharing}
+          aria-busy={isSharing}
           aria-label="Share invoice"
           title="Share"
           className={compact
-            ? "flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-            : "cursor-pointer rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-blue-700"}
+            ? "flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+            : "cursor-pointer rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"}
         >
           {compact ? (
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 9-18 9 4-9-4-9Zm0 9h9" />
-            </svg>
+            isSharing ? (
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6 animate-spin" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="12" cy="12" r="9" opacity="0.25" />
+                <path strokeLinecap="round" d="M21 12a9 9 0 0 0-9-9" />
+              </svg>
+            ) : (
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 9-18 9 4-9-4-9Zm0 9h9" />
+              </svg>
+            )
           ) : shareLabel}
         </button>
       </div>

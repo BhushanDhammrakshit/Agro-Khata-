@@ -11,6 +11,7 @@ import { inputClass, tdClass, thClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 import { BillPrintModal } from "./BillPrintModal";
+import { shareInvoicePdf } from "@/lib/share-invoice-pdf";
 
 function inr(value: string | number) {
   const n = typeof value === "string" ? parseFloat(value) : value;
@@ -40,6 +41,7 @@ export default function PurchaseInvoiceDetailPage({ params }: { params: Promise<
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [showBill, setShowBill] = useState(false);
   const [payment, setPayment] = useState({ amount: "", paidDate: "", paymentMode: "cash" as PaymentMode, referenceNo: "" });
 
@@ -104,24 +106,32 @@ export default function PurchaseInvoiceDetailPage({ params }: { params: Promise<
             className="cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             🖨 Print Invoice
           </button>
-          {typeof navigator !== "undefined" && "share" in navigator && (
-            <button
-              onClick={async () => {
-                try {
-                  await navigator.share({
-                    title: `Bill ${invoice.invoiceNo}`,
-                    text: `Bill ${invoice.invoiceNo} — ₹${invoice.totalAmount}`,
-                    url: window.location.href,
-                  });
-                } catch { /* user cancelled */ }
-              }}
-              className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+          <button
+            onClick={async () => {
+              try {
+                setSharing(true);
+                await shareInvoicePdf("purchase", invoice.id);
+              } catch {
+                // Ignore failures to preserve existing UX.
+              } finally {
+                setSharing(false);
+              }
+            }}
+            disabled={sharing}
+            aria-busy={sharing}
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+            {sharing ? (
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="9" opacity="0.25" />
+                <path strokeLinecap="round" d="M21 12a9 9 0 0 0-9-9" />
+              </svg>
+            ) : (
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m3 3 18 9-18 9 4-9-4-9Zm0 9h9" />
               </svg>
-              Share
-            </button>
-          )}
+            )}
+            {sharing ? "Preparing PDF..." : "Share PDF"}
+          </button>
         </div>
 
         {showBill && <BillPrintModal invoiceId={invoice.id} onClose={() => setShowBill(false)} />}
