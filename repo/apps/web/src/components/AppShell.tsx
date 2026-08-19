@@ -198,7 +198,7 @@ function Sidebar({
   };
 
   return (
-    <aside className={`flex ${collapsed ? "w-14" : "w-60"} shrink-0 flex-col border-r border-slate-200 bg-white transition-[width] duration-200 max-sm:w-64 max-sm:fixed max-sm:inset-y-0 max-sm:left-0 max-sm:z-40 max-sm:shadow-2xl max-sm:transition-transform max-sm:duration-200 ${mobileOpen ? "max-sm:translate-x-0" : "max-sm:-translate-x-full"}`}>
+    <aside className={`flex ${collapsed ? "w-14" : "w-60"} shrink-0 flex-col border-r border-slate-200 bg-white transition-[width] duration-500 ease-in-out max-sm:w-64 max-sm:fixed max-sm:inset-y-0 max-sm:left-0 max-sm:z-40 max-sm:shadow-2xl max-sm:transition-transform max-sm:duration-500 max-sm:ease-in-out ${mobileOpen ? "max-sm:translate-x-0" : "max-sm:-translate-x-full"}`}>
       {/* Logo + collapse toggle — stacked instead of side-by-side when collapsed so the toggle never overflows off the narrow rail */}
       <div className={`flex items-center gap-2 border-b border-slate-200 px-2 py-4 lg:px-3 ${effectiveCollapsed ? "flex-col justify-center" : "justify-between"}`}>
         <div className="flex min-w-0 items-center gap-2">
