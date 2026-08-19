@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { AuditLogService } from '../common/audit/audit-log.service';
 import { Expense } from '../entities/expense.entity';
 import { CreateExpenseDto } from './dto/create-expense.dto';
+import { UpdateExpenseDto } from './dto/update-expense.dto';
 
 @Injectable()
 export class ExpensesService {
@@ -35,5 +36,22 @@ export class ExpensesService {
     );
     await this.auditLog.record({ action: 'expense.created', entityType: 'expense', entityId: expense.id, after: expense });
     return expense;
+  }
+
+  async update(id: string, dto: UpdateExpenseDto): Promise<Expense> {
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const repository = manager.getRepository(Expense);
+    const before = await repository.findOne({ where: { id, tenantId } });
+    if (!before) throw new NotFoundException('Expense not found.');
+
+    const changes = {
+      ...dto,
+      amount: dto.amount === undefined ? undefined : dto.amount.toString(),
+    };
+    await repository.update({ id, tenantId }, changes);
+    const after = await repository.findOneOrFail({ where: { id, tenantId } });
+    await this.auditLog.record({ action: 'expense.updated', entityType: 'expense', entityId: id, before, after });
+    return after;
   }
 }

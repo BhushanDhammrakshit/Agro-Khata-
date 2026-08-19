@@ -12,6 +12,7 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
   const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({ vehicleNo: "", name: "", loadCapacity: "" });
@@ -21,20 +22,34 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load vehicles."));
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  function resetForm() {
+    setForm({ vehicleNo: "", name: "", loadCapacity: "" });
+    setEditingId(null);
+  }
+
+  function beginEdit(vehicle: Vehicle) {
+    setForm({ vehicleNo: vehicle.vehicleNo, name: vehicle.name ?? "", loadCapacity: vehicle.loadCapacity ?? "" });
+    setEditingId(vehicle.id);
+    setFormOpen(true);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setCreating(true);
     try {
-      await api.createVehicle({
+      const dto = {
         vehicleNo: form.vehicleNo,
         name: form.name || undefined,
         loadCapacity: form.loadCapacity || undefined,
-      });
-      setForm({ vehicleNo: "", name: "", loadCapacity: "" });
+      };
+      if (editingId) await api.updateVehicle(editingId, dto);
+      else await api.createVehicle(dto);
+      resetForm();
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to add vehicle.");
+      setError(err instanceof ApiError ? err.message : `Failed to ${editingId ? "update" : "add"} vehicle.`);
     } finally {
       setCreating(false);
     }
@@ -51,7 +66,7 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
             onClick={() => setFormOpen((o) => !o)}
             className="flex w-full cursor-pointer items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-500 sm:cursor-default"
           >
-            <span>Add Vehicle</span>
+            <span>{editingId ? "Edit Vehicle" : "Add Vehicle"}</span>
             <svg className={`h-4 w-4 text-emerald-600 transition-transform sm:hidden ${formOpen ? "rotate-45" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
           </button>
           <div
@@ -59,7 +74,7 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
             className={`grid overflow-hidden transition-[grid-template-rows] duration-[375ms] ease-in-out sm:grid-rows-[1fr] ${formOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           >
           <div className="min-h-0">
-          <form onSubmit={handleCreate} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <form onSubmit={handleSubmit} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Vehicle Number *</label>
               <input required value={form.vehicleNo} onChange={(e) => set("vehicleNo", e.target.value)}
@@ -75,9 +90,10 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
               <input value={form.loadCapacity} onChange={(e) => set("loadCapacity", e.target.value)}
                 placeholder="e.g. 2 Ton, 1500 Kg" className={inputClass} />
             </div>
-            <div className="flex items-end">
-              <Button type="submit" disabled={creating} className="w-full">
-                {creating ? "Adding…" : "Add Vehicle"}
+            <div className="flex items-end justify-end gap-2 sm:col-span-2 lg:col-span-1">
+              {editingId && <Button type="button" variant="secondary" onClick={resetForm}>Cancel</Button>}
+              <Button type="submit" disabled={creating} className="whitespace-nowrap">
+                {creating ? "Saving…" : editingId ? "Save Vehicle" : "Add Vehicle"}
               </Button>
             </div>
           </form>
@@ -95,7 +111,10 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
                   <p className="text-xs font-medium text-slate-400">Vehicle number</p>
                   <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{vehicle.vehicleNo}</p>
                 </div>
-                <Badge tone={vehicle.isActive ? "green" : "slate"}>{vehicle.isActive ? "Active" : "Inactive"}</Badge>
+                <div className="flex shrink-0 items-center gap-3">
+                  <Badge tone={vehicle.isActive ? "green" : "slate"}>{vehicle.isActive ? "Active" : "Inactive"}</Badge>
+                  <button type="button" onClick={() => beginEdit(vehicle)} className="text-xs font-medium text-emerald-700 hover:underline">Edit</button>
+                </div>
               </div>
               <div className="mt-5 grid grid-cols-2 gap-4">
                 <div className="min-w-0">
@@ -120,11 +139,12 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
                 <th className={thClass}>Name / Type</th>
                 <th className={thClass}>Load Capacity</th>
                 <th className={thClass}>Status</th>
+                <th className={thClass}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {vehicles.length === 0 && (
-                <tr><td colSpan={4} className={tdClass + " text-center text-slate-400"}>No vehicles added yet.</td></tr>
+                <tr><td colSpan={5} className={tdClass + " text-center text-slate-400"}>No vehicles added yet.</td></tr>
               )}
               {vehicles.map((v) => (
                 <tr key={v.id} className="hover:bg-slate-50">
@@ -132,6 +152,7 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
                   <td className={tdClass}>{v.name ?? "—"}</td>
                   <td className={tdClass}>{v.loadCapacity ?? "—"}</td>
                   <td className={tdClass}><Badge tone={v.isActive ? "green" : "slate"}>{v.isActive ? "Active" : "Inactive"}</Badge></td>
+                  <td className={tdClass}><button type="button" onClick={() => beginEdit(v)} className="text-sm font-medium text-emerald-700 hover:underline">Edit</button></td>
                 </tr>
               ))}
             </tbody>

@@ -450,6 +450,8 @@ export const api = {
   listExpenses: () => cachedRequest<Expense[]>("/expenses", LIST_TTL),
   createExpense: (dto: { category: string; description?: string; amount: number; expenseDate: string; paymentMode: PaymentMode }) =>
     request<Expense>("/expenses", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/expenses", "/reports/dashboard")),
+  updateExpense: (id: string, dto: { category: string; description?: string; amount: number; expenseDate: string; paymentMode: PaymentMode }) =>
+    request<Expense>(`/expenses/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/expenses", "/reports/dashboard")),
 
   // Drivers
   listDrivers: () => cachedRequest<Driver[]>("/drivers"),

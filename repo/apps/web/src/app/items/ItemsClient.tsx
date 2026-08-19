@@ -12,6 +12,7 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", uom: "", salePrice: "", gstRate: "", hsnCode: "", openingStock: "" });
   const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -19,23 +20,43 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
     api.listItems().then(setItems).catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load items."));
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  function resetForm() {
+    setForm({ name: "", uom: "", salePrice: "", gstRate: "", hsnCode: "", openingStock: "" });
+    setEditingId(null);
+  }
+
+  function beginEdit(item: Item) {
+    setForm({
+      name: item.name,
+      uom: item.uom,
+      salePrice: item.salePrice ?? "",
+      gstRate: item.gstRate ?? "",
+      hsnCode: item.hsnCode ?? "",
+      openingStock: "",
+    });
+    setEditingId(item.id);
+    setFormOpen(true);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setCreating(true);
     try {
-      await api.createItem({
+      const dto = {
         name: form.name,
         uom: form.uom,
         salePrice: form.salePrice ? parseFloat(form.salePrice) : undefined,
         gstRate: form.gstRate ? parseFloat(form.gstRate) : undefined,
         hsnCode: form.hsnCode || undefined,
-        openingStock: form.openingStock ? parseFloat(form.openingStock) : undefined,
-      });
-      setForm({ name: "", uom: "", salePrice: "", gstRate: "", hsnCode: "", openingStock: "" });
+      };
+      if (editingId) await api.updateItem(editingId, dto);
+      else await api.createItem({ ...dto, openingStock: form.openingStock ? parseFloat(form.openingStock) : undefined });
+      resetForm();
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to create item.");
+      setError(err instanceof ApiError ? err.message : `Failed to ${editingId ? "update" : "create"} item.`);
     } finally {
       setCreating(false);
     }
@@ -50,7 +71,7 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
             onClick={() => setFormOpen((o) => !o)}
             className="flex w-full cursor-pointer items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-500 sm:cursor-default"
           >
-            <span>Add Item</span>
+            <span>{editingId ? "Edit Item" : "Add Item"}</span>
             <svg className={`h-4 w-4 text-emerald-600 transition-transform sm:hidden ${formOpen ? "rotate-45" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
           </button>
           <div
@@ -58,7 +79,7 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
             className={`grid overflow-hidden transition-[grid-template-rows] duration-[375ms] ease-in-out sm:grid-rows-[1fr] ${formOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           >
           <div className="min-h-0">
-          <form className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" onSubmit={handleCreate}>
+          <form className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" onSubmit={handleSubmit}>
             <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-1">
               <label className="text-sm font-medium text-slate-700">Item name</label>
               <input required placeholder="e.g. Tomato" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={inputClass} />
@@ -79,12 +100,13 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
               <label className="text-sm font-medium text-slate-700">HSN code</label>
               <input value={form.hsnCode} onChange={(e) => setForm((f) => ({ ...f, hsnCode: e.target.value }))} className={inputClass} />
             </div>
-            <div className="flex flex-col gap-1.5">
+            {!editingId && <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Opening stock</label>
               <input type="number" step="0.001" value={form.openingStock} onChange={(e) => setForm((f) => ({ ...f, openingStock: e.target.value }))} className={inputClass} />
-            </div>
-            <div className="flex items-end">
-              <Button type="submit" disabled={creating} className="w-full">{creating ? "Adding…" : "Add item"}</Button>
+            </div>}
+            <div className="col-span-full flex items-end justify-end gap-2">
+              {editingId && <Button type="button" variant="secondary" onClick={resetForm}>Cancel</Button>}
+              <Button type="submit" disabled={creating} className="whitespace-nowrap">{creating ? "Saving…" : editingId ? "Save item" : "Add item"}</Button>
             </div>
           </form>
           </div>
@@ -101,7 +123,10 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
                   <p className="text-xs font-medium text-slate-400">Item</p>
                   <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{item.name}</p>
                 </div>
-                <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{item.uom}</span>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{item.uom}</span>
+                  <button type="button" onClick={() => beginEdit(item)} className="text-xs font-medium text-emerald-700 hover:underline">Edit</button>
+                </div>
               </div>
               <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3">
                 <div className="min-w-0">
@@ -136,6 +161,7 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
                 <th className={thClass}>GST %</th>
                 <th className={thClass}>HSN</th>
                 <th className={thClass}>Stock</th>
+                <th className={thClass}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -147,6 +173,7 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
                   <td className={tdClass}>{i.gstRate}%</td>
                   <td className={tdClass}>{i.hsnCode ?? "—"}</td>
                   <td className={tdClass}>{i.currentStock}</td>
+                  <td className={tdClass}><button type="button" onClick={() => beginEdit(i)} className="text-sm font-medium text-emerald-700 hover:underline">Edit</button></td>
                 </tr>
               ))}
             </tbody>

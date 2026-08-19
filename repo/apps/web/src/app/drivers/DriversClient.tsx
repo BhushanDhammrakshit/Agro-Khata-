@@ -13,6 +13,7 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
   const [drivers, setDrivers] = useState<Driver[]>(initialDrivers);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({ name: "", licenceNo: "", phone: "" });
@@ -22,20 +23,34 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
       .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load drivers."));
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  function resetForm() {
+    setForm({ name: "", licenceNo: "", phone: "" });
+    setEditingId(null);
+  }
+
+  function beginEdit(driver: Driver) {
+    setForm({ name: driver.name, licenceNo: driver.licenceNo ?? "", phone: driver.phone ? stripPrefix(driver.phone) : "" });
+    setEditingId(driver.id);
+    setFormOpen(true);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setCreating(true);
     try {
-      await api.createDriver({
+      const dto = {
         name: form.name,
         licenceNo: form.licenceNo || undefined,
         phone: form.phone ? withPrefix(form.phone) : undefined,
-      });
-      setForm({ name: "", licenceNo: "", phone: "" });
+      };
+      if (editingId) await api.updateDriver(editingId, dto);
+      else await api.createDriver(dto);
+      resetForm();
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to add driver.");
+      setError(err instanceof ApiError ? err.message : `Failed to ${editingId ? "update" : "add"} driver.`);
     } finally {
       setCreating(false);
     }
@@ -52,7 +67,7 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
             onClick={() => setFormOpen((o) => !o)}
             className="flex w-full cursor-pointer items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-500 sm:cursor-default"
           >
-            <span>Add Driver</span>
+            <span>{editingId ? "Edit Driver" : "Add Driver"}</span>
             <svg className={`h-4 w-4 text-emerald-600 transition-transform sm:hidden ${formOpen ? "rotate-45" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
           </button>
           <div
@@ -60,7 +75,7 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
             className={`grid overflow-hidden transition-[grid-template-rows] duration-[375ms] ease-in-out sm:grid-rows-[1fr] ${formOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           >
           <div className="min-h-0">
-          <form onSubmit={handleCreate} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <form onSubmit={handleSubmit} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Driver Name *</label>
               <input required value={form.name} onChange={(e) => set("name", e.target.value)}
@@ -75,9 +90,10 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
               <label className="mb-1.5 block text-sm font-medium text-slate-700">Contact Number</label>
               <PhoneInput value={form.phone} onChange={(v) => set("phone", v)} />
             </div>
-            <div className="flex items-end">
-              <Button type="submit" disabled={creating} className="w-full">
-                {creating ? "Adding…" : "Add Driver"}
+            <div className="flex items-end justify-end gap-2 sm:col-span-2 lg:col-span-1">
+              {editingId && <Button type="button" variant="secondary" onClick={resetForm}>Cancel</Button>}
+              <Button type="submit" disabled={creating} className="whitespace-nowrap">
+                {creating ? "Saving…" : editingId ? "Save Driver" : "Add Driver"}
               </Button>
             </div>
           </form>
@@ -95,7 +111,10 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
                   <p className="text-xs font-medium text-slate-400">Driver</p>
                   <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{driver.name}</p>
                 </div>
-                <Badge tone={driver.isActive ? "green" : "slate"}>{driver.isActive ? "Active" : "Inactive"}</Badge>
+                <div className="flex shrink-0 items-center gap-3">
+                  <Badge tone={driver.isActive ? "green" : "slate"}>{driver.isActive ? "Active" : "Inactive"}</Badge>
+                  <button type="button" onClick={() => beginEdit(driver)} className="text-xs font-medium text-emerald-700 hover:underline">Edit</button>
+                </div>
               </div>
               <div className="mt-5 grid grid-cols-2 gap-4">
                 <div className="min-w-0">
@@ -120,11 +139,12 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
                 <th className={thClass}>Driving Licence</th>
                 <th className={thClass}>Contact Number</th>
                 <th className={thClass}>Status</th>
+                <th className={thClass}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {drivers.length === 0 && (
-                <tr><td colSpan={4} className={tdClass + " text-center text-slate-400"}>No drivers added yet.</td></tr>
+                <tr><td colSpan={5} className={tdClass + " text-center text-slate-400"}>No drivers added yet.</td></tr>
               )}
               {drivers.map((d) => (
                 <tr key={d.id} className="hover:bg-slate-50">
@@ -132,6 +152,7 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
                   <td className={tdClass}>{d.licenceNo ?? "—"}</td>
                   <td className={tdClass}>{d.phone ? stripPrefix(d.phone) : "—"}</td>
                   <td className={tdClass}><Badge tone={d.isActive ? "green" : "slate"}>{d.isActive ? "Active" : "Inactive"}</Badge></td>
+                  <td className={tdClass}><button type="button" onClick={() => beginEdit(d)} className="text-sm font-medium text-emerald-700 hover:underline">Edit</button></td>
                 </tr>
               ))}
             </tbody>

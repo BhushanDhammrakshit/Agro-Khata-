@@ -32,6 +32,7 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ category: "", description: "", amount: "", expenseDate: "", paymentMode: "cash" as PaymentMode });
   const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -39,22 +40,42 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
     api.listExpenses().then(setExpenses).catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load expenses."));
   }
 
-  async function handleCreate(e: React.FormEvent) {
+  function resetForm() {
+    setForm({ category: "", description: "", amount: "", expenseDate: "", paymentMode: "cash" });
+    setEditingId(null);
+  }
+
+  function beginEdit(expense: Expense) {
+    setForm({
+      category: expense.category,
+      description: expense.description ?? "",
+      amount: expense.amount,
+      expenseDate: expense.expenseDate.slice(0, 10),
+      paymentMode: expense.paymentMode,
+    });
+    setEditingId(expense.id);
+    setFormOpen(true);
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setCreating(true);
     try {
-      await api.createExpense({
+      const dto = {
         category: form.category,
         description: form.description || undefined,
         amount: parseFloat(form.amount),
         expenseDate: form.expenseDate,
         paymentMode: form.paymentMode,
-      });
-      setForm({ category: "", description: "", amount: "", expenseDate: "", paymentMode: "cash" });
+      };
+      if (editingId) await api.updateExpense(editingId, dto);
+      else await api.createExpense(dto);
+      resetForm();
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to create expense.");
+      setError(err instanceof ApiError ? err.message : `Failed to ${editingId ? "update" : "create"} expense.`);
     } finally {
       setCreating(false);
     }
@@ -69,7 +90,7 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
             onClick={() => setFormOpen((o) => !o)}
             className="flex w-full cursor-pointer items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-500 sm:cursor-default"
           >
-            <span>Add Expense</span>
+            <span>{editingId ? "Edit Expense" : "Add Expense"}</span>
             <svg className={`h-4 w-4 text-emerald-600 transition-transform sm:hidden ${formOpen ? "rotate-45" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M12 5v14M5 12h14"/></svg>
           </button>
           <div
@@ -77,7 +98,7 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
             className={`grid overflow-hidden transition-[grid-template-rows] duration-[375ms] ease-in-out sm:grid-rows-[1fr] ${formOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           >
           <div className="min-h-0">
-          <form className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" onSubmit={handleCreate}>
+          <form className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Category</label>
               <input required placeholder="e.g. Transport" value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))} className={inputClass} />
@@ -108,8 +129,9 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
                 ]}
               />
             </div>
-            <div className="flex items-end">
-              <Button type="submit" disabled={creating} className="w-full">{creating ? "Adding…" : "Add expense"}</Button>
+            <div className="col-span-full flex items-end justify-end gap-2">
+              {editingId && <Button type="button" variant="secondary" onClick={resetForm}>Cancel</Button>}
+              <Button type="submit" disabled={creating} className="whitespace-nowrap">{creating ? "Saving…" : editingId ? "Save expense" : "Add expense"}</Button>
             </div>
           </form>
           </div>
@@ -126,7 +148,10 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
                   <p className="text-xs font-medium text-slate-400">Category</p>
                   <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{expense.category}</p>
                 </div>
-                <p className="shrink-0 text-sm text-slate-400">{formatDate(expense.expenseDate)}</p>
+                <div className="flex shrink-0 items-center gap-3">
+                  <p className="text-sm text-slate-400">{formatDate(expense.expenseDate)}</p>
+                  <button type="button" onClick={() => beginEdit(expense)} className="text-xs font-medium text-emerald-700 hover:underline">Edit</button>
+                </div>
               </div>
               <p className="mt-2 line-clamp-2 min-h-5 text-sm text-slate-500">{expense.description ?? "No description"}</p>
               <div className="mt-5 grid grid-cols-2 gap-4 border-t border-slate-100 pt-3">
@@ -153,6 +178,7 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
                 <th className={thClass}>Description</th>
                 <th className={thClass}>Amount</th>
                 <th className={thClass}>Mode</th>
+                <th className={thClass}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -163,6 +189,7 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
                   <td className={tdClass}>{e.description ?? "—"}</td>
                   <td className={tdClass}>₹{e.amount}</td>
                   <td className={tdClass}>{e.paymentMode}</td>
+                  <td className={tdClass}><button type="button" onClick={() => beginEdit(e)} className="text-sm font-medium text-emerald-700 hover:underline">Edit</button></td>
                 </tr>
               ))}
             </tbody>
