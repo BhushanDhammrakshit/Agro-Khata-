@@ -8,6 +8,7 @@ const apiUrl = (
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  output: "standalone", // Azure App Service: self-contained server.js, avoids Oryx's node_modules repackaging
   async rewrites() {
     return [
       {
