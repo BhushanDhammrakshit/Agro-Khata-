@@ -44,7 +44,7 @@ export default function PaymentsPage() {
       : await api.listPurchaseInvoices({ partyId: id });
     setOutstanding(
       invs
-        .filter((i) => i.status !== "paid" && i.status !== "cancelled" && parseFloat(i.balanceAmount) > 0)
+        .filter((i) => i.status !== "paid" && i.status !== "cancelled" && i.status !== "draft" && parseFloat(i.balanceAmount) > 0)
         .sort((a, b) => a.invoiceDate.localeCompare(b.invoiceDate)),
     );
   }

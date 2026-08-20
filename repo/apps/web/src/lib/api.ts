@@ -355,17 +355,29 @@ export interface CreatePartyPaymentDto {
   notes?: string;
 }
 
-export interface PurchasePaymentReportRow {
-  id: string;
-  paid_date: string;
+export interface PurchasePaymentInvoicePaymentEntry {
+  paidDate: string;
   amount: string;
-  payment_mode: PaymentMode;
-  reference_no?: string;
+  paymentMode: PaymentMode;
+  referenceNo?: string;
   notes?: string;
+}
+
+export interface PurchasePaymentInvoiceRow {
   invoice_id: string;
   invoice_no: string;
+  invoice_date: string;
+  status: string;
   party_id: string;
   party_name: string;
+  total_amount: string;
+  paid_amount: string;
+  balance_amount: string;
+  payments: PurchasePaymentInvoicePaymentEntry[];
+}
+
+export interface PurchasePaymentsReportResult {
+  invoices: PurchasePaymentInvoiceRow[];
 }
 
 export interface PaySupplierDto {
@@ -550,7 +562,7 @@ export const api = {
   getPurchasesReport: (params?: { from?: string; to?: string; partyId?: string }) =>
     request<ReportInvoiceRow[]>(`/reports/purchases${params ? "?" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v !== undefined)) as Record<string,string>).toString() : ""}`),
   getPurchasePaymentsReport: (params?: { from?: string; to?: string; partyId?: string }) =>
-    request<PurchasePaymentReportRow[]>(`/reports/purchase-payments${params ? "?" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v !== undefined)) as Record<string,string>).toString() : ""}`),
+    request<PurchasePaymentsReportResult>(`/reports/purchase-payments${params ? "?" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v !== undefined)) as Record<string,string>).toString() : ""}`),
   getStockSummary: () => request<StockSummaryRow[]>("/reports/stock-summary"),
   getOutstandingReport: (type: "receivable" | "payable") =>
     request<ReportInvoiceRow[]>(`/reports/outstanding?type=${type}`),

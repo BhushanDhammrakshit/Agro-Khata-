@@ -88,27 +88,40 @@ export class ReportsService {
     );
   }
 
-  // Individual purchase-invoice payments (per invoice, oldest-first allocation or single) within a date range — for the printable payments report.
+  // Invoice-wise purchase payments breakdown within a date range — every invoice dated in the
+  // range, each with its own payment history, so the report shows what's paid, what's not, and
+  // what remains (unlike a flat payments list, this also surfaces fully-unpaid invoices).
   async getPurchasePaymentsReport(from?: string, to?: string, partyId?: string) {
     const mgr = this.tenantContext.getManager();
     const tid = this.tenantContext.getTenantIdOrThrow();
     const params: unknown[] = [tid];
-    let where = 'pi.tenant_id=$1';
-    if (from) { params.push(from); where += ` AND pip.paid_date>=$${params.length}`; }
-    if (to)   { params.push(to);   where += ` AND pip.paid_date<=$${params.length}`; }
+    let where = "pi.tenant_id=$1 AND pi.status!='cancelled'";
+    if (from) { params.push(from); where += ` AND pi.invoice_date>=$${params.length}`; }
+    if (to)   { params.push(to);   where += ` AND pi.invoice_date<=$${params.length}`; }
     if (partyId) { params.push(partyId); where += ` AND pi.party_id=$${params.length}`; }
 
-    return mgr.query(
-      `SELECT pip.id, pip.paid_date, pip.amount, pip.payment_mode, pip.reference_no, pip.notes,
-              pi.id AS invoice_id, pi.invoice_no, p.id AS party_id, p.name AS party_name
-       FROM purchase_invoice_payments pip
-       JOIN purchase_invoices pi ON pi.id=pip.purchase_invoice_id
+    const invoices = await mgr.query(
+      `SELECT pi.id AS invoice_id, pi.invoice_no, pi.invoice_date, pi.status,
+              p.id AS party_id, p.name AS party_name,
+              pi.total_amount, pi.paid_amount, pi.balance_amount,
+              COALESCE(
+                (SELECT jsonb_agg(jsonb_build_object(
+                   'paidDate', pip.paid_date, 'amount', pip.amount, 'paymentMode', pip.payment_mode,
+                   'referenceNo', pip.reference_no, 'notes', pip.notes
+                 ) ORDER BY pip.paid_date)
+                 FROM purchase_invoice_payments pip WHERE pip.purchase_invoice_id = pi.id),
+                '[]'::jsonb
+              ) AS payments
+       FROM purchase_invoices pi
        LEFT JOIN parties p ON p.id=pi.party_id
        WHERE ${where}
-       ORDER BY pip.paid_date ASC, pi.invoice_no ASC`,
+       ORDER BY pi.invoice_date ASC, pi.invoice_no ASC`,
       params,
     );
+
+    return { invoices };
   }
+
 
   async getStockSummary() {
     const mgr = this.tenantContext.getManager();
