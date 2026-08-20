@@ -141,7 +141,36 @@ async function serverRenderedPdf(kind: InvoiceKind, invoiceId: string): Promise<
   }
 }
 
-async function buildInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<{ blob: Blob; fileName: string; title: string; totalAmount: string }> {
+type InvoicePdfResult = { blob: Blob; fileName: string; title: string; totalAmount: string };
+
+// Generating the PDF (server round-trip or client-side render) takes long enough that awaiting it
+// before calling navigator.share() can burn through the browser's transient user-activation window,
+// so share() ends up rejecting and silently falling back to a download. Callers can warm this cache
+// (e.g. on hover/focus, before the click) so the click handler only awaits an already-in-flight promise.
+const pdfCache = new Map<string, Promise<InvoicePdfResult>>();
+
+function pdfCacheKey(kind: InvoiceKind, invoiceId: string) {
+  return `${kind}:${invoiceId}`;
+}
+
+/** Kicks off PDF generation ahead of time so a later share/download click resolves near-instantly. */
+export function prefetchInvoicePdf(kind: InvoiceKind, invoiceId: string): void {
+  const key = pdfCacheKey(kind, invoiceId);
+  if (pdfCache.has(key)) return;
+  const promise = buildInvoicePdf(kind, invoiceId);
+  pdfCache.set(key, promise);
+  promise.catch(() => pdfCache.delete(key));
+}
+
+function takeCachedInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<InvoicePdfResult> {
+  const key = pdfCacheKey(kind, invoiceId);
+  const cached = pdfCache.get(key);
+  if (!cached) return buildInvoicePdf(kind, invoiceId);
+  pdfCache.delete(key); // one-shot: invoice data may have changed since it was warmed
+  return cached;
+}
+
+async function buildInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<InvoicePdfResult> {
   const [serverBlob, invoice] = await Promise.all([
     serverRenderedPdf(kind, invoiceId),
     kind === "sales" ? api.getSalesInvoice(invoiceId) : api.getPurchaseInvoice(invoiceId),
@@ -169,7 +198,7 @@ async function buildInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<{ 
 
 export async function downloadInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<void> {
   try {
-    const { blob, fileName } = await buildInvoicePdf(kind, invoiceId);
+    const { blob, fileName } = await takeCachedInvoicePdf(kind, invoiceId);
     downloadBlob(blob, fileName);
   } catch (error) {
     if (error instanceof ApiError) {
@@ -181,7 +210,7 @@ export async function downloadInvoicePdf(kind: InvoiceKind, invoiceId: string): 
 
 export async function shareInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<"shared" | "downloaded" | "cancelled"> {
   try {
-    const { blob, fileName, title, totalAmount } = await buildInvoicePdf(kind, invoiceId);
+    const { blob, fileName, title, totalAmount } = await takeCachedInvoicePdf(kind, invoiceId);
     const text = `${title} - ₹${totalAmount}`;
 
     if (typeof navigator !== "undefined" && navigator.share && typeof File !== "undefined") {

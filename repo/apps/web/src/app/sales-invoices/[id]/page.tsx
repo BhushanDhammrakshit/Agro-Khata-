@@ -11,7 +11,7 @@ import { inputClass, tdClass, thClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 import { SalesBillPrintModal } from "./SalesBillPrintModal";
-import { downloadInvoicePdf, shareInvoicePdf } from "@/lib/invoice-pdf";
+import { downloadInvoicePdf, prefetchInvoicePdf, shareInvoicePdf } from "@/lib/invoice-pdf";
 
 function inr(value: string | number) {
   const n = typeof value === "string" ? parseFloat(value) : value;
@@ -144,6 +144,9 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
                 setSharing(false);
               }
             }}
+            onMouseEnter={() => prefetchInvoicePdf("sales", invoice.id)}
+            onFocus={() => prefetchInvoicePdf("sales", invoice.id)}
+            onTouchStart={() => prefetchInvoicePdf("sales", invoice.id)}
             disabled={sharing}
             aria-busy={sharing}
             className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">

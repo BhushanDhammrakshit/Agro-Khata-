@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { SalesBillPrintModal } from "./[id]/SalesBillPrintModal";
-import { downloadInvoicePdf, shareInvoicePdf } from "@/lib/invoice-pdf";
+import { downloadInvoicePdf, prefetchInvoicePdf, shareInvoicePdf } from "@/lib/invoice-pdf";
 
 interface SalesInvoiceRowActionsProps {
   invoice: {
@@ -95,6 +95,9 @@ export function SalesInvoiceRowActions({ invoice, compact = false }: SalesInvoic
         <button
           type="button"
           onClick={handleShare}
+          onMouseEnter={() => prefetchInvoicePdf("sales", invoice.id)}
+          onFocus={() => prefetchInvoicePdf("sales", invoice.id)}
+          onTouchStart={() => prefetchInvoicePdf("sales", invoice.id)}
           disabled={isSharing}
           aria-busy={isSharing}
           aria-label="Share invoice"
