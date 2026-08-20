@@ -14,13 +14,36 @@ function sanitizeFileName(name: string) {
 /**
  * Renders the bill with headless Chrome's own print pipeline, so the downloaded PDF is produced by
  * the exact same engine (and the same `@page` rules) as the browser's Print / Save as PDF output.
+ *
+ * Plain Azure App Service Linux Node runtimes (no custom Dockerfile) are missing the system shared
+ * libraries (libnss3, libatk-bridge2.0-0, libgbm1, etc.) the full `puppeteer` package's bundled
+ * Chromium needs to launch — `browser.launch()` throws there, this whole route 503s, and the client
+ * silently falls back to the much lower-quality/larger `html2canvas` raster PDF (see invoice-pdf.ts).
+ * `@sparticuz/chromium` ships a statically-linked Chromium built specifically for restricted
+ * serverless/PaaS Linux hosts, so it's used instead whenever running in production on Linux. Locally
+ * (Windows/Mac dev) the full `puppeteer` package's own bundled Chromium is used, since
+ * @sparticuz/chromium's binary is Linux-only and won't run there.
  */
 async function renderPdf(html: string): Promise<Buffer> {
-  const puppeteer = (await import("puppeteer")).default;
-  const browser = await puppeteer.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-  });
+  const useServerlessChromium = process.env.NODE_ENV === "production" && process.platform === "linux";
+
+  let browser;
+  if (useServerlessChromium) {
+    const chromium = (await import("@sparticuz/chromium")).default;
+    const puppeteerCore = (await import("puppeteer-core")).default;
+    browser = await puppeteerCore.launch({
+      args: chromium.args,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || (await chromium.executablePath()),
+      headless: "shell",
+    });
+  } else {
+    const puppeteer = (await import("puppeteer")).default;
+    browser = await puppeteer.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    });
+  }
+
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });

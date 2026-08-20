@@ -23,9 +23,9 @@ function fmt(v: string | number) {
 }
 
 export const PURCHASE_BILL_CSS = `
-.kag-purchase-bill { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; color: #000; max-width: 820px; margin: 0 auto; padding: 0 8px; }
+.kag-purchase-bill { font-family: Arial, "Liberation Sans", "Helvetica Neue", Helvetica, sans-serif; font-size: 11px; line-height: 1.6; color: #000; max-width: 820px; margin: 0 auto; padding: 0 8px; }
 .kag-purchase-bill table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-.kag-purchase-bill td, .kag-purchase-bill th { border: 1px solid #000; padding: 3px 6px; vertical-align: top; overflow-wrap: break-word; }
+.kag-purchase-bill td, .kag-purchase-bill th { border: 1px solid #000; padding: 5px 6px 4px; vertical-align: top; overflow-wrap: break-word; }
 `;
 
 export function buildPurchaseBillBody(invoice: Invoice, tenant: TenantSummary, party: Party): string {

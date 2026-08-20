@@ -22,9 +22,9 @@ function num(v: string | number, dp = 2): string {
 }
 
 export const SALES_BILL_CSS = `
-.kag-bill { width: 100%; min-width: 920px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; color: #000; }
+.kag-bill { width: 100%; min-width: 920px; font-family: Arial, "Liberation Sans", "Helvetica Neue", Helvetica, sans-serif; font-size: 13px; line-height: 1.6; color: #000; }
 .kag-bill table { border-collapse: collapse; width: 100%; table-layout: fixed; border: 2px solid #000; }
-.kag-bill td, .kag-bill th { border: 1px solid #555; padding: 3px 4px; vertical-align: top; overflow-wrap: break-word; }
+.kag-bill td, .kag-bill th { border: 1px solid #555; padding: 4px 4px 3px; vertical-align: top; overflow-wrap: break-word; }
 .kag-bill .tb { border-bottom: 2px solid #000; }
 .kag-bill .tr { border-right: 2px solid #000; }
 .kag-bill .nb { border: none; }
@@ -36,11 +36,11 @@ export const SALES_BILL_CSS = `
 .kag-bill .vendor { text-align: center; font-size: 14px; line-height: 20px; }
 .kag-bill .shipping { height: 126px; line-height: 20px; }
 /* vertical-align: top (not middle) so text sits near the row's top edge, clear of the border below. */
-.kag-bill .meta { height: 24px; vertical-align: top; padding-top: 4px; }
+.kag-bill .meta { height: 26px; vertical-align: top; padding-top: 5px; }
 .kag-bill .asn { height: 38px; }
-.kag-bill .items td, .kag-bill .items th { height: 24px; padding: 4px 4px 3px; vertical-align: top; }
-.kag-bill .dispatch td { height: 24px; vertical-align: top; padding-top: 4px; }
-.kag-bill .signature { height: 60px; vertical-align: top; padding-top: 4px; }
+.kag-bill .items td, .kag-bill .items th { height: 26px; padding: 5px 4px 3px; vertical-align: top; }
+.kag-bill .dispatch td { height: 26px; vertical-align: top; padding-top: 5px; }
+.kag-bill .signature { height: 60px; vertical-align: top; padding-top: 5px; }
 .kag-bill .red { color: #ff0000; }
 `;
 
