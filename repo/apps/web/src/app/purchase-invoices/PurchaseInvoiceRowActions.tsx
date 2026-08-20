@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BillPrintModal } from "./[id]/BillPrintModal";
 import { downloadInvoicePdf, prefetchInvoicePdf, shareInvoicePdf } from "@/lib/invoice-pdf";
 
@@ -18,6 +18,24 @@ export function PurchaseInvoiceRowActions({ invoice, compact = false }: Purchase
   const [shareLabel, setShareLabel] = useState("Share PDF");
   const [isSharing, setIsSharing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Warm the PDF cache once the row scrolls into view — gives mobile taps (which lack hover and
+  // barely precede touchstart) a much bigger head start than touchstart alone, so navigator.share()
+  // is more likely to run against an already-resolved PDF instead of racing the transient
+  // user-activation window against a slow render. See kag-mall-web-notes.md.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        prefetchInvoicePdf("purchase", invoice.id);
+        observer.disconnect();
+      }
+    }, { rootMargin: "200px" });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [invoice.id]);
 
   async function handleDownload() {
     try {
@@ -52,7 +70,7 @@ export function PurchaseInvoiceRowActions({ invoice, compact = false }: Purchase
 
   return (
     <>
-      <div className="flex min-w-max items-center gap-2">
+      <div ref={containerRef} className="flex min-w-max items-center gap-2">
         <button
           type="button"
           onClick={() => setShowBill(true)}

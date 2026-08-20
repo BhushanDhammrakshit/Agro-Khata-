@@ -1,134 +1,195 @@
 import type { Invoice, Party, TenantSummary } from "@/lib/api";
-
-function toWords(n: number): string {
-  if (n === 0) return "Zero";
-  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-    "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
-  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
-  function cvt(num: number): string {
-    if (num < 20) return ones[num];
-    if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 ? " " + ones[num % 10] : "");
-    if (num < 1000) return ones[Math.floor(num / 100)] + " Hundred" + (num % 100 ? " and " + cvt(num % 100) : "");
-    if (num < 100000) return cvt(Math.floor(num / 1000)) + " Thousand" + (num % 1000 ? " " + cvt(num % 1000) : "");
-    if (num < 10000000) return cvt(Math.floor(num / 100000)) + " Lakh" + (num % 100000 ? " " + cvt(num % 100000) : "");
-    return cvt(Math.floor(num / 10000000)) + " Crore" + (num % 10000000 ? " " + cvt(num % 10000000) : "");
-  }
-  const rupees = Math.floor(n);
-  const paise = Math.round((n - rupees) * 100);
-  return cvt(rupees) + " Rupees" + (paise > 0 ? " and " + cvt(paise) + " Paise" : "") + " only";
-}
-
-function fmt(v: string | number) {
-  return "₹ " + parseFloat(String(v)).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+import { amountInWords, dmy, esc, num } from "./common";
 
 export const PURCHASE_BILL_CSS = `
-.kag-purchase-bill { font-family: Arial, "Liberation Sans", "Helvetica Neue", Helvetica, sans-serif; font-size: 11px; line-height: 1.6; color: #000; max-width: 820px; margin: 0 auto; padding: 0 8px; }
-.kag-purchase-bill table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-.kag-purchase-bill td, .kag-purchase-bill th { border: 1px solid #000; padding: 5px 6px 4px; vertical-align: top; overflow-wrap: break-word; }
+.kag-purchase-bill { width: 100%; font-family: Arial, "Liberation Sans", "Helvetica Neue", Helvetica, sans-serif; font-size: 11.5px; line-height: 1.5; color: #1a1a1a; }
+.kag-purchase-bill table { border-collapse: collapse; width: 100%; table-layout: fixed; border: 1px solid #b6c6d2; }
+.kag-purchase-bill td, .kag-purchase-bill th { border: 1px solid #b6c6d2; padding: 6px 8px; vertical-align: top; overflow-wrap: break-word; }
+.kag-purchase-bill .band { background: #0f3d5c; color: #ffffff; border-color: #0f3d5c; padding: 12px 14px; vertical-align: middle; }
+.kag-purchase-bill .band-logo { overflow: hidden; }
+.kag-purchase-bill .band-co { font-size: 16px; font-weight: bold; line-height: 1.3; }
+.kag-purchase-bill .band-sub { font-size: 9.5px; color: #cfe3ef; line-height: 1.5; padding-top: 3px; }
+.kag-purchase-bill .band-doc { font-size: 17px; font-weight: bold; letter-spacing: 2px; }
+.kag-purchase-bill .band-no { font-size: 11.5px; color: #cfe3ef; padding-top: 3px; }
+.kag-purchase-bill .strip td { background: #eef4f8; height: 32px; padding: 6px 8px 5px; }
+.kag-purchase-bill .k { font-size: 8.5px; text-transform: uppercase; letter-spacing: .5px; color: #0f3d5c; font-weight: bold; }
+.kag-purchase-bill .v { padding-top: 2px; }
+.kag-purchase-bill .party td { height: 72px; }
+.kag-purchase-bill .party .nm { font-weight: bold; font-size: 12.5px; padding-top: 3px; }
+.kag-purchase-bill th.ih { background: #0f3d5c; color: #ffffff; border-color: #0f3d5c; font-size: 9.5px; text-transform: uppercase; letter-spacing: .4px; font-weight: bold; padding: 7px 8px; vertical-align: middle; }
+.kag-purchase-bill .item td { height: 22px; padding: 6px 8px 5px; }
+.kag-purchase-bill .alt td { background: #f3f7fa; }
+.kag-purchase-bill .tot td { background: #dfeaf1; font-weight: bold; height: 22px; }
+.kag-purchase-bill .sum td { height: 20px; padding: 5px 8px 4px; }
+.kag-purchase-bill .grand td { background: #0f3d5c; color: #ffffff; border-color: #0f3d5c; font-weight: bold; font-size: 13px; padding: 7px 8px; }
+.kag-purchase-bill .words td { background: #eef4f8; }
+.kag-purchase-bill .sign td { height: 84px; }
+.kag-purchase-bill .fine td { background: #eef4f8; text-align: center; font-size: 9px; color: #4b5f6d; padding: 5px 8px; }
+.kag-purchase-bill .c { text-align: center; }
+.kag-purchase-bill .r { text-align: right; }
+.kag-purchase-bill .b { font-weight: bold; }
 `;
 
 export function buildPurchaseBillBody(invoice: Invoice, tenant: TenantSummary, party: Party): string {
-  const totalQty   = invoice.items?.reduce((s, i) => s + parseFloat(i.qty), 0) ?? 0;
-  const totalValue = parseFloat(invoice.totalAmount);
-  const paidAmt    = parseFloat(invoice.paidAmount);
-  const balance    = parseFloat(invoice.balanceAmount);
+  const items = invoice.items ?? [];
+  const vendorName = tenant.legalName || tenant.name;
+  const totalQty = items.reduce((s, i) => s + parseFloat(i.qty), 0);
+  const subTotal = parseFloat(invoice.subTotal);
+  const cgst = parseFloat(invoice.cgstAmount || "0");
+  const sgst = parseFloat(invoice.sgstAmount || "0");
+  const igst = parseFloat(invoice.igstAmount || "0");
+  const total = parseFloat(invoice.totalAmount);
+  const paidAmt = parseFloat(invoice.paidAmount);
+  const balance = parseFloat(invoice.balanceAmount);
   const paymentMode = invoice.payments?.[0]?.paymentMode
     ? invoice.payments[0].paymentMode.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Credit";
 
-  const logoHtml = tenant.logoUrl
-    ? `<img src="${tenant.logoUrl}" crossorigin="anonymous" style="max-height:64px;max-width:84px;object-fit:contain;" />`
-    : `<div style="height:64px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#94a3b8;">Logo</div>`;
+  const logoCell = tenant.logoUrl
+    ? `<td class="band band-logo c"><img src="${esc(tenant.logoUrl)}" crossorigin="anonymous" style="max-height:38px;max-width:100%;width:auto;height:auto;object-fit:contain;display:block;margin:0 auto;" /></td>`
+    : "";
+  const coSpan = tenant.logoUrl ? 3 : 4;
 
-  const sigHtml = tenant.signatureUrl
-    ? `<img src="${tenant.signatureUrl}" crossorigin="anonymous" style="max-height:64px;max-width:160px;object-fit:contain;display:block;margin:0 auto 4px;" />`
-    : `<div style="height:52px;"></div>`;
+  const itemRows = items
+    .map(
+      (item, i) => `
+      <tr class="item${i % 2 === 1 ? " alt" : ""}">
+        <td class="c">${i + 1}</td>
+        <td>${esc(item.itemName)}</td>
+        <td class="c">${esc(item.uom)}</td>
+        <td class="c">${num(item.qty, 0)}</td>
+        <td class="r">${num(item.rate)}</td>
+        <td class="r">${num(item.lineTotal)}</td>
+      </tr>`,
+    )
+    .join("");
 
-  const itemRows = (invoice.items ?? []).map((item, i) => `
+  const summaryLines: Array<{ label: string; value: number }> = [{ label: "Taxable Value", value: subTotal }];
+  if (cgst > 0) summaryLines.push({ label: "CGST", value: cgst });
+  if (sgst > 0) summaryLines.push({ label: "SGST", value: sgst });
+  if (igst > 0) summaryLines.push({ label: "IGST", value: igst });
+  summaryLines.push({ label: "Paid", value: paidAmt }, { label: "Balance Due", value: balance });
+
+  const bankLines = [
+    tenant.bankName ? esc(tenant.bankName) : "",
+    tenant.bankAccount ? `A/c No.: ${esc(tenant.bankAccount)}` : "",
+    tenant.bankIfsc ? `IFSC: ${esc(tenant.bankIfsc)}` : "",
+    tenant.bankUpi ? `UPI: ${esc(tenant.bankUpi)}` : "",
+  ].filter(Boolean);
+
+  const bankCell = `<td colspan="3" rowspan="${summaryLines.length + 1}">
+        ${bankLines.length ? `<div class="k">Bank Details</div><div class="v">${bankLines.join("<br />")}</div>` : ""}
+        ${tenant.termsConditions ? `<div class="k" style="padding-top:8px;">Terms &amp; Conditions</div><div class="v" style="font-size:10px;">${esc(tenant.termsConditions)}</div>` : ""}
+      </td>`;
+
+  const summaryRows = summaryLines
+    .map(
+      (line, i) => `
+    <tr class="sum">
+      ${i === 0 ? bankCell : ""}
+      <td colspan="2" class="r">${esc(line.label)}</td>
+      <td class="r">${num(line.value)}</td>
+    </tr>`,
+    )
+    .join("");
+
+  const partyIdLines = [
+    party.gstin ? `GSTIN: ${esc(party.gstin)}` : "",
+    party.pan ? `PAN: ${esc(party.pan)}` : "",
+    party.phone ? `Ph: ${esc(party.phone)}` : "",
+  ].filter(Boolean);
+
+  const signatureImg = tenant.signatureUrl
+    ? `<img src="${esc(tenant.signatureUrl)}" crossorigin="anonymous" style="max-height:44px;max-width:150px;object-fit:contain;display:block;margin:6px 0 4px auto;" />`
+    : `<div style="height:44px;"></div>`;
+
+  const bandSub = [
+    tenant.address ? esc(tenant.address) : "",
+    tenant.contactPhone ? "Ph: " + esc(tenant.contactPhone) : "",
+    tenant.contactEmail ? esc(tenant.contactEmail) : "",
+    tenant.gstin ? "GSTIN: " + esc(tenant.gstin) : tenant.pan ? "PAN: " + esc(tenant.pan) : "",
+  ]
+    .filter(Boolean)
+    .join(" &nbsp;|&nbsp; ");
+
+  return `<div class="kag-purchase-bill"><table><colgroup>
+    <col style="width:10%" /><col style="width:30%" /><col style="width:12%" />
+    <col style="width:12%" /><col style="width:17%" /><col style="width:19%" />
+  </colgroup><tbody>
+
     <tr>
-      <td style="text-align:center;">${i + 1}</td>
-      <td style="font-weight:bold;">${item.itemName}</td>
-      <td style="text-align:center;"></td>
-      <td style="text-align:right;">${parseFloat(item.qty).toLocaleString("en-IN")}</td>
-      <td style="text-align:right;">₹ ${parseFloat(item.rate).toFixed(2)}</td>
-      <td style="text-align:right;">₹ ${parseFloat(item.lineTotal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-    </tr>`).join("");
+      ${logoCell}
+      <td class="band" colspan="${coSpan}">
+        <div class="band-co">${esc(vendorName)}</div>
+        <div class="band-sub">${bandSub}</div>
+      </td>
+      <td class="band r" colspan="2">
+        <div class="band-doc">PURCHASE BILL</div>
+        <div class="band-no">${esc(invoice.invoiceNo)}</div>
+      </td>
+    </tr>
 
-  return `<div class="kag-purchase-bill">
+    <tr class="strip">
+      <td colspan="2"><div class="k">Bill Date</div><div class="v b">${dmy(invoice.invoiceDate)}</div></td>
+      <td colspan="2"><div class="k">Due Date</div><div class="v b">${dmy(invoice.dueDate) || "&mdash;"}</div></td>
+      <td colspan="2"><div class="k">Payment Mode</div><div class="v b">${esc(paymentMode)}</div></td>
+    </tr>
 
-    <!-- A single table (not several stacked <table> elements glued together with border-top:none)
-         — html2canvas misaligns borders/text across separately-measured adjacent tables. -->
-    <table><colgroup>
-      <col style="width:13%" /><col style="width:32%" /><col style="width:11%" />
-      <col style="width:10%" /><col style="width:17%" /><col style="width:17%" />
-    </colgroup><tbody>
+    <tr class="party">
+      <td colspan="3">
+        <div class="k">Bill From (Supplier)</div>
+        <div class="nm">${esc(party.name)}</div>
+        ${party.address ? `<div>${esc(party.address)}</div>` : ""}
+        ${partyIdLines.length ? `<div>${partyIdLines.join(" &nbsp;|&nbsp; ")}</div>` : ""}
+      </td>
+      <td colspan="3">
+        <div class="k">Bill To</div>
+        <div class="nm">${esc(vendorName)}</div>
+        ${tenant.address ? `<div>${esc(tenant.address)}</div>` : ""}
+        ${invoice.placeOfSupply ? `<div>Place of Supply: ${esc(invoice.placeOfSupply)}</div>` : ""}
+      </td>
+    </tr>
 
-      <tr><td colspan="6" style="text-align:center;font-weight:bold;font-size:15px;padding:5px;">Bill</td></tr>
+    <tr>
+      <th class="ih c">#</th>
+      <th class="ih" style="text-align:left;">Item Name</th>
+      <th class="ih c">UOM</th>
+      <th class="ih c">Quantity</th>
+      <th class="ih r">Price / Unit</th>
+      <th class="ih r">Amount</th>
+    </tr>
+    ${itemRows}
 
-      <tr>
-        <td style="text-align:center;vertical-align:middle;padding:4px;">${logoHtml}</td>
-        <td colspan="3" style="padding:5px 8px;">
-          <div style="font-weight:bold;font-size:13px;">${tenant.legalName || tenant.name}</div>
-          ${tenant.address ? `<div>${tenant.address}</div>` : ""}
-          <div>${tenant.contactPhone ? `<strong>Phone:</strong> ${tenant.contactPhone}&nbsp;&nbsp;` : ""}${tenant.contactEmail ? `<strong>Email:</strong> ${tenant.contactEmail}` : ""}</div>
-          ${tenant.gstin ? `<div><strong>State:</strong> 27-Maharashtra</div>` : ""}
-        </td>
-        <td colspan="2" style="padding:5px 8px;">
-          <div><strong>Date: </strong><strong>${invoice.invoiceDate}</strong></div>
-          ${invoice.placeOfSupply ? `<div><strong>Place of Supply: </strong><strong>${invoice.placeOfSupply}</strong></div>` : ""}
-        </td>
-      </tr>
+    <tr class="tot">
+      <td colspan="3" class="r">Total</td>
+      <td class="c">${num(totalQty, 0)}</td>
+      <td></td>
+      <td class="r">${num(subTotal)}</td>
+    </tr>
+    ${summaryRows}
+    <tr class="grand">
+      <td colspan="2" class="r">Grand Total</td>
+      <td class="r">&#8377; ${num(total)}</td>
+    </tr>
 
-      <tr><td colspan="6" style="padding:5px 8px;">
-        <div><strong>Bill From:</strong></div>
-        <div style="font-weight:bold;font-size:12px;">${party.name}</div>
-        ${party.address ? `<div>${party.address}</div>` : ""}
-        ${party.gstin ? `<div><strong>GSTIN:</strong> ${party.gstin}</div>` : ""}
-      </td></tr>
+    <tr class="words">
+      <td colspan="6"><span class="k">Amount in Words:</span> <span class="b">${esc(amountInWords(total))}</span></td>
+    </tr>
 
-      <tr>
-        <th style="text-align:center;">#</th>
-        <th style="text-align:left;">Item name</th>
-        <th style="text-align:center;">HSN/ SAC</th>
-        <th style="text-align:right;">Quantity</th>
-        <th style="text-align:right;">Price/ Unit (₹)</th>
-        <th style="text-align:right;">Amount(₹)</th>
-      </tr>
-      ${itemRows}
-      <tr>
-        <td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td>
-        <td style="text-align:right;font-weight:bold;">${totalQty.toLocaleString("en-IN")}</td>
-        <td style="border:none;"></td>
-        <td style="text-align:right;font-weight:bold;">₹ ${totalValue.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</td>
-      </tr>
+    <tr class="sign">
+      <td colspan="3">
+        ${invoice.notes ? `<div class="k">Notes</div><div class="v">${esc(invoice.notes)}</div>` : ""}
+      </td>
+      <td colspan="3">
+        <div class="b r">for ${esc(vendorName)}</div>
+        ${signatureImg}
+        <div class="r" style="font-size:9.5px;">Authorised Signatory</div>
+      </td>
+    </tr>
 
-      <tr>
-        <td colspan="2"><strong>Sub Total: ${fmt(invoice.subTotal)}</strong></td>
-        <td colspan="4"><strong>Total: ${fmt(totalValue)}(${toWords(totalValue)})</strong></td>
-      </tr>
-      <tr>
-        <td colspan="2"><strong>Paid: ${fmt(paidAmt)}</strong></td>
-        <td colspan="4"><strong>Balance: ${fmt(balance)}</strong></td>
-      </tr>
+    <tr class="fine"><td colspan="6">This is a computer generated bill.</td></tr>
 
-      <tr><td colspan="6"><strong>Payment Mode: ${paymentMode}</strong></td></tr>
-
-      <tr>
-        <td colspan="3" style="padding:6px 8px;">
-          <div style="font-weight:bold;">Terms And Conditions:</div>
-          <div style="margin-top:4px;font-size:10px;">${tenant.termsConditions ?? ""}</div>
-        </td>
-        <td colspan="3" style="text-align:center;vertical-align:bottom;padding:6px 8px;">
-          <div style="font-weight:bold;margin-bottom:8px;">For ${tenant.legalName || tenant.name}:</div>
-          ${sigHtml}
-          <div style="border-top:1px solid #000;padding-top:3px;font-size:10px;">Authorized Signatory</div>
-        </td>
-      </tr>
-
-    </tbody></table>
-
-  </div>`;
+  </tbody></table></div>`;
 }
 
 export function buildPurchaseBillHtml(invoice: Invoice, tenant: TenantSummary, party: Party): string {
@@ -136,9 +197,9 @@ export function buildPurchaseBillHtml(invoice: Invoice, tenant: TenantSummary, p
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Bill - ${invoice.invoiceNo}</title>
+  <title>Bill - ${esc(invoice.invoiceNo)}</title>
   <style>
-    @page { size: A4; margin: 8mm; }
+    @page { size: A4; margin: 10mm; }
     body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     ${PURCHASE_BILL_CSS}
   </style>

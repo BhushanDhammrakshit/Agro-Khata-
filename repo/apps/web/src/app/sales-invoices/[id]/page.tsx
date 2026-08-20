@@ -52,6 +52,11 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
 
   useEffect(load, [id]);
 
+  // Warm the PDF cache as soon as the page loads (not just on hover/touch of the Share button) so
+  // navigator.share() can fire near-instantly on click instead of racing the browser's transient
+  // user-activation window against a slow PDF render — see kag-mall-web-notes.md.
+  useEffect(() => { prefetchInvoicePdf("sales", id); }, [id]);
+
   async function handleSend() {
     setBusy(true);
     setError(null);
