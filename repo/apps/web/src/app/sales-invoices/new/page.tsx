@@ -8,6 +8,7 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/styles";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { PartyCombobox } from "@/components/QuickAddParty";
 import { ItemCombobox } from "@/components/ItemCombobox";
@@ -34,9 +35,9 @@ export default function NewSalesInvoicePage() {
   const [partyId, setPartyId] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0, 10));
-  const [dueDate, setDueDate] = useState("");
+  const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
   const [poNo, setPoNo] = useState("");
-  const [poDate, setPoDate] = useState("");
+  const [poDate, setPoDate] = useState(new Date().toISOString().slice(0, 10));
   const [asnNo, setAsnNo] = useState("");
   const [driverName, setDriverName] = useState("");
   const [vehicleNo, setVehicleNo] = useState("");
@@ -119,11 +120,11 @@ export default function NewSalesInvoicePage() {
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Invoice Date</label>
-                <input required type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className={inputClass} />
+                <DatePicker required value={invoiceDate} onChange={setInvoiceDate} />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Due Date</label>
-                <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className={inputClass} />
+                <DatePicker value={dueDate} onChange={setDueDate} />
               </div>
               <div className="flex items-end gap-4 pb-1">
                 <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -149,7 +150,7 @@ export default function NewSalesInvoicePage() {
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">PO Date</label>
-                <input type="date" value={poDate} onChange={(e) => setPoDate(e.target.value)} className={inputClass} />
+                <DatePicker value={poDate} onChange={setPoDate} />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">ASN No.</label>

@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { inputClass, tdClass, thClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { DatePicker } from "@/components/ui/DatePicker";
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 import { SalesBillPrintModal } from "./SalesBillPrintModal";
 import { downloadInvoicePdf, prefetchInvoicePdf, shareInvoicePdf } from "@/lib/invoice-pdf";
@@ -44,7 +49,7 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
   const [sharing, setSharing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [showBill, setShowBill] = useState(false);
-  const [payment, setPayment] = useState({ amount: "", paidDate: "", paymentMode: "bank_transfer" as PaymentMode, referenceNo: "" });
+  const [payment, setPayment] = useState({ amount: "", paidDate: todayIso(), paymentMode: "bank_transfer" as PaymentMode, referenceNo: "" });
 
   function load() {
     api.getSalesInvoice(id).then(setInvoice).catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load invoice."));
@@ -82,7 +87,7 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
         referenceNo: payment.referenceNo || undefined,
       };
       await api.addSalesInvoicePayment(id, dto);
-      setPayment({ amount: "", paidDate: "", paymentMode: "bank_transfer", referenceNo: "" });
+      setPayment({ amount: "", paidDate: todayIso(), paymentMode: "bank_transfer", referenceNo: "" });
       load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to record payment.");
@@ -292,8 +297,8 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
             <form className="grid grid-cols-1 gap-3 sm:grid-cols-2" onSubmit={handlePayment}>
               <input required type="number" step="0.01" placeholder="Amount" value={payment.amount}
                 onChange={(e) => setPayment((p) => ({ ...p, amount: e.target.value }))} className={inputClass} />
-              <input required type="date" value={payment.paidDate}
-                onChange={(e) => setPayment((p) => ({ ...p, paidDate: e.target.value }))} className={inputClass} />
+              <DatePicker required value={payment.paidDate}
+                onChange={(v) => setPayment((p) => ({ ...p, paidDate: v }))} />
               <CustomSelect
                 value={payment.paymentMode}
                 onChange={(val) => setPayment((p) => ({ ...p, paymentMode: val as PaymentMode }))}

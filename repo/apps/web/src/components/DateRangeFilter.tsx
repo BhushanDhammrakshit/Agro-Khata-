@@ -1,6 +1,6 @@
 "use client";
 
-import { inputClass } from "@/components/ui/styles";
+import { DatePicker } from "@/components/ui/DatePicker";
 
 interface Props {
   from: string;
@@ -14,11 +14,11 @@ export function DateRangeFilter({ from, to, onFrom, onTo }: Props) {
     <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end">
       <div className="min-w-0">
         <label className="mb-1.5 block text-sm font-medium text-slate-700">From</label>
-        <input type="date" value={from} onChange={(e) => onFrom(e.target.value)} className={inputClass + " min-w-[9.5rem] py-1.5 text-sm"} />
+        <DatePicker size="sm" value={from} onChange={onFrom} className="min-w-[9.5rem]" />
       </div>
       <div className="min-w-0">
         <label className="mb-1.5 block text-sm font-medium text-slate-700">To</label>
-        <input type="date" value={to} onChange={(e) => onTo(e.target.value)} className={inputClass + " min-w-[9.5rem] py-1.5 text-sm"} />
+        <DatePicker size="sm" value={to} onChange={onTo} className="min-w-[9.5rem]" />
       </div>
     </div>
   );

@@ -7,7 +7,12 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function fmt(v: string | number) {
   const n = typeof v === "string" ? parseFloat(v) : v;
@@ -22,7 +27,7 @@ export default function PaymentsPage() {
   const [partyId, setPartyId] = useState("");
   const [outstanding, setOutstanding] = useState<Invoice[]>([]);
   const [amount, setAmount] = useState("");
-  const [paidDate, setPaidDate] = useState("");
+  const [paidDate, setPaidDate] = useState(todayIso());
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("bank_transfer");
   const [referenceNo, setReferenceNo] = useState("");
   const [notes, setNotes] = useState("");
@@ -120,8 +125,8 @@ export default function PaymentsPage() {
             )}
             <input required type="number" step="0.01" placeholder="Amount" value={amount}
               onChange={(e) => setAmount(e.target.value)} className={inputClass} />
-            <input required type="date" value={paidDate}
-              onChange={(e) => setPaidDate(e.target.value)} className={inputClass} />
+            <DatePicker required value={paidDate}
+              onChange={setPaidDate} />
             <CustomSelect
               value={paymentMode}
               onChange={(val) => setPaymentMode(val as PaymentMode)}

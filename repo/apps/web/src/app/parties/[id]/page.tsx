@@ -7,7 +7,12 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { inputClass, tableWrapClass, thClass, tdClass } from "@/components/ui/styles";
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function fmt(v: string | number) {
   const n = parseFloat(String(v));
@@ -55,7 +60,7 @@ export default function PartyDetailPage({ params }: { params: Promise<{ id: stri
   const [farmerCodeDraft, setFarmerCodeDraft] = useState("");
   const [savingFarmerCode, setSavingFarmerCode] = useState(false);
   const [payment, setPayment] = useState<{ direction: PartyPaymentDirection; amount: string; paidDate: string; paymentMode: PaymentMode; referenceNo: string; notes: string }>(
-    { direction: "received", amount: "", paidDate: "", paymentMode: "cash", referenceNo: "", notes: "" },
+    { direction: "received", amount: "", paidDate: todayIso(), paymentMode: "cash", referenceNo: "", notes: "" },
   );
   const [recordingPayment, setRecordingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -86,7 +91,7 @@ export default function PartyDetailPage({ params }: { params: Promise<{ id: stri
         notes: payment.notes || undefined,
       };
       await api.recordPartyPayment(id, dto);
-      setPayment({ direction: "received", amount: "", paidDate: "", paymentMode: "cash", referenceNo: "", notes: "" });
+      setPayment({ direction: "received", amount: "", paidDate: todayIso(), paymentMode: "cash", referenceNo: "", notes: "" });
       loadLedger();
     } catch (err) {
       setPaymentError(err instanceof ApiError ? err.message : "Failed to record payment.");
@@ -232,8 +237,8 @@ export default function PartyDetailPage({ params }: { params: Promise<{ id: stri
                 />
                 <input required type="number" step="0.01" placeholder="Amount" value={payment.amount}
                   onChange={(e) => setPayment((p) => ({ ...p, amount: e.target.value }))} className={inputClass} />
-                <input required type="date" value={payment.paidDate}
-                  onChange={(e) => setPayment((p) => ({ ...p, paidDate: e.target.value }))} className={inputClass} />
+                <DatePicker required value={payment.paidDate}
+                  onChange={(v) => setPayment((p) => ({ ...p, paidDate: v }))} />
                 <CustomSelect
                   value={payment.paymentMode}
                   onChange={(val) => setPayment((p) => ({ ...p, paymentMode: val as PaymentMode }))}

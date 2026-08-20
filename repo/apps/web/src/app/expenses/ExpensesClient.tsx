@@ -7,6 +7,11 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { DatePicker } from "@/components/ui/DatePicker";
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function formatAmount(value: string) {
   const amount = Number(value);
@@ -30,7 +35,7 @@ function formatPaymentMode(value: PaymentMode) {
 export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[] }) {
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({ category: "", description: "", amount: "", expenseDate: "", paymentMode: "cash" as PaymentMode });
+  const [form, setForm] = useState({ category: "", description: "", amount: "", expenseDate: todayIso(), paymentMode: "cash" as PaymentMode });
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -41,7 +46,7 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
   }
 
   function resetForm() {
-    setForm({ category: "", description: "", amount: "", expenseDate: "", paymentMode: "cash" });
+    setForm({ category: "", description: "", amount: "", expenseDate: todayIso(), paymentMode: "cash" });
     setEditingId(null);
   }
 
@@ -113,7 +118,7 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Date</label>
-              <input required type="date" value={form.expenseDate} onChange={(e) => setForm((f) => ({ ...f, expenseDate: e.target.value }))} className={inputClass} />
+              <DatePicker required value={form.expenseDate} onChange={(v) => setForm((f) => ({ ...f, expenseDate: v }))} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Payment mode</label>
