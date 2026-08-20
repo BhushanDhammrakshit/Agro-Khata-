@@ -6,6 +6,7 @@ import { UserRole } from '../entities/user.entity';
 import { PartyType } from '../entities/party.entity';
 import { PartiesService } from './parties.service';
 import { CreatePartyDto } from './dto/create-party.dto';
+import { CreatePartyPaymentDto } from './dto/create-party-payment.dto';
 import { UpdatePartyDto } from './dto/update-party.dto';
 
 const WRITE_ROLES = [UserRole.OWNER, UserRole.STAFF];
@@ -46,5 +47,16 @@ export class PartiesController {
   @Roles(UserRole.OWNER)
   updateFarmerCode(@Param('id') id: string, @Body('farmerCode') farmerCode: string) {
     return this.partiesService.updateFarmerCode(id, farmerCode);
+  }
+
+  @Get(':id/payments')
+  listPayments(@Param('id') id: string) {
+    return this.partiesService.listPayments(id);
+  }
+
+  @Post(':id/payments')
+  @Roles(...WRITE_ROLES)
+  recordPayment(@Param('id') id: string, @Body() dto: CreatePartyPaymentDto) {
+    return this.partiesService.recordPayment(id, dto);
   }
 }

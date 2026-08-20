@@ -2,9 +2,11 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { api, AuthUser, Party, PartyLedger } from "@/lib/api";
+import { api, ApiError, AuthUser, CreatePartyPaymentDto, Party, PartyLedger, PartyPaymentDirection, PaymentMode } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 import { inputClass, tableWrapClass, thClass, tdClass } from "@/components/ui/styles";
 
 function fmt(v: string | number) {
@@ -16,6 +18,7 @@ function fmt(v: string | number) {
 const TXN_LABEL: Record<string, string> = {
   sales_invoice: "Sales Invoice", sales_payment: "Payment Received",
   purchase_invoice: "Purchase Invoice", purchase_payment: "Payment Made",
+  payment_received: "Payment Received", payment_paid: "Payment Made",
 };
 
 const PARTY_FIELDS: { key: keyof Party; label: string; type?: string; section: string; placeholder?: string }[] = [
@@ -51,17 +54,46 @@ export default function PartyDetailPage({ params }: { params: Promise<{ id: stri
   const [editingFarmerCode, setEditingFarmerCode] = useState(false);
   const [farmerCodeDraft, setFarmerCodeDraft] = useState("");
   const [savingFarmerCode, setSavingFarmerCode] = useState(false);
+  const [payment, setPayment] = useState<{ direction: PartyPaymentDirection; amount: string; paidDate: string; paymentMode: PaymentMode; referenceNo: string; notes: string }>(
+    { direction: "received", amount: "", paidDate: "", paymentMode: "cash", referenceNo: "", notes: "" },
+  );
+  const [recordingPayment, setRecordingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   useEffect(() => {
     api.getParty(id).then((p) => { setParty(p); setForm(p); setFarmerCodeDraft(p.farmerCode ?? ""); }).catch((e) => setError(e?.message ?? "Failed to load."));
     api.getMe().then(setMe).catch(() => null);
   }, [id]);
 
+  function loadLedger() {
+    api.getPartyLedger(id).then(setLedger).catch(() => null);
+  }
+
   useEffect(() => {
-    if (tab === "ledger") {
-      api.getPartyLedger(id).then(setLedger).catch(() => null);
-    }
+    if (tab === "ledger") loadLedger();
   }, [tab, id]);
+
+  async function handleRecordPayment(e: React.FormEvent) {
+    e.preventDefault();
+    setRecordingPayment(true); setPaymentError(null);
+    try {
+      const dto: CreatePartyPaymentDto = {
+        direction: payment.direction,
+        amount: parseFloat(payment.amount),
+        paidDate: payment.paidDate,
+        paymentMode: payment.paymentMode,
+        referenceNo: payment.referenceNo || undefined,
+        notes: payment.notes || undefined,
+      };
+      await api.recordPartyPayment(id, dto);
+      setPayment({ direction: "received", amount: "", paidDate: "", paymentMode: "cash", referenceNo: "", notes: "" });
+      loadLedger();
+    } catch (err) {
+      setPaymentError(err instanceof ApiError ? err.message : "Failed to record payment.");
+    } finally {
+      setRecordingPayment(false);
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -185,6 +217,45 @@ export default function PartyDetailPage({ params }: { params: Promise<{ id: stri
               </Card>
               <Card><p className="text-xs text-slate-500">Transactions</p><p className="mt-1 text-2xl font-semibold">{ledger.transactions.length}</p></Card>
             </div>
+
+            <Card className="mb-5">
+              <h3 className="mb-3 text-sm font-semibold text-slate-700">Record a payment</h3>
+              <p className="mb-3 text-xs text-slate-500">This only records that money changed hands — no payment is processed through the app.</p>
+              <form className="grid grid-cols-1 gap-3 sm:grid-cols-2" onSubmit={handleRecordPayment}>
+                <CustomSelect
+                  value={payment.direction}
+                  onChange={(val) => setPayment((p) => ({ ...p, direction: val as PartyPaymentDirection }))}
+                  options={[
+                    { value: "received", label: "Received from party" },
+                    { value: "paid", label: "Paid to party" },
+                  ]}
+                />
+                <input required type="number" step="0.01" placeholder="Amount" value={payment.amount}
+                  onChange={(e) => setPayment((p) => ({ ...p, amount: e.target.value }))} className={inputClass} />
+                <input required type="date" value={payment.paidDate}
+                  onChange={(e) => setPayment((p) => ({ ...p, paidDate: e.target.value }))} className={inputClass} />
+                <CustomSelect
+                  value={payment.paymentMode}
+                  onChange={(val) => setPayment((p) => ({ ...p, paymentMode: val as PaymentMode }))}
+                  options={[
+                    { value: "cash", label: "Cash" },
+                    { value: "bank_transfer", label: "Bank transfer" },
+                    { value: "upi", label: "UPI" },
+                    { value: "cheque", label: "Cheque" },
+                    { value: "adjustment", label: "Adjustment / deduction (TDS, commission, discount, etc.)" },
+                    { value: "other", label: "Other" },
+                  ]}
+                />
+                <input placeholder="Reference no (optional)" value={payment.referenceNo}
+                  onChange={(e) => setPayment((p) => ({ ...p, referenceNo: e.target.value }))} className={inputClass} />
+                <input placeholder="Notes — e.g. what this expense/deduction is (optional)" value={payment.notes}
+                  onChange={(e) => setPayment((p) => ({ ...p, notes: e.target.value }))} className={inputClass} />
+                {paymentError && <p className="sm:col-span-2 text-sm text-red-600">{paymentError}</p>}
+                <Button type="submit" disabled={recordingPayment} className="sm:col-span-2">
+                  {recordingPayment ? "Recording…" : "Record payment"}
+                </Button>
+              </form>
+            </Card>
             <div className={tableWrapClass}>
               <table className="w-full text-sm">
                 <thead><tr>

@@ -242,7 +242,7 @@ export interface Item {
 }
 
 export type InvoiceStatus = "draft" | "sent" | "partially_paid" | "paid" | "overdue" | "cancelled";
-export type PaymentMode = "cash" | "bank_transfer" | "upi" | "cheque" | "other";
+export type PaymentMode = "cash" | "bank_transfer" | "upi" | "cheque" | "adjustment" | "other";
 
 export interface InvoiceLineItemInput {
   itemId?: string;
@@ -332,6 +332,61 @@ export interface CreatePaymentDto {
   notes?: string;
 }
 
+export type PartyPaymentDirection = "paid" | "received";
+
+export interface PartyPayment {
+  id: string;
+  partyId: string;
+  direction: PartyPaymentDirection;
+  amount: string;
+  paidDate: string;
+  paymentMode: PaymentMode;
+  referenceNo?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface CreatePartyPaymentDto {
+  direction: PartyPaymentDirection;
+  amount: number;
+  paidDate: string;
+  paymentMode: PaymentMode;
+  referenceNo?: string;
+  notes?: string;
+}
+
+export interface PurchasePaymentReportRow {
+  id: string;
+  paid_date: string;
+  amount: string;
+  payment_mode: PaymentMode;
+  reference_no?: string;
+  notes?: string;
+  invoice_id: string;
+  invoice_no: string;
+  party_id: string;
+  party_name: string;
+}
+
+export interface PaySupplierDto {
+  partyId: string;
+  amount: number;
+  paidDate: string;
+  paymentMode: PaymentMode;
+  referenceNo?: string;
+  notes?: string;
+}
+
+export type PayCustomerDto = PaySupplierDto;
+
+export interface PaySupplierResult {
+  partyId: string;
+  partyName: string;
+  totalAmount: string;
+  applied: { invoiceId: string; invoiceNo: string; amount: string; newStatus: InvoiceStatus }[];
+  advanceAmount: string | null;
+}
+
 export interface Expense {
   id: string;
   category: string;
@@ -401,6 +456,9 @@ export const api = {
   updateParty: (id: string, dto: Partial<Party>) => request<Party>(`/parties/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/parties")),
   updateFarmerCode: (id: string, farmerCode: string) =>
     request<Party>(`/parties/${id}/farmer-code`, { method: "PATCH", body: JSON.stringify({ farmerCode }) }).finally(() => invalidate("/parties")),
+  listPartyPayments: (id: string) => cachedRequest<PartyPayment[]>(`/parties/${id}/payments`),
+  recordPartyPayment: (id: string, dto: CreatePartyPaymentDto) =>
+    request<PartyPayment>(`/parties/${id}/payments`, { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/parties", "/reports/party")),
 
   // Items
   listItems: () => cachedRequest<Item[]>("/items"),
@@ -432,6 +490,8 @@ export const api = {
     request<Invoice>(`/sales-invoices/${id}/send`, { method: "POST" }).finally(() => invalidate("/sales-invoices")),
   addSalesInvoicePayment: (id: string, dto: CreatePaymentDto) =>
     request<Invoice>(`/sales-invoices/${id}/payments`, { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/sales-invoices", "/reports/dashboard")),
+  payCustomer: (dto: PayCustomerDto) =>
+    request<PaySupplierResult>("/sales-invoices/pay-customer", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/sales-invoices", "/reports/dashboard", "/parties")),
 
   // Purchase Invoices (from a supplier)
   listPurchaseInvoices: (filters?: { partyId?: string; status?: InvoiceStatus }) => {
@@ -445,6 +505,8 @@ export const api = {
     request<Invoice>(`/purchase-invoices/${id}/send`, { method: "POST" }).finally(() => invalidate("/purchase-invoices")),
   addPurchaseInvoicePayment: (id: string, dto: CreatePaymentDto) =>
     request<Invoice>(`/purchase-invoices/${id}/payments`, { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/purchase-invoices", "/reports/dashboard")),
+  paySupplier: (dto: PaySupplierDto) =>
+    request<PaySupplierResult>("/purchase-invoices/pay-supplier", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/purchase-invoices", "/reports/dashboard", "/reports/purchase-payments", "/parties")),
 
   // Expenses
   listExpenses: () => cachedRequest<Expense[]>("/expenses", LIST_TTL),
@@ -487,6 +549,8 @@ export const api = {
     request<ReportInvoiceRow[]>(`/reports/sales${params ? "?" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v !== undefined)) as Record<string,string>).toString() : ""}`),
   getPurchasesReport: (params?: { from?: string; to?: string; partyId?: string }) =>
     request<ReportInvoiceRow[]>(`/reports/purchases${params ? "?" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v !== undefined)) as Record<string,string>).toString() : ""}`),
+  getPurchasePaymentsReport: (params?: { from?: string; to?: string; partyId?: string }) =>
+    request<PurchasePaymentReportRow[]>(`/reports/purchase-payments${params ? "?" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([,v]) => v !== undefined)) as Record<string,string>).toString() : ""}`),
   getStockSummary: () => request<StockSummaryRow[]>("/reports/stock-summary"),
   getOutstandingReport: (type: "receivable" | "payable") =>
     request<ReportInvoiceRow[]>(`/reports/outstanding?type=${type}`),

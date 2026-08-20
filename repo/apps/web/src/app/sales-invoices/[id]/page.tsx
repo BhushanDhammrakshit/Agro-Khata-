@@ -302,6 +302,7 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
                   { value: "upi", label: "UPI" },
                   { value: "cash", label: "Cash" },
                   { value: "cheque", label: "Cheque" },
+                  { value: "adjustment", label: "Adjustment / deduction (TDS, commission, discount, etc.)" },
                   { value: "other", label: "Other" },
                 ]}
               />

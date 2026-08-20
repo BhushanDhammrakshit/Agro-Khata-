@@ -6,12 +6,14 @@ import { PurchaseInvoice } from '../entities/purchase-invoice.entity';
 import { PurchaseInvoiceItem } from '../entities/purchase-invoice-item.entity';
 import { PurchaseInvoicePayment } from '../entities/purchase-invoice-payment.entity';
 import { Party } from '../entities/party.entity';
+import { PartyPayment, PartyPaymentDirection } from '../entities/party-payment.entity';
 import { Item } from '../entities/item.entity';
 import { StockLedger } from '../entities/stock-ledger.entity';
 import { StockMovementType } from '../entities/stock-movement-type.enum';
 import { InvoiceStatus } from '../entities/invoice-status.enum';
 import { CreatePurchaseInvoiceDto } from './dto/create-purchase-invoice.dto';
 import { CreatePaymentDto } from '../common/dto/create-payment.dto';
+import { PaySupplierDto } from './dto/pay-supplier.dto';
 
 @Injectable()
 export class PurchaseInvoicesService {
@@ -100,6 +102,8 @@ export class PurchaseInvoicesService {
         totalAmount: totalAmount.toFixed(2),
         notes: dto.notes,
         createdBy: userId,
+        // Purchase invoices go straight to "sent" — there's no separate draft-review step for them.
+        status: InvoiceStatus.SENT,
       }),
     );
     } catch (err) {
@@ -191,6 +195,90 @@ export class PurchaseInvoicesService {
     const after = await manager.getRepository(PurchaseInvoice).findOneByOrFail({ id });
     await this.auditLog.record({ action: 'purchase_invoice.payment_recorded', entityType: 'purchase_invoice', entityId: id, before: invoice, after });
     return after;
+  }
+
+  // Applies one lump-sum supplier payment across their outstanding invoices, oldest first;
+  // any leftover past the last invoice is logged as a standalone advance (PartyPayment).
+  async recordSupplierPayment(dto: PaySupplierDto) {
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const userId = this.tenantContext.getUserId();
+
+    const party = await manager.getRepository(Party).findOne({ where: { id: dto.partyId, tenantId } });
+    if (!party) {
+      throw new NotFoundException('Party not found.');
+    }
+
+    const outstanding = await manager.getRepository(PurchaseInvoice).find({
+      where: { tenantId, partyId: dto.partyId },
+      order: { invoiceDate: 'ASC', createdAt: 'ASC' },
+    });
+    const unpaid = outstanding.filter(
+      (inv) => inv.status !== InvoiceStatus.PAID && inv.status !== InvoiceStatus.CANCELLED && inv.status !== InvoiceStatus.DRAFT,
+    );
+
+    let remaining = dto.amount;
+    const applied: { invoiceId: string; invoiceNo: string; amount: string; newStatus: InvoiceStatus }[] = [];
+
+    for (const invoice of unpaid) {
+      if (remaining <= 0) break;
+      const balance = parseFloat(invoice.totalAmount) - parseFloat(invoice.paidAmount);
+      if (balance <= 0) continue;
+      const allocated = Math.min(remaining, balance);
+
+      await manager.getRepository(PurchaseInvoicePayment).save(
+        manager.getRepository(PurchaseInvoicePayment).create({
+          tenantId,
+          purchaseInvoiceId: invoice.id,
+          amount: allocated.toFixed(2),
+          paidDate: dto.paidDate,
+          paymentMode: dto.paymentMode,
+          referenceNo: dto.referenceNo,
+          notes: dto.notes,
+          createdBy: userId,
+        }),
+      );
+
+      const newPaid = parseFloat(invoice.paidAmount) + allocated;
+      const isFullyPaid = newPaid >= parseFloat(invoice.totalAmount);
+      const newStatus = isFullyPaid ? InvoiceStatus.PAID : InvoiceStatus.PARTIALLY_PAID;
+      await manager.getRepository(PurchaseInvoice).update(invoice.id, { paidAmount: newPaid.toFixed(2), status: newStatus });
+
+      applied.push({ invoiceId: invoice.id, invoiceNo: invoice.invoiceNo, amount: allocated.toFixed(2), newStatus });
+      remaining -= allocated;
+    }
+
+    let advance: PartyPayment | null = null;
+    if (remaining > 0) {
+      advance = await manager.getRepository(PartyPayment).save(
+        manager.getRepository(PartyPayment).create({
+          tenantId,
+          partyId: dto.partyId,
+          direction: PartyPaymentDirection.PAID,
+          amount: remaining.toFixed(2),
+          paidDate: dto.paidDate,
+          paymentMode: dto.paymentMode,
+          referenceNo: dto.referenceNo,
+          notes: dto.notes ? `${dto.notes} (advance — no outstanding invoice left to apply to)` : 'Advance — no outstanding invoice left to apply to',
+          createdBy: userId,
+        }),
+      );
+    }
+
+    await this.auditLog.record({
+      action: 'purchase_invoice.supplier_payment_recorded',
+      entityType: 'party',
+      entityId: dto.partyId,
+      after: { amount: dto.amount, applied, advanceAmount: advance?.amount ?? null },
+    });
+
+    return {
+      partyId: dto.partyId,
+      partyName: party.name,
+      totalAmount: dto.amount.toFixed(2),
+      applied,
+      advanceAmount: advance?.amount ?? null,
+    };
   }
 
   private async getOrThrow(id: string): Promise<PurchaseInvoice> {

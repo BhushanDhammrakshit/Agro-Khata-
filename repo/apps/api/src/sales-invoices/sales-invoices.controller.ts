@@ -7,6 +7,7 @@ import { InvoiceStatus } from '../entities/invoice-status.enum';
 import { SalesInvoicesService } from './sales-invoices.service';
 import { CreateSalesInvoiceDto } from './dto/create-sales-invoice.dto';
 import { CreatePaymentDto } from '../common/dto/create-payment.dto';
+import { PayCustomerDto } from './dto/pay-customer.dto';
 
 const WRITE_ROLES = [UserRole.OWNER, UserRole.STAFF];
 
@@ -41,5 +42,12 @@ export class SalesInvoicesController {
   @Roles(...WRITE_ROLES)
   addPayment(@Param('id') id: string, @Body() dto: CreatePaymentDto) {
     return this.salesInvoicesService.addPayment(id, dto);
+  }
+
+  // Bulk customer payment: allocates one lump sum across their outstanding invoices, oldest first.
+  @Post('pay-customer')
+  @Roles(...WRITE_ROLES)
+  payCustomer(@Body() dto: PayCustomerDto) {
+    return this.salesInvoicesService.recordCustomerPayment(dto);
   }
 }

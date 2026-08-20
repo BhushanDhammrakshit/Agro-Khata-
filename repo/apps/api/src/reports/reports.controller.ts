@@ -22,6 +22,11 @@ export class ReportsController {
     return this.reportsService.getPurchasesReport(from, to, partyId);
   }
 
+  @Get('purchase-payments')
+  getPurchasePayments(@Query('from') from?: string, @Query('to') to?: string, @Query('partyId') partyId?: string) {
+    return this.reportsService.getPurchasePaymentsReport(from, to, partyId);
+  }
+
   @Get('stock-summary')
   getStockSummary() {
     return this.reportsService.getStockSummary();

@@ -88,6 +88,28 @@ export class ReportsService {
     );
   }
 
+  // Individual purchase-invoice payments (per invoice, oldest-first allocation or single) within a date range — for the printable payments report.
+  async getPurchasePaymentsReport(from?: string, to?: string, partyId?: string) {
+    const mgr = this.tenantContext.getManager();
+    const tid = this.tenantContext.getTenantIdOrThrow();
+    const params: unknown[] = [tid];
+    let where = 'pi.tenant_id=$1';
+    if (from) { params.push(from); where += ` AND pip.paid_date>=$${params.length}`; }
+    if (to)   { params.push(to);   where += ` AND pip.paid_date<=$${params.length}`; }
+    if (partyId) { params.push(partyId); where += ` AND pi.party_id=$${params.length}`; }
+
+    return mgr.query(
+      `SELECT pip.id, pip.paid_date, pip.amount, pip.payment_mode, pip.reference_no, pip.notes,
+              pi.id AS invoice_id, pi.invoice_no, p.id AS party_id, p.name AS party_name
+       FROM purchase_invoice_payments pip
+       JOIN purchase_invoices pi ON pi.id=pip.purchase_invoice_id
+       LEFT JOIN parties p ON p.id=pi.party_id
+       WHERE ${where}
+       ORDER BY pip.paid_date ASC, pi.invoice_no ASC`,
+      params,
+    );
+  }
+
   async getStockSummary() {
     const mgr = this.tenantContext.getManager();
     const tid = this.tenantContext.getTenantIdOrThrow();
@@ -222,6 +244,16 @@ export class ReportsService {
         FROM purchase_invoice_payments pip
         JOIN purchase_invoices pi ON pi.id=pip.purchase_invoice_id
         WHERE pi.tenant_id=$2 AND pi.party_id=$1
+
+        UNION ALL
+        -- Standalone party payments (not tied to any invoice, record-only)
+        SELECT id, reference_no AS ref_no, paid_date AS txn_date,
+               CASE WHEN direction='received' THEN 'payment_received' ELSE 'payment_paid' END AS txn_type,
+               CASE WHEN direction='paid' THEN amount ELSE 0 END AS debit,
+               CASE WHEN direction='received' THEN amount ELSE 0 END AS credit,
+               NULL
+        FROM party_payments
+        WHERE tenant_id=$2 AND party_id=$1
       )
       SELECT *, SUM(debit - credit) OVER (ORDER BY txn_date, txn_type) AS running_balance
       FROM ledger

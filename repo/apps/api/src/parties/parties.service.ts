@@ -2,11 +2,13 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { AuditLogService } from '../common/audit/audit-log.service';
 import { Party, PartyType } from '../entities/party.entity';
+import { PartyPayment } from '../entities/party-payment.entity';
 import { PurchaseInvoice } from '../entities/purchase-invoice.entity';
 import { SalesInvoice } from '../entities/sales-invoice.entity';
 import { Tenant } from '../entities/tenant.entity';
 import { User, UserRole } from '../entities/user.entity';
 import { CreatePartyDto } from './dto/create-party.dto';
+import { CreatePartyPaymentDto } from './dto/create-party-payment.dto';
 import { UpdatePartyDto } from './dto/update-party.dto';
 
 @Injectable()
@@ -133,5 +135,39 @@ export class PartiesService {
     const after = await manager.getRepository(Party).findOneByOrFail({ id: partyId });
     await this.auditLog.record({ action: 'party.farmer_code_updated', entityType: 'party', entityId: partyId, before: { farmerCode: before.farmerCode }, after: { farmerCode } });
     return after;
+  }
+
+  // Record-only: no money actually moves through the app.
+  async recordPayment(partyId: string, dto: CreatePartyPaymentDto): Promise<PartyPayment> {
+    await this.findOneOrThrow(partyId);
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const userId = this.tenantContext.getUserId();
+
+    const payment = await manager.getRepository(PartyPayment).save(
+      manager.getRepository(PartyPayment).create({
+        tenantId,
+        partyId,
+        direction: dto.direction,
+        amount: dto.amount.toString(),
+        paidDate: dto.paidDate,
+        paymentMode: dto.paymentMode,
+        referenceNo: dto.referenceNo,
+        notes: dto.notes,
+        createdBy: userId,
+      }),
+    );
+    await this.auditLog.record({ action: 'party.payment_recorded', entityType: 'party', entityId: partyId, after: payment });
+    return payment;
+  }
+
+  async listPayments(partyId: string): Promise<PartyPayment[]> {
+    await this.findOneOrThrow(partyId);
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    return manager.getRepository(PartyPayment).find({
+      where: { partyId, tenantId },
+      order: { paidDate: 'DESC', createdAt: 'DESC' },
+    });
   }
 }

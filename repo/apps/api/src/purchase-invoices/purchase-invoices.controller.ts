@@ -7,6 +7,7 @@ import { InvoiceStatus } from '../entities/invoice-status.enum';
 import { PurchaseInvoicesService } from './purchase-invoices.service';
 import { CreatePurchaseInvoiceDto } from './dto/create-purchase-invoice.dto';
 import { CreatePaymentDto } from '../common/dto/create-payment.dto';
+import { PaySupplierDto } from './dto/pay-supplier.dto';
 
 const WRITE_ROLES = [UserRole.OWNER, UserRole.STAFF];
 
@@ -41,5 +42,12 @@ export class PurchaseInvoicesController {
   @Roles(...WRITE_ROLES)
   addPayment(@Param('id') id: string, @Body() dto: CreatePaymentDto) {
     return this.purchaseInvoicesService.addPayment(id, dto);
+  }
+
+  // Bulk supplier payment: allocates one lump sum across their outstanding invoices, oldest first.
+  @Post('pay-supplier')
+  @Roles(...WRITE_ROLES)
+  paySupplier(@Body() dto: PaySupplierDto) {
+    return this.purchaseInvoicesService.recordSupplierPayment(dto);
   }
 }

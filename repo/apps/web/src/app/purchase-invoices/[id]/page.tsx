@@ -302,6 +302,7 @@ export default function PurchaseInvoiceDetailPage({ params }: { params: Promise<
                   { value: "bank_transfer", label: "Bank transfer" },
                   { value: "upi", label: "UPI" },
                   { value: "cheque", label: "Cheque" },
+                  { value: "adjustment", label: "Adjustment / deduction (TDS, commission, discount, etc.)" },
                   { value: "other", label: "Other" },
                 ]}
               />

@@ -7,6 +7,7 @@ import { OtpRequest } from '../entities/otp-request.entity';
 import { Item } from '../entities/item.entity';
 import { AuditLog } from '../entities/audit-log.entity';
 import { Party } from '../entities/party.entity';
+import { PartyPayment } from '../entities/party-payment.entity';
 import { SalesInvoice } from '../entities/sales-invoice.entity';
 import { SalesInvoiceItem } from '../entities/sales-invoice-item.entity';
 import { SalesInvoicePayment } from '../entities/sales-invoice-payment.entity';
@@ -20,7 +21,7 @@ import { Vehicle } from '../entities/vehicle.entity';
 
 const ENTITIES = [
   Tenant, User, OtpRequest, Item, AuditLog,
-  Party,
+  Party, PartyPayment,
   SalesInvoice, SalesInvoiceItem, SalesInvoicePayment,
   PurchaseInvoice, PurchaseInvoiceItem, PurchaseInvoicePayment,
   Expense, StockLedger,
