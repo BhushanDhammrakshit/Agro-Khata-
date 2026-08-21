@@ -87,7 +87,7 @@ export default function PaymentsPage() {
 
   return (
     <AppShell title="Payments">
-      <div className="mx-auto flex max-w-2xl flex-col gap-6">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden text-sm w-fit">
           {(["customer", "supplier"] as const).map((d) => (
             <button key={d} onClick={() => setDirection(d)}
