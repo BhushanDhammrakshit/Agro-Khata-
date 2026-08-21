@@ -10,24 +10,11 @@ import { CustomSelect } from "@/components/ui/CustomSelect";
 import { Badge } from "@/components/ui/Badge";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 import { buildPaymentsStatementHtml } from "@/lib/bill-templates/payments-statement";
+import { downloadHtmlAsPdf } from "@/lib/invoice-pdf";
 
 function fmt(v: string) { return "₹" + parseFloat(v).toLocaleString("en-IN", { minimumFractionDigits: 2 }); }
 const firstOfMonth = () => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
 const today = () => new Date().toISOString().slice(0, 10);
-
-// Prints the payment statement document itself (via a hidden iframe), never the raw report page.
-function printViaIframe(html: string) {
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText = "position:fixed;top:0;left:0;width:0;height:0;border:none;visibility:hidden;";
-  document.body.appendChild(iframe);
-  const doc = iframe.contentDocument!;
-  doc.open();
-  doc.write(html);
-  doc.close();
-  const ready = () => { iframe.contentWindow?.focus(); iframe.contentWindow?.print(); };
-  setTimeout(ready, 100);
-  setTimeout(() => document.body.removeChild(iframe), 5000);
-}
 
 export default function PurchasePaymentsReportPage() {
   const [invoices, setInvoices] = useState<PurchasePaymentInvoiceRow[]>([]);
@@ -35,6 +22,7 @@ export default function PurchasePaymentsReportPage() {
   const [from, setFrom]         = useState(firstOfMonth());
   const [to, setTo]             = useState(today());
   const [partyId, setPartyId]   = useState("");
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     api.listParties("supplier").then(setParties).catch(() => null);
@@ -48,10 +36,17 @@ export default function PurchasePaymentsReportPage() {
 
   const partyName = partyId ? parties.find((p) => p.id === partyId)?.name : undefined;
 
-  async function handlePrintInvoice() {
+  async function handleDownload() {
     const tenant = await api.getMyTenant().catch(() => null);
     if (!tenant) return;
-    printViaIframe(buildPaymentsStatementHtml(invoices, tenant, partyName, from, to));
+    setDownloading(true);
+    try {
+      const html = buildPaymentsStatementHtml(invoices, tenant, partyName, from, to);
+      const fileName = `Purchase Payments ${from} to ${to}${partyName ? ` - ${partyName}` : ""}.pdf`;
+      await downloadHtmlAsPdf(html, fileName, "portrait", 10);
+    } finally {
+      setDownloading(false);
+    }
   }
 
   return (
@@ -68,9 +63,13 @@ export default function PurchasePaymentsReportPage() {
               className="w-full"
             />
           </div>
-          <button onClick={handlePrintInvoice}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700">
-            🖨 Print Invoice
+          <button onClick={handleDownload} disabled={downloading}
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-400">
+            <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5" />
+              <path d="M4 14.5v1A1.5 1.5 0 005.5 17h9a1.5 1.5 0 001.5-1.5v-1" />
+            </svg>
+            {downloading ? "Preparing…" : "Download Report"}
           </button>
         </div>
       </div>

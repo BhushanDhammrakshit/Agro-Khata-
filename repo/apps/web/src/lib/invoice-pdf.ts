@@ -65,7 +65,7 @@ function getRowBoundaries(body: HTMLElement, scale: number): number[] {
 }
 
 /** Rasterizes `html` (the exact same markup used for Print / Save PDF) into a PDF blob so the shared file matches the printed bill. */
-async function renderHtmlToPdfBlob(html: string, orientation: "portrait" | "landscape"): Promise<Blob> {
+async function renderHtmlToPdfBlob(html: string, orientation: "portrait" | "landscape", marginMm = 8): Promise<Blob> {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
     import("html2canvas"),
     import("jspdf"),
@@ -73,9 +73,9 @@ async function renderHtmlToPdfBlob(html: string, orientation: "portrait" | "land
 
   const pageWidthPt = orientation === "landscape" ? 841.89 : 595.28;
   const pageHeightPt = orientation === "landscape" ? 595.28 : 841.89;
-  // Both bill templates print with `@page { margin: 8mm; }` — mirror that margin here so the
-  // downloaded PDF has the same page layout as the printed one, not edge-to-edge content.
-  const marginPt = 22.68;
+  // Mirror the template's own `@page { margin }` so the downloaded PDF has the same page
+  // layout as the printed one, not edge-to-edge content. 1mm = 2.8346pt.
+  const marginPt = marginMm * 2.8346;
   const contentWidthPt = pageWidthPt - marginPt * 2;
   const contentHeightPt = pageHeightPt - marginPt * 2;
   // Render at the same width the browser would give the content inside that printable area
@@ -206,6 +206,17 @@ export async function downloadInvoicePdf(kind: InvoiceKind, invoiceId: string): 
     }
     throw error;
   }
+}
+
+/** Renders any standalone bill-template HTML document (e.g. a report statement) to a PDF and downloads it. */
+export async function downloadHtmlAsPdf(
+  html: string,
+  fileName: string,
+  orientation: "portrait" | "landscape" = "portrait",
+  marginMm = 10,
+): Promise<void> {
+  const blob = await renderHtmlToPdfBlob(html, orientation, marginMm);
+  downloadBlob(blob, fileName);
 }
 
 export async function shareInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<"shared" | "downloaded" | "cancelled"> {
