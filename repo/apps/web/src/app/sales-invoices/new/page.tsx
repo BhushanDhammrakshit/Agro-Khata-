@@ -253,7 +253,7 @@ export default function NewSalesInvoicePage() {
 
           {error && <p className="text-sm text-red-600">{error}</p>}
           <Button type="submit" disabled={saving} className="self-start">
-            {saving ? "Creating…" : "Create Draft Invoice"}
+            {saving ? "Creating…" : "Create Invoice"}
           </Button>
         </form>
       </div>

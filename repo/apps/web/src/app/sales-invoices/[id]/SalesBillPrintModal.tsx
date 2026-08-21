@@ -80,13 +80,13 @@ export function SalesBillPrintModal({ invoiceId, onClose }: { invoiceId: string;
       <div className="w-full max-w-5xl rounded-xl bg-white shadow-2xl">
 
         {/* Toolbar */}
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+        <div className="flex flex-col gap-2 border-b border-slate-200 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <span className="text-sm font-semibold text-slate-700">Invoice Preview</span>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handlePrint}
               disabled={loading || !invoice}
-              className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
             >
               🖨 Print / Save PDF
             </button>
@@ -94,7 +94,7 @@ export function SalesBillPrintModal({ invoiceId, onClose }: { invoiceId: string;
               onClick={handleDownload}
               disabled={loading || !invoice || downloading}
               aria-busy={downloading}
-              className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:text-sm"
             >
               {downloading ? (
                 <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth="2">
@@ -110,7 +110,7 @@ export function SalesBillPrintModal({ invoiceId, onClose }: { invoiceId: string;
             </button>
             <button
               onClick={onClose}
-              className="cursor-pointer rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+              className="cursor-pointer rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 sm:text-sm"
             >
               ✕ Close
             </button>

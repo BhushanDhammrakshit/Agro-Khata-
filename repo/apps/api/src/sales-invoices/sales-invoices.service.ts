@@ -105,6 +105,7 @@ export class SalesInvoicesService {
         poNo: dto.poNo,
         poDate: dto.poDate,
         asnNo: dto.asnNo,
+        status: InvoiceStatus.SENT,
         createdBy: userId,
       }),
     );

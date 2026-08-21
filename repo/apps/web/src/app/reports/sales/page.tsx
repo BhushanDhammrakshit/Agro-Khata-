@@ -9,7 +9,7 @@ import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { tableWrapClass, thClass, tdClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
-import { downloadCsv } from "@/lib/download";
+import { downloadStyledExcel } from "@/lib/download";
 
 function fmt(v: string) { return "₹" + parseFloat(v).toLocaleString("en-IN", { minimumFractionDigits: 2 }); }
 
@@ -35,15 +35,31 @@ export default function SalesReportPage() {
   const received = rows.reduce((s, r) => s + parseFloat(r.paid_amount), 0);
 
   function handleDownload() {
-    const headers = ["Invoice No", "Date", "Customer", "Total (₹)", "Paid (₹)", "Balance (₹)", "Status"];
-    const data = rows.map((r) => [
-      r.invoice_no, r.invoice_date, r.party_name,
-      parseFloat(r.total_amount).toFixed(2),
-      parseFloat(r.paid_amount).toFixed(2),
-      parseFloat(r.balance_amount).toFixed(2),
-      formatStatusLabel(r.status),
-    ]);
-    downloadCsv(`sales-report-${from}-to-${to}.csv`, headers, data);
+    downloadStyledExcel({
+      filename: `sales-report-${from}-to-${to}.xlsx`,
+      sheetName: "Sales Report",
+      title: "Sales Report",
+      subtitle: `${from} to ${to}${partyId ? ` — ${parties.find((p) => p.id === partyId)?.name ?? ""}` : ""}`,
+      columns: [
+        { header: "Invoice No", key: "invoiceNo", width: 16, type: "text" },
+        { header: "Date", key: "date", width: 14, type: "text" },
+        { header: "Customer", key: "customer", width: 24, type: "text" },
+        { header: "Total", key: "total", width: 16, type: "currency" },
+        { header: "Paid", key: "paid", width: 16, type: "currency" },
+        { header: "Balance", key: "balance", width: 16, type: "currency" },
+        { header: "Status", key: "status", width: 14, type: "text" },
+      ],
+      rows: rows.map((r) => ({
+        invoiceNo: r.invoice_no,
+        date: r.invoice_date,
+        customer: r.party_name,
+        total: parseFloat(r.total_amount),
+        paid: parseFloat(r.paid_amount),
+        balance: parseFloat(r.balance_amount),
+        status: formatStatusLabel(r.status),
+      })),
+      totals: { total, paid: received, balance: total - received },
+    });
   }
 
   return (
