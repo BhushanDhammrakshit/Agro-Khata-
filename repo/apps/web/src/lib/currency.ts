@@ -1,8 +1,10 @@
 /**
  * Indian-numbering-system currency helpers (₹ symbol, lakh/crore grouping).
  * `formatCompactINR` is meant for space-constrained summary/KPI displays where a long
- * digit string (e.g. ₹1,31,21,000.00) would overflow a small card on mobile — it
- * abbreviates to Lakh/Crore instead. Use `formatINR` wherever the exact figure matters
+ * digit string (e.g. ₹1,31,21,000.00) would overflow/wrap a small card on mobile — it
+ * abbreviates to Lakh/Crore instead. Testing showed even 7-digit Lakh-range amounts
+ * (e.g. ₹17,74,544.23) wrap onto two lines at the card's font size, so both thresholds
+ * abbreviate, not just Crore. Use `formatINR` wherever the exact figure matters
  * (invoice detail pages, bills, per-row report/table data).
  */
 
@@ -20,7 +22,7 @@ export function formatINR(value: string | number): string {
 const LAKH = 1_00_000;
 const CRORE = 1_00_00_000;
 
-/** e.g. 13121000 -> "₹1.31 Cr", 130000 -> "₹1.30 L", 3500 -> "₹3,500.00" (unabbreviated below 1 lakh). */
+/** e.g. 13121000 -> "₹1.31 Cr", 1774544 -> "₹17.75 L", 3500 -> "₹3,500.00" (kept in full below 1 lakh). */
 export function formatCompactINR(value: string | number): string {
   const n = toNumber(value);
   if (!Number.isFinite(n)) return "₹0.00";
@@ -30,3 +32,4 @@ export function formatCompactINR(value: string | number): string {
   if (abs >= LAKH) return `${sign}₹${(abs / LAKH).toFixed(2)} L`;
   return formatINR(n);
 }
+
