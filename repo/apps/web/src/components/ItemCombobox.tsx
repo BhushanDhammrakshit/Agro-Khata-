@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Item } from "@/lib/api";
+import { useFloatingPosition } from "@/lib/use-floating-position";
 
 interface Props {
   items: Item[];
@@ -12,19 +13,10 @@ interface Props {
   className?: string;
 }
 
-interface Rect { top: number; left: number; width: number; }
-
 export function ItemCombobox({ items, value, onTextChange, onSelect, placeholder, className }: Props) {
   const [open, setOpen] = useState(false);
-  const [rect, setRect] = useState<Rect | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  function updateRect() {
-    if (inputRef.current) {
-      const r = inputRef.current.getBoundingClientRect();
-      setRect({ top: r.bottom, left: r.left, width: r.width });
-    }
-  }
+  const rect = useFloatingPosition(inputRef, open, 240);
 
   useEffect(() => {
     if (!open) return;
@@ -32,15 +24,8 @@ export function ItemCombobox({ items, value, onTextChange, onSelect, placeholder
       if (inputRef.current && inputRef.current.contains(e.target as Node)) return;
       setOpen(false);
     }
-    function reposition() { updateRect(); }
     document.addEventListener("mousedown", close);
-    window.addEventListener("scroll", reposition, true);
-    window.addEventListener("resize", reposition);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      window.removeEventListener("scroll", reposition, true);
-      window.removeEventListener("resize", reposition);
-    };
+    return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
   const filtered = value.trim()
@@ -56,13 +41,21 @@ export function ItemCombobox({ items, value, onTextChange, onSelect, placeholder
         placeholder={placeholder ?? "Item"}
         autoComplete="off"
         className={className}
-        onChange={(e) => { onTextChange(e.target.value); updateRect(); setOpen(true); }}
-        onFocus={() => { updateRect(); setOpen(true); }}
+        onChange={(e) => { onTextChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
       />
       {open && filtered.length > 0 && rect && (
         <ul
-          style={{ position: "fixed", top: rect.top + 4, left: rect.left, width: Math.max(rect.width, 240), zIndex: 9999 }}
-          className="max-h-52 overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg text-sm"
+          style={{
+            position: "fixed",
+            top: rect.placement === "bottom" ? rect.top : undefined,
+            bottom: rect.placement === "top" ? rect.bottom : undefined,
+            left: rect.left,
+            width: rect.width,
+            maxHeight: rect.maxHeight,
+            zIndex: 9999,
+          }}
+          className="overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg text-sm"
         >
           {filtered.map((it) => (
             <li key={it.id}

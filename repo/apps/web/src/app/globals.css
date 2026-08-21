@@ -22,3 +22,15 @@ body {
 table {
   min-width: 600px;
 }
+
+/* iOS Safari/Chrome auto-zoom the whole page when a focused form field's
+   computed font-size is below 16px. Our inputs use Tailwind text-sm (14px),
+   which triggered this — the zoom (and the layout shift it causes together
+   with the keyboard) is what looked like "the UI breaking" on iPhone. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}

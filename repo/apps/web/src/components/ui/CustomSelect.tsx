@@ -1,6 +1,7 @@
 ï»¿"use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useFloatingPosition } from "@/lib/use-floating-position";
 
 export interface SelectOption {
   value: string;
@@ -16,18 +17,14 @@ interface Props {
   disabled?: boolean;
 }
 
-interface Rect { top: number; left: number; width: number; }
-
 export function CustomSelect({ value, onChange, options, placeholder = "Selectâ€¦", className, disabled }: Props) {
   const [open, setOpen] = useState(false);
-  const [rect, setRect] = useState<Rect | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const rect = useFloatingPosition(btnRef, open);
   const selected = options.find((o) => o.value === value);
 
   function openDropdown() {
     if (disabled || !btnRef.current) return;
-    const r = btnRef.current.getBoundingClientRect();
-    setRect({ top: r.bottom, left: r.left, width: r.width });
     setOpen(true);
   }
 
@@ -37,20 +34,8 @@ export function CustomSelect({ value, onChange, options, placeholder = "Selectâ€
       if (btnRef.current && btnRef.current.contains(e.target as Node)) return;
       setOpen(false);
     }
-    function reposition() {
-      if (btnRef.current) {
-        const r = btnRef.current.getBoundingClientRect();
-        setRect({ top: r.bottom, left: r.left, width: r.width });
-      }
-    }
     document.addEventListener("mousedown", close);
-    window.addEventListener("scroll", reposition, true);
-    window.addEventListener("resize", reposition);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      window.removeEventListener("scroll", reposition, true);
-      window.removeEventListener("resize", reposition);
-    };
+    return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
   return (
@@ -72,8 +57,16 @@ export function CustomSelect({ value, onChange, options, placeholder = "Selectâ€
 
       {open && rect && (
         <ul
-          style={{ position: "fixed", top: rect.top + 4, left: rect.left, width: rect.width, zIndex: 9999 }}
-          className="max-h-60 overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+          style={{
+            position: "fixed",
+            top: rect.placement === "bottom" ? rect.top : undefined,
+            bottom: rect.placement === "top" ? rect.bottom : undefined,
+            left: rect.left,
+            width: rect.width,
+            maxHeight: rect.maxHeight,
+            zIndex: 9999,
+          }}
+          className="overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
         >
           {options.map((opt) => (
             <li key={opt.value}>

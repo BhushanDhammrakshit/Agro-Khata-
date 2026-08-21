@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { api, Party, PartyType } from "@/lib/api";
+import { useFloatingPosition } from "@/lib/use-floating-position";
 
 interface Props {
   partyType: PartyType;
@@ -16,17 +17,10 @@ export function PartyCombobox({ partyType, parties, value, onChange, onPartyCrea
   const selectedParty = parties.find((p) => p.id === value);
   const [query, setQuery] = useState(selectedParty?.name ?? "");
   const [open, setOpen] = useState(false);
-  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  function updateRect() {
-    if (inputRef.current) {
-      const r = inputRef.current.getBoundingClientRect();
-      setRect({ top: r.bottom, left: r.left, width: r.width });
-    }
-  }
+  const rect = useFloatingPosition(inputRef, open);
 
   useEffect(() => {
     if (value) {
@@ -41,15 +35,8 @@ export function PartyCombobox({ partyType, parties, value, onChange, onPartyCrea
       if (inputRef.current && inputRef.current.contains(e.target as Node)) return;
       setOpen(false);
     }
-    function reposition() { updateRect(); }
     document.addEventListener("mousedown", close);
-    window.addEventListener("scroll", reposition, true);
-    window.addEventListener("resize", reposition);
-    return () => {
-      document.removeEventListener("mousedown", close);
-      window.removeEventListener("scroll", reposition, true);
-      window.removeEventListener("resize", reposition);
-    };
+    return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
   const filtered = query.trim()
@@ -95,17 +82,24 @@ export function PartyCombobox({ partyType, parties, value, onChange, onPartyCrea
         onChange={(e) => {
           setQuery(e.target.value);
           onChange(""); // clear selection while typing
-          updateRect();
           setOpen(true);
           setError(null);
         }}
-        onFocus={() => { updateRect(); setOpen(true); }}
+        onFocus={() => setOpen(true)}
       />
 
       {open && (filtered.length > 0 || showCreate) && rect && (
         <ul
-          style={{ position: "fixed", top: rect.top + 4, left: rect.left, width: rect.width, zIndex: 9999 }}
-          className="max-h-52 overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg text-sm"
+          style={{
+            position: "fixed",
+            top: rect.placement === "bottom" ? rect.top : undefined,
+            bottom: rect.placement === "top" ? rect.bottom : undefined,
+            left: rect.left,
+            width: rect.width,
+            maxHeight: rect.maxHeight,
+            zIndex: 9999,
+          }}
+          className="overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg text-sm"
         >
           {filtered.map((p) => (
             <li key={p.id}
