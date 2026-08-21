@@ -8,6 +8,7 @@ import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/Badge";
 import { tableWrapClass, thClass, tdClass } from "@/components/ui/styles";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
+import { formatCompactINR, formatINR } from "@/lib/currency";
 
 function fmt(v: string) { return "₹" + parseFloat(v).toLocaleString("en-IN", { minimumFractionDigits: 2 }); }
 
@@ -35,7 +36,7 @@ function OutstandingReport() {
           ))}
         </div>
         <p className="text-sm font-semibold text-slate-700">
-          Outstanding: <span className={type === "receivable" ? "text-blue-700" : "text-orange-700"}>{fmt(String(total))}</span>
+          Outstanding: <span className={type === "receivable" ? "text-blue-700" : "text-orange-700"} title={formatINR(total)}>{formatCompactINR(total)}</span>
         </p>
       </div>
 

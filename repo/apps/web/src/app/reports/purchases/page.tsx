@@ -10,6 +10,7 @@ import { tableWrapClass, thClass, tdClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 import { downloadStyledExcel } from "@/lib/download";
+import { formatCompactINR, formatINR } from "@/lib/currency";
 
 function fmt(v: string) { return "₹" + parseFloat(v).toLocaleString("en-IN", { minimumFractionDigits: 2 }); }
 const firstOfMonth = () => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
@@ -79,9 +80,9 @@ export default function PurchasesReportPage() {
 
         <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap gap-2 text-sm">
-            <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-slate-500">Total <strong className="ml-1 text-slate-800">{fmt(String(total))}</strong></span>
-            <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-slate-500">Paid <strong className="ml-1 text-emerald-700">{fmt(String(paid))}</strong></span>
-            <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-slate-500">Pending <strong className="ml-1 text-orange-700">{fmt(String(total - paid))}</strong></span>
+            <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-slate-500">Total <strong className="ml-1 text-slate-800" title={formatINR(total)}>{formatCompactINR(total)}</strong></span>
+            <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-slate-500">Paid <strong className="ml-1 text-emerald-700" title={formatINR(paid)}>{formatCompactINR(paid)}</strong></span>
+            <span className="rounded-lg bg-slate-50 px-3 py-1.5 text-slate-500">Pending <strong className="ml-1 text-orange-700" title={formatINR(total - paid)}>{formatCompactINR(total - paid)}</strong></span>
           </div>
           <button onClick={handleDownload}
             className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 sm:w-auto">

@@ -3,13 +3,7 @@ import type { ReactNode } from "react";
 import type { Invoice } from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
-
-function formatAmount(value: string) {
-  const amount = Number(value);
-  return Number.isFinite(amount)
-    ? `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : "₹0.00";
-}
+import { formatCompactINR, formatINR } from "@/lib/currency";
 
 function formatDate(value: string) {
   const [year, month, day] = value.slice(0, 10).split("-").map(Number);
@@ -50,16 +44,18 @@ export function InvoiceMobileCard({ invoice, href, partyLabel, actions }: Invoic
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 items-end gap-3 min-[360px]:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-400">Total</p>
-          <p className="mt-1 whitespace-nowrap text-base font-semibold text-slate-800 min-[400px]:text-lg">{formatAmount(invoice.totalAmount)}</p>
+      <div className="mt-5 flex flex-col gap-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-slate-400">Total</p>
+            <p className="mt-1 break-words text-base font-semibold text-slate-800 min-[400px]:text-lg" title={formatINR(invoice.totalAmount)}>{formatCompactINR(invoice.totalAmount)}</p>
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-slate-400">Balance</p>
+            <p className="mt-1 break-words text-base font-semibold text-slate-800 min-[400px]:text-lg" title={formatINR(invoice.balanceAmount)}>{formatCompactINR(invoice.balanceAmount)}</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-400">Balance</p>
-          <p className="mt-1 whitespace-nowrap text-base font-semibold text-slate-800 min-[400px]:text-lg">{formatAmount(invoice.balanceAmount)}</p>
-        </div>
-        <div className="relative z-20 col-span-2 justify-self-end min-[360px]:col-span-1">{actions}</div>
+        <div className="relative z-20 flex justify-end">{actions}</div>
       </div>
     </article>
   );

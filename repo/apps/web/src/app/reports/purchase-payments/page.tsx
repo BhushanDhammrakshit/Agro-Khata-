@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 import { buildPaymentsStatementHtml } from "@/lib/bill-templates/payments-statement";
 import { downloadHtmlAsPdf } from "@/lib/invoice-pdf";
+import { formatCompactINR, formatINR } from "@/lib/currency";
 
 function fmt(v: string) { return "₹" + parseFloat(v).toLocaleString("en-IN", { minimumFractionDigits: 2 }); }
 const firstOfMonth = () => new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
@@ -93,15 +94,15 @@ export default function PurchasePaymentsReportPage() {
             <div className="mt-5 grid grid-cols-3 items-end gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-medium text-slate-400">Total</p>
-                <p className="mt-1 whitespace-nowrap text-base font-semibold text-slate-800">{fmt(inv.total_amount)}</p>
+                <p className="mt-1 break-words text-base font-semibold text-slate-800" title={formatINR(inv.total_amount)}>{formatCompactINR(inv.total_amount)}</p>
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-medium text-slate-400">Paid</p>
-                <p className="mt-1 whitespace-nowrap text-base font-semibold text-slate-800">{fmt(inv.paid_amount)}</p>
+                <p className="mt-1 break-words text-base font-semibold text-slate-800" title={formatINR(inv.paid_amount)}>{formatCompactINR(inv.paid_amount)}</p>
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-medium text-slate-400">Balance</p>
-                <p className="mt-1 whitespace-nowrap text-base font-semibold text-slate-800">{fmt(inv.balance_amount)}</p>
+                <p className="mt-1 break-words text-base font-semibold text-slate-800" title={formatINR(inv.balance_amount)}>{formatCompactINR(inv.balance_amount)}</p>
               </div>
             </div>
           </article>

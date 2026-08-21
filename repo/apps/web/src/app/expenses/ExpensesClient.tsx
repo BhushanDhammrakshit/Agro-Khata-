@@ -8,16 +8,10 @@ import { Button } from "@/components/ui/Button";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { formatCompactINR, formatINR } from "@/lib/currency";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
-}
-
-function formatAmount(value: string) {
-  const amount = Number(value);
-  return Number.isFinite(amount)
-    ? `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : "₹0.00";
 }
 
 function formatDate(value: string) {
@@ -162,7 +156,7 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
               <div className="mt-5 grid grid-cols-2 gap-4 border-t border-slate-100 pt-3">
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-slate-400">Amount</p>
-                  <p className="mt-1 whitespace-nowrap text-base font-semibold text-slate-800">{formatAmount(expense.amount)}</p>
+                  <p className="mt-1 break-words text-base font-semibold text-slate-800" title={formatINR(expense.amount)}>{formatCompactINR(expense.amount)}</p>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-slate-400">Payment mode</p>
