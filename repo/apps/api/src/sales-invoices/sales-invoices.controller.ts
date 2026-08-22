@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -6,6 +6,7 @@ import { UserRole } from '../entities/user.entity';
 import { InvoiceStatus } from '../entities/invoice-status.enum';
 import { SalesInvoicesService } from './sales-invoices.service';
 import { CreateSalesInvoiceDto } from './dto/create-sales-invoice.dto';
+import { UpdateSalesInvoiceDto } from './dto/update-sales-invoice.dto';
 import { CreatePaymentDto } from '../common/dto/create-payment.dto';
 import { PayCustomerDto } from './dto/pay-customer.dto';
 
@@ -30,6 +31,18 @@ export class SalesInvoicesController {
   @Roles(...WRITE_ROLES)
   create(@Body() dto: CreateSalesInvoiceDto) {
     return this.salesInvoicesService.create(dto);
+  }
+
+  @Patch(':id')
+  @Roles(...WRITE_ROLES)
+  update(@Param('id') id: string, @Body() dto: UpdateSalesInvoiceDto) {
+    return this.salesInvoicesService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(...WRITE_ROLES)
+  remove(@Param('id') id: string) {
+    return this.salesInvoicesService.remove(id);
   }
 
   @Post(':id/send')

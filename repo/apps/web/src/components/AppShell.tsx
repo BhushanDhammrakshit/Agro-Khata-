@@ -330,7 +330,7 @@ export function AppShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       {mobileOpen && (
         <div className="fixed inset-0 z-30 bg-black/40 sm:hidden" onClick={() => setMobileOpen(false)} />
       )}
@@ -347,7 +347,7 @@ export function AppShell({
         onMobileClose={() => setMobileOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
           <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-3.5">
             <div className="flex min-w-0 items-center gap-2">

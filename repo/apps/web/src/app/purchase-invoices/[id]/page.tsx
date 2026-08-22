@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api, ApiError, CreatePaymentDto, Invoice, PaymentMode } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
@@ -17,6 +18,7 @@ function todayIso() {
 import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 import { BillPrintModal } from "./BillPrintModal";
 import { downloadInvoicePdf, prefetchInvoicePdf, shareInvoicePdf } from "@/lib/invoice-pdf";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 function inr(value: string | number) {
   const n = typeof value === "string" ? parseFloat(value) : value;
@@ -43,9 +45,12 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 export default function PurchaseInvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [showBill, setShowBill] = useState(false);
@@ -72,6 +77,19 @@ export default function PurchaseInvoiceDetailPage({ params }: { params: Promise<
       setError(err instanceof ApiError ? err.message : "Failed to mark as sent.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    setError(null);
+    try {
+      await api.deletePurchaseInvoice(id);
+      router.push("/purchase-invoices");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete invoice.");
+      setDeleting(false);
+      setConfirmingDelete(false);
     }
   }
 
@@ -113,6 +131,18 @@ export default function PurchaseInvoiceDetailPage({ params }: { params: Promise<
         <Link href="/purchase-invoices" className="text-sm font-medium text-slate-600 hover:text-slate-900">← Purchase Invoices</Link>
 
         <div className="flex justify-end gap-2 print:hidden">
+          {invoice.status !== "paid" && invoice.status !== "partially_paid" && invoice.status !== "cancelled" && (
+            <Link href={`/purchase-invoices/${invoice.id}/edit`}
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+              ✏️ Edit
+            </Link>
+          )}
+          {invoice.status !== "paid" && invoice.status !== "partially_paid" && (
+            <button onClick={() => setConfirmingDelete(true)} disabled={deleting} aria-busy={deleting}
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60">
+              🗑 {deleting ? "Deleting…" : "Delete"}
+            </button>
+          )}
           <button onClick={() => setShowBill(true)}
             className="cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
             🖨 Print Invoice
@@ -175,6 +205,17 @@ export default function PurchaseInvoiceDetailPage({ params }: { params: Promise<
         </div>
 
         {showBill && <BillPrintModal invoiceId={invoice.id} onClose={() => setShowBill(false)} />}
+
+        <ConfirmDialog
+          open={confirmingDelete}
+          title="Delete invoice"
+          message={`Delete invoice ${invoice.invoiceNo}? This cannot be undone.`}
+          confirmLabel="Delete"
+          danger
+          busy={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmingDelete(false)}
+        />
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

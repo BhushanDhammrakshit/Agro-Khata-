@@ -12,6 +12,7 @@ import { StockLedger } from '../entities/stock-ledger.entity';
 import { StockMovementType } from '../entities/stock-movement-type.enum';
 import { InvoiceStatus } from '../entities/invoice-status.enum';
 import { CreatePurchaseInvoiceDto } from './dto/create-purchase-invoice.dto';
+import { UpdatePurchaseInvoiceDto } from './dto/update-purchase-invoice.dto';
 import { CreatePaymentDto } from '../common/dto/create-payment.dto';
 import { PaySupplierDto } from './dto/pay-supplier.dto';
 
@@ -152,6 +153,168 @@ export class PurchaseInvoicesService {
     const items = await itemRepo.find({ where: { purchaseInvoiceId: invoice.id }, order: { lineNo: 'ASC' } });
     await this.auditLog.record({ action: 'purchase_invoice.created', entityType: 'purchase_invoice', entityId: invoice.id, after: invoice });
     return { ...invoice, items };
+  }
+
+  // Full replace of an invoice's header + line items — only allowed before any payment is
+  // recorded against it, since editing totals afterward would invalidate existing payments.
+  async update(id: string, dto: UpdatePurchaseInvoiceDto): Promise<PurchaseInvoice & { items: PurchaseInvoiceItem[] }> {
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const userId = this.tenantContext.getUserId();
+    const invoice = await this.getOrThrow(id);
+
+    if (invoice.status === InvoiceStatus.PAID || invoice.status === InvoiceStatus.PARTIALLY_PAID) {
+      throw new BadRequestException('Paid or partially paid invoices cannot be edited.');
+    }
+    if (invoice.status === InvoiceStatus.CANCELLED) {
+      throw new BadRequestException('Cancelled invoices cannot be edited.');
+    }
+
+    const party = await manager.getRepository(Party).findOne({ where: { id: dto.partyId, tenantId } });
+    if (!party) {
+      throw new NotFoundException('Party not found.');
+    }
+
+    if (dto.invoiceNo !== invoice.invoiceNo) {
+      const existing = await manager.getRepository(PurchaseInvoice).findOne({ where: { tenantId, invoiceNo: dto.invoiceNo } });
+      if (existing && existing.id !== id) {
+        throw new BadRequestException('An invoice with this number already exists.');
+      }
+    }
+
+    const isGst = dto.isGstInvoice ?? false;
+    let subTotal = 0;
+    let totalGst = 0;
+    const lines = dto.items.map((line) => {
+      const gstRate = isGst ? (line.gstRate ?? 0) : 0;
+      const taxable = line.qty * line.rate;
+      const gstAmount = (taxable * gstRate) / 100;
+      subTotal += taxable;
+      totalGst += gstAmount;
+      return { ...line, gstRate };
+    });
+
+    const cgstAmount = isGst && !dto.isInterState ? totalGst / 2 : 0;
+    const sgstAmount = isGst && !dto.isInterState ? totalGst / 2 : 0;
+    const igstAmount = isGst && dto.isInterState ? totalGst : 0;
+    const totalAmount = subTotal + totalGst;
+
+    const itemRepo = manager.getRepository(PurchaseInvoiceItem);
+    const stockRepo = manager.getRepository(StockLedger);
+    const itemMasterRepo = manager.getRepository(Item);
+    const oldItems = await itemRepo.find({ where: { purchaseInvoiceId: id, tenantId } });
+
+    // Reverse the stock addition the old line items made, then re-apply for the new ones.
+    for (const oldLine of oldItems) {
+      if (!oldLine.itemId) continue;
+      await stockRepo.save(
+        stockRepo.create({
+          tenantId,
+          itemId: oldLine.itemId,
+          movementType: StockMovementType.ADJUSTMENT,
+          qtyChange: (-parseFloat(oldLine.qty)).toString(),
+          referenceType: 'purchase_invoice',
+          referenceId: id,
+          notes: 'Invoice edited — reverting previous line item',
+          createdBy: userId,
+        }),
+      );
+      await itemMasterRepo.decrement({ id: oldLine.itemId, tenantId }, 'currentStock', parseFloat(oldLine.qty));
+    }
+    await itemRepo.delete({ purchaseInvoiceId: id, tenantId });
+
+    await itemRepo.save(
+      lines.map((line, index) =>
+        itemRepo.create({
+          tenantId,
+          purchaseInvoiceId: id,
+          lineNo: index + 1,
+          itemId: line.itemId,
+          itemName: line.itemName,
+          uom: line.uom,
+          qty: line.qty.toString(),
+          rate: line.rate.toString(),
+          gstRate: line.gstRate.toString(),
+        }),
+      ),
+    );
+
+    for (const line of lines) {
+      if (!line.itemId) continue;
+      await stockRepo.save(
+        stockRepo.create({
+          tenantId,
+          itemId: line.itemId,
+          movementType: StockMovementType.ADJUSTMENT,
+          qtyChange: line.qty.toString(),
+          referenceType: 'purchase_invoice',
+          referenceId: id,
+          notes: 'Invoice edited — applying updated line item',
+          createdBy: userId,
+        }),
+      );
+      await itemMasterRepo.increment({ id: line.itemId, tenantId }, 'currentStock', line.qty);
+    }
+
+    await manager.getRepository(PurchaseInvoice).update(id, {
+      partyId: dto.partyId,
+      invoiceNo: dto.invoiceNo,
+      invoiceDate: dto.invoiceDate,
+      dueDate: dto.dueDate,
+      isGstInvoice: isGst,
+      placeOfSupply: dto.placeOfSupply,
+      subTotal: subTotal.toFixed(2),
+      cgstAmount: cgstAmount.toFixed(2),
+      sgstAmount: sgstAmount.toFixed(2),
+      igstAmount: igstAmount.toFixed(2),
+      totalAmount: totalAmount.toFixed(2),
+      notes: dto.notes,
+    });
+
+    const after = await manager.getRepository(PurchaseInvoice).findOneByOrFail({ id });
+    const items = await itemRepo.find({ where: { purchaseInvoiceId: id }, order: { lineNo: 'ASC' } });
+    await this.auditLog.record({ action: 'purchase_invoice.updated', entityType: 'purchase_invoice', entityId: id, before: invoice, after });
+    return { ...after, items };
+  }
+
+  // Reverses stock effects and deletes the invoice (items/payments cascade via FK).
+  // Only allowed before any payment is recorded — deleting a paid invoice would silently
+  // orphan its payment history.
+  async remove(id: string): Promise<{ id: string }> {
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const userId = this.tenantContext.getUserId();
+    const invoice = await this.getOrThrow(id);
+
+    if (invoice.status === InvoiceStatus.PAID || invoice.status === InvoiceStatus.PARTIALLY_PAID) {
+      throw new BadRequestException('Paid or partially paid invoices cannot be deleted.');
+    }
+
+    const itemRepo = manager.getRepository(PurchaseInvoiceItem);
+    const stockRepo = manager.getRepository(StockLedger);
+    const itemMasterRepo = manager.getRepository(Item);
+    const items = await itemRepo.find({ where: { purchaseInvoiceId: id, tenantId } });
+
+    for (const line of items) {
+      if (!line.itemId) continue;
+      await stockRepo.save(
+        stockRepo.create({
+          tenantId,
+          itemId: line.itemId,
+          movementType: StockMovementType.ADJUSTMENT,
+          qtyChange: (-parseFloat(line.qty)).toString(),
+          referenceType: 'purchase_invoice',
+          referenceId: id,
+          notes: 'Invoice deleted — reverting stock',
+          createdBy: userId,
+        }),
+      );
+      await itemMasterRepo.decrement({ id: line.itemId, tenantId }, 'currentStock', parseFloat(line.qty));
+    }
+
+    await manager.getRepository(PurchaseInvoice).delete({ id, tenantId });
+    await this.auditLog.record({ action: 'purchase_invoice.deleted', entityType: 'purchase_invoice', entityId: id, before: invoice });
+    return { id };
   }
 
   async markSent(id: string): Promise<PurchaseInvoice> {

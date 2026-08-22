@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -6,6 +6,7 @@ import { UserRole } from '../entities/user.entity';
 import { InvoiceStatus } from '../entities/invoice-status.enum';
 import { PurchaseInvoicesService } from './purchase-invoices.service';
 import { CreatePurchaseInvoiceDto } from './dto/create-purchase-invoice.dto';
+import { UpdatePurchaseInvoiceDto } from './dto/update-purchase-invoice.dto';
 import { CreatePaymentDto } from '../common/dto/create-payment.dto';
 import { PaySupplierDto } from './dto/pay-supplier.dto';
 
@@ -30,6 +31,18 @@ export class PurchaseInvoicesController {
   @Roles(...WRITE_ROLES)
   create(@Body() dto: CreatePurchaseInvoiceDto) {
     return this.purchaseInvoicesService.create(dto);
+  }
+
+  @Patch(':id')
+  @Roles(...WRITE_ROLES)
+  update(@Param('id') id: string, @Body() dto: UpdatePurchaseInvoiceDto) {
+    return this.purchaseInvoicesService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(...WRITE_ROLES)
+  remove(@Param('id') id: string) {
+    return this.purchaseInvoicesService.remove(id);
   }
 
   @Post(':id/send')
