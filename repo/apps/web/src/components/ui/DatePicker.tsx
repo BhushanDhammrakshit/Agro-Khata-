@@ -40,12 +40,16 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
   const [isOpen, setIsOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => selectedDate ?? new Date());
   const containerRef = useRef<HTMLDivElement>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const rect = useFloatingPosition(btnRef, isOpen, 304);
+  const rect = useFloatingPosition(btnRef, isOpen, 304, 300);
 
   useEffect(() => {
     function closeOnOutsideClick(event: MouseEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) setIsOpen(false);
+      const target = event.target as Node;
+      if (containerRef.current?.contains(target)) return;
+      if (calendarRef.current?.contains(target)) return;
+      setIsOpen(false);
     }
 
     document.addEventListener("mousedown", closeOnOutsideClick);
@@ -94,6 +98,7 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
 
       {isOpen && rect && (
         <div
+          ref={calendarRef}
           role="dialog"
           aria-label="Choose date"
           style={{
@@ -102,9 +107,10 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
             bottom: rect.placement === "top" ? rect.bottom : undefined,
             left: rect.left,
             width: rect.width,
+            maxHeight: rect.maxHeight,
             zIndex: 9999,
           }}
-          className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10"
+          className="overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10"
         >
           <div className="flex items-center justify-between bg-emerald-600 px-3 py-2.5">
             <button type="button" aria-label="Previous month" onClick={() => moveMonth(-1)} className="grid h-7 w-7 cursor-pointer place-items-center rounded-md text-white/90 transition-colors hover:bg-white/20">‹</button>

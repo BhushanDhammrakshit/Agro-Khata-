@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Patch,
+  Post,
+  Res,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
@@ -72,8 +84,14 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  getMe(@CurrentUser() user: AuthenticatedUser) {
-    return this.usersService.findById(user.sub);
+  async getMe(@CurrentUser() user: AuthenticatedUser) {
+    try {
+      return await this.usersService.findById(user.sub);
+    } catch (err) {
+      // Token is valid but its user no longer exists (deleted/reseeded DB) — treat as unauthenticated.
+      if (err instanceof NotFoundException) throw new UnauthorizedException('Session is no longer valid.');
+      throw err;
+    }
   }
 
   @Patch('me')

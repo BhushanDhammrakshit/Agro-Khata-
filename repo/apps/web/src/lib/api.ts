@@ -20,6 +20,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   const body = await res.json().catch(() => undefined);
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined" && !path.startsWith("/auth/")) {
+      // Stale/invalid session (e.g. token's user no longer exists) — force a clean re-login.
+      getCache.clear();
+      if (!window.location.pathname.startsWith("/login")) window.location.href = "/login";
+    }
     throw new ApiError(body?.message ?? "Something went wrong.", res.status);
   }
   return body as T;

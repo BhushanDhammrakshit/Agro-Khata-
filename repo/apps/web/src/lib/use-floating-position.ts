@@ -25,6 +25,7 @@ export function useFloatingPosition(
   anchorRef: RefObject<HTMLElement | null>,
   open: boolean,
   minWidth = 0,
+  minSpace = 120,
 ): FloatingRect | null {
   const [rect, setRect] = useState<FloatingRect | null>(null);
 
@@ -49,7 +50,6 @@ export function useFloatingPosition(
       const spaceBelow = viewportTop + viewportHeight - r.bottom;
       const spaceAbove = r.top - viewportTop;
       const gap = 4;
-      const minSpace = 120;
 
       if (spaceBelow < minSpace && spaceAbove > spaceBelow) {
         setRect({

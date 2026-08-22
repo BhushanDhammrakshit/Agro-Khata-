@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
+import { PartyCombobox } from "@/components/QuickAddParty";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -108,11 +109,13 @@ export default function PaymentsPage() {
           <form className="grid grid-cols-1 gap-3 sm:grid-cols-2" onSubmit={handleSubmit}>
             <div className="sm:col-span-2">
               <label className="mb-1.5 block text-sm font-medium text-slate-700">{direction === "customer" ? "Customer" : "Supplier"}</label>
-              <CustomSelect
+              <PartyCombobox
+                partyType={partyTypeFilter}
+                parties={parties}
                 value={partyId}
-                onChange={setPartyId}
-                options={[{ value: "", label: `Select a ${direction}…` }, ...parties.map((p) => ({ value: p.id, label: p.name }))]}
-                className="w-full"
+                onChange={(id) => { setPartyId(id); setResult(null); }}
+                onPartyCreated={(p) => { setParties((prev) => [...prev, p]); setPartyId(p.id); setResult(null); }}
+                placeholder={`Search ${direction === "customer" ? "customer" : "supplier"}…`}
               />
             </div>
             {partyId && (
