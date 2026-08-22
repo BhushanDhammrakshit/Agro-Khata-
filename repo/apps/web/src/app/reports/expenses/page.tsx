@@ -64,61 +64,61 @@ export default function ExpensesReportPage() {
       </div>
 
       {data && (
-        <div className="grid min-w-0 gap-6 lg:grid-cols-3">
-          {/* Category breakdown */}
-          <Card>
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">By Category</h2>
-            <div className="divide-y divide-slate-100">
-              {data.categoryTotals.map(c => (
-                <div key={c.category} className="flex justify-between py-2 text-sm">
-                  <span className="text-slate-700">{c.category}</span>
-                  <span className="font-medium text-slate-900">{fmt(c.total)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between py-2 text-sm font-semibold">
-                <span>Total</span>
-                <span className="text-red-600">{fmt(String(grandTotal))}</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Vehicle breakdown */}
-          {data.vehicleTotals.length > 0 && (
+        <div className="flex flex-col gap-6">
+          <div className="grid gap-6 sm:grid-cols-2">
+            {/* Category breakdown */}
             <Card>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">By Vehicle</h2>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">By Category</h2>
               <div className="divide-y divide-slate-100">
-                {data.vehicleTotals.map(v => (
-                  <div key={v.vehicle_id} className="flex justify-between py-2 text-sm">
-                    <span className="text-slate-700">{v.vehicle_no}</span>
-                    <span className="font-medium text-slate-900">{fmt(v.total)}</span>
+                {data.categoryTotals.map(c => (
+                  <div key={c.category} className="flex justify-between py-2 text-sm">
+                    <span className="text-slate-700">{c.category}</span>
+                    <span className="font-medium text-slate-900">{fmt(c.total)}</span>
                   </div>
                 ))}
+                <div className="flex justify-between py-2 text-sm font-semibold">
+                  <span>Total</span>
+                  <span className="text-red-600">{fmt(String(grandTotal))}</span>
+                </div>
               </div>
             </Card>
-          )}
+
+            {/* Vehicle breakdown */}
+            {data.vehicleTotals.length > 0 && (
+              <Card>
+                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">By Vehicle</h2>
+                <div className="divide-y divide-slate-100">
+                  {data.vehicleTotals.map(v => (
+                    <div key={v.vehicle_id} className="flex justify-between py-2 text-sm">
+                      <span className="text-slate-700">{v.vehicle_no}</span>
+                      <span className="font-medium text-slate-900">{fmt(v.total)}</span>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </div>
 
           {/* Detailed list */}
-          <div className="min-w-0 lg:col-span-2">
-            <div className={tableWrapClass}>
-              <table className="w-full text-sm">
-                <thead><tr>
-                  {["Date", "Category", "Description", "Vehicle", "Mode", "Amount"].map(h => <th key={h} className={thClass}>{h}</th>)}
-                </tr></thead>
-                <tbody>
-                  {data.rows.length === 0 && <tr><td colSpan={6} className={tdClass + " text-center text-slate-400"}>No expenses</td></tr>}
-                  {data.rows.map(r => (
-                    <tr key={r.id} className="hover:bg-slate-50">
-                      <td className={tdClass}>{r.expense_date}</td>
-                      <td className={tdClass}>{r.category}</td>
-                      <td className={tdClass}>{r.description ?? "—"}</td>
-                      <td className={tdClass}>{r.vehicle_no ?? "—"}</td>
-                      <td className={tdClass + " capitalize"}>{r.payment_mode.replace("_", " ")}</td>
-                      <td className={tdClass + " font-medium text-right"}>{fmt(r.amount)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className={tableWrapClass}>
+            <table className="w-full text-sm">
+              <thead><tr>
+                {["Date", "Category", "Description", "Vehicle", "Mode", "Amount"].map(h => <th key={h} className={thClass}>{h}</th>)}
+              </tr></thead>
+              <tbody>
+                {data.rows.length === 0 && <tr><td colSpan={6} className={tdClass + " text-center text-slate-400"}>No expenses</td></tr>}
+                {data.rows.map(r => (
+                  <tr key={r.id} className="hover:bg-slate-50">
+                    <td className={tdClass}>{r.expense_date}</td>
+                    <td className={tdClass}>{r.category}</td>
+                    <td className={tdClass}>{r.description ?? "—"}</td>
+                    <td className={tdClass}>{r.vehicle_no ?? "—"}</td>
+                    <td className={tdClass + " capitalize"}>{r.payment_mode.replace("_", " ")}</td>
+                    <td className={tdClass + " font-medium text-right"}>{fmt(r.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
