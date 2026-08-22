@@ -1,4 +1,4 @@
-import { IsEnum, IsISO8601, IsNumber, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import { IsEnum, IsISO8601, IsNumber, IsOptional, IsString, IsUUID, Min, MinLength } from 'class-validator';
 import { PaymentMode } from '../../entities/payment-mode.enum';
 
 export class CreateExpenseDto {
@@ -19,4 +19,8 @@ export class CreateExpenseDto {
 
   @IsEnum(PaymentMode)
   paymentMode: PaymentMode;
+
+  @IsOptional()
+  @IsUUID()
+  vehicleId?: string;
 }

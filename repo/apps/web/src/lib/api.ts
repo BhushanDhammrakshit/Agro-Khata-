@@ -133,6 +133,8 @@ export interface ExpenseReportRow {
   amount: string;
   expense_date: string;
   payment_mode: string;
+  vehicle_id?: string;
+  vehicle_no?: string;
 }
 
 export interface LedgerTransaction {
@@ -406,6 +408,7 @@ export interface Expense {
   amount: string;
   expenseDate: string;
   paymentMode: PaymentMode;
+  vehicleId?: string;
   createdAt: string;
 }
 
@@ -521,10 +524,10 @@ export const api = {
     request<PaySupplierResult>("/purchase-invoices/pay-supplier", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/purchase-invoices", "/reports/dashboard", "/reports/purchase-payments", "/parties")),
 
   // Expenses
-  listExpenses: () => cachedRequest<Expense[]>("/expenses", LIST_TTL),
-  createExpense: (dto: { category: string; description?: string; amount: number; expenseDate: string; paymentMode: PaymentMode }) =>
+  listExpenses: (vehicleId?: string) => cachedRequest<Expense[]>(`/expenses${vehicleId ? `?vehicleId=${vehicleId}` : ""}`, LIST_TTL),
+  createExpense: (dto: { category: string; description?: string; amount: number; expenseDate: string; paymentMode: PaymentMode; vehicleId?: string }) =>
     request<Expense>("/expenses", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/expenses", "/reports/dashboard")),
-  updateExpense: (id: string, dto: { category: string; description?: string; amount: number; expenseDate: string; paymentMode: PaymentMode }) =>
+  updateExpense: (id: string, dto: { category: string; description?: string; amount: number; expenseDate: string; paymentMode: PaymentMode; vehicleId?: string }) =>
     request<Expense>(`/expenses/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/expenses", "/reports/dashboard")),
 
   // Drivers
@@ -568,8 +571,8 @@ export const api = {
     request<ReportInvoiceRow[]>(`/reports/outstanding?type=${type}`),
   getProfitLoss: (params?: { from?: string; to?: string }) =>
     request<ProfitLoss>(`/reports/profit-loss${params ? "?" + new URLSearchParams(params as Record<string,string>).toString() : ""}`),
-  getExpensesReport: (params?: { from?: string; to?: string }) =>
-    request<{ rows: ExpenseReportRow[]; categoryTotals: { category: string; total: string }[] }>(
+  getExpensesReport: (params?: { from?: string; to?: string; vehicleId?: string }) =>
+    request<{ rows: ExpenseReportRow[]; categoryTotals: { category: string; total: string }[]; vehicleTotals: { vehicle_id: string; vehicle_no: string; total: string }[] }>(
       `/reports/expenses${params ? "?" + new URLSearchParams(params as Record<string,string>).toString() : ""}`,
     ),
   getPartyLedger: (partyId: string) => request<PartyLedger>(`/reports/party/${partyId}/ledger`),

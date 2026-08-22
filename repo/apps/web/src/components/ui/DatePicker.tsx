@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useFloatingPosition } from "@/lib/use-floating-position";
 
 interface DatePickerProps {
   value: string;
@@ -39,6 +40,8 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
   const [isOpen, setIsOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(() => selectedDate ?? new Date());
   const containerRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const rect = useFloatingPosition(btnRef, isOpen, 304);
 
   useEffect(() => {
     function closeOnOutsideClick(event: MouseEvent) {
@@ -70,6 +73,7 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={btnRef}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
@@ -88,8 +92,20 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
         </svg>
       </button>
 
-      {isOpen && (
-        <div role="dialog" aria-label="Choose date" className="fixed left-4 right-4 top-1/2 z-50 w-auto -translate-y-1/2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-2 sm:w-[19rem] sm:translate-y-0">
+      {isOpen && rect && (
+        <div
+          role="dialog"
+          aria-label="Choose date"
+          style={{
+            position: "fixed",
+            top: rect.placement === "bottom" ? rect.top : undefined,
+            bottom: rect.placement === "top" ? rect.bottom : undefined,
+            left: rect.left,
+            width: rect.width,
+            zIndex: 9999,
+          }}
+          className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10"
+        >
           <div className="flex items-center justify-between bg-emerald-600 px-3 py-2.5">
             <button type="button" aria-label="Previous month" onClick={() => moveMonth(-1)} className="grid h-7 w-7 cursor-pointer place-items-center rounded-md text-white/90 transition-colors hover:bg-white/20">‹</button>
             <p className="text-sm font-semibold text-white">{monthFormatter.format(visibleMonth)}</p>

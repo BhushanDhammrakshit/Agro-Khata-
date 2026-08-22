@@ -192,29 +192,39 @@ export class ReportsService {
     };
   }
 
-  async getExpensesReport(from?: string, to?: string) {
+  async getExpensesReport(from?: string, to?: string, vehicleId?: string) {
     const mgr = this.tenantContext.getManager();
     const tid = this.tenantContext.getTenantIdOrThrow();
     const params: unknown[] = [tid];
-    let where = 'tenant_id=$1';
-    if (from) { params.push(from); where += ` AND expense_date>=$${params.length}`; }
-    if (to)   { params.push(to);   where += ` AND expense_date<=$${params.length}`; }
+    let where = 'e.tenant_id=$1';
+    if (from) { params.push(from); where += ` AND e.expense_date>=$${params.length}`; }
+    if (to)   { params.push(to);   where += ` AND e.expense_date<=$${params.length}`; }
+    if (vehicleId) { params.push(vehicleId); where += ` AND e.vehicle_id=$${params.length}`; }
 
-    const [rows, categoryTotals] = await Promise.all([
+    const [rows, categoryTotals, vehicleTotals] = await Promise.all([
       mgr.query(
-        `SELECT id, category, description, amount, expense_date, payment_mode, created_at
-         FROM expenses WHERE ${where}
-         ORDER BY expense_date DESC, created_at DESC`,
+        `SELECT e.id, e.category, e.description, e.amount, e.expense_date, e.payment_mode, e.created_at,
+                e.vehicle_id, v.vehicle_no
+         FROM expenses e LEFT JOIN vehicles v ON v.id = e.vehicle_id
+         WHERE ${where}
+         ORDER BY e.expense_date DESC, e.created_at DESC`,
         params,
       ),
       mgr.query(
-        `SELECT category, SUM(amount) AS total
-         FROM expenses WHERE ${where}
-         GROUP BY category ORDER BY total DESC`,
+        `SELECT e.category, SUM(e.amount) AS total
+         FROM expenses e WHERE ${where}
+         GROUP BY e.category ORDER BY total DESC`,
+        params,
+      ),
+      mgr.query(
+        `SELECT e.vehicle_id, v.vehicle_no, SUM(e.amount) AS total
+         FROM expenses e JOIN vehicles v ON v.id = e.vehicle_id
+         WHERE ${where}
+         GROUP BY e.vehicle_id, v.vehicle_no ORDER BY total DESC`,
         params,
       ),
     ]);
-    return { rows, categoryTotals };
+    return { rows, categoryTotals, vehicleTotals };
   }
 
   async getPartyLedger(partyId: string) {

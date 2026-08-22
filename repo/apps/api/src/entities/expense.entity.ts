@@ -24,6 +24,9 @@ export class Expense {
   @Column({ name: 'payment_mode', type: 'enum', enum: PaymentMode, enumName: 'payment_mode', default: PaymentMode.CASH })
   paymentMode: PaymentMode;
 
+  @Column({ name: 'vehicle_id', nullable: true })
+  vehicleId?: string;
+
   @Column({ name: 'created_by', nullable: true })
   createdBy?: string;
 

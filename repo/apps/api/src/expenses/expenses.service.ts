@@ -12,10 +12,13 @@ export class ExpensesService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  async list(): Promise<Expense[]> {
+  async list(vehicleId?: string): Promise<Expense[]> {
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
-    return manager.getRepository(Expense).find({ where: { tenantId }, order: { expenseDate: 'DESC' } });
+    return manager.getRepository(Expense).find({
+      where: { tenantId, ...(vehicleId ? { vehicleId } : {}) },
+      order: { expenseDate: 'DESC' },
+    });
   }
 
   async create(dto: CreateExpenseDto): Promise<Expense> {
@@ -31,6 +34,7 @@ export class ExpensesService {
         amount: dto.amount.toString(),
         expenseDate: dto.expenseDate,
         paymentMode: dto.paymentMode,
+        vehicleId: dto.vehicleId,
         createdBy: userId,
       }),
     );

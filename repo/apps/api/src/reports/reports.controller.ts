@@ -43,8 +43,8 @@ export class ReportsController {
   }
 
   @Get('expenses')
-  getExpenses(@Query('from') from?: string, @Query('to') to?: string) {
-    return this.reportsService.getExpensesReport(from, to);
+  getExpenses(@Query('from') from?: string, @Query('to') to?: string, @Query('vehicleId') vehicleId?: string) {
+    return this.reportsService.getExpensesReport(from, to, vehicleId);
   }
 
   @Get('party/:id/ledger')
