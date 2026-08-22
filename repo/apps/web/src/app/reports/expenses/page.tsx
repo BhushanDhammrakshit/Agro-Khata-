@@ -64,7 +64,7 @@ export default function ExpensesReportPage() {
       </div>
 
       {data && (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-3">
           {/* Category breakdown */}
           <Card>
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">By Category</h2>
@@ -98,7 +98,7 @@ export default function ExpensesReportPage() {
           )}
 
           {/* Detailed list */}
-          <div className="lg:col-span-2">
+          <div className="min-w-0 lg:col-span-2">
             <div className={tableWrapClass}>
               <table className="w-full text-sm">
                 <thead><tr>
