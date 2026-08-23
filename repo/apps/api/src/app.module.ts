@@ -7,6 +7,7 @@ import configuration from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { TenantContextModule } from './common/tenant-context/tenant-context.module';
 import { AuditLogModule } from './common/audit/audit-log.module';
+import { MailModule } from './common/mail/mail.module';
 import { TenantTransactionInterceptor } from './common/interceptors/tenant-transaction.interceptor';
 import { AuthModule } from './auth/auth.module';
 import { TenantsModule } from './tenants/tenants.module';
@@ -28,6 +29,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
     TenantContextModule,
     AuditLogModule,
+    MailModule,
     DatabaseModule,
     AuthModule,
     TenantsModule,
