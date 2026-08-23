@@ -1,6 +1,4 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { AuditLogService } from '../common/audit/audit-log.service';
 import { User, UserRole } from '../entities/user.entity';
@@ -12,17 +10,18 @@ export class UsersService {
   constructor(
     private readonly tenantContext: TenantContextService,
     private readonly auditLog: AuditLogService,
-    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   async findById(id: string): Promise<User> {
-    const user = await this.dataSource.getRepository(User).findOneBy({ id });
+    const manager = this.tenantContext.getManager();
+    const user = await manager.getRepository(User).findOneBy({ id });
     if (!user) throw new NotFoundException('User not found.');
     return user;
   }
 
   async updateSelf(id: string, dto: { name?: string; email?: string }): Promise<User> {
-    await this.dataSource.getRepository(User).update(id, dto);
+    const manager = this.tenantContext.getManager();
+    await manager.getRepository(User).update(id, dto);
     return this.findById(id);
   }
 
