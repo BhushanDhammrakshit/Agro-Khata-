@@ -20,7 +20,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   const body = await res.json().catch(() => undefined);
   if (!res.ok) {
-    if (res.status === 401 && typeof window !== "undefined" && !path.startsWith("/auth/")) {
+    // Only these two legitimately return 401 for a wrong password/OTP during login itself.
+    const isLoginAttempt = path === "/auth/password/login" || path === "/auth/otp/verify";
+    if (res.status === 401 && typeof window !== "undefined" && !isLoginAttempt) {
       // Stale/invalid session (e.g. token's user no longer exists) — force a clean re-login.
       getCache.clear();
       if (!window.location.pathname.startsWith("/login")) window.location.href = "/login";
