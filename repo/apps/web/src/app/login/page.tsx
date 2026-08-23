@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/styles";
 import { PhoneInput, stripPrefix, withPrefix } from "@/components/PhoneInput";
+import { SetPasswordModal } from "@/components/SetPasswordModal";
 
 export default function LoginPage() {
   const { dict } = useLanguage();
@@ -21,6 +22,7 @@ export default function LoginPage() {
   const [useOtp, setUseOtp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showSetPassword, setShowSetPassword] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -93,7 +95,11 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await api.verifyOtp(withPrefix(phone), otp, tenantId);
+      const { user } = await api.verifyOtp(withPrefix(phone), otp, tenantId);
+      if (!user.hasPassword) {
+        setShowSetPassword(true);
+        return;
+      }
       window.location.href = "/dashboard";
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to verify OTP.");
@@ -191,6 +197,7 @@ export default function LoginPage() {
           {dict.login.newCompany} <Link className="font-medium text-emerald-700 hover:underline" href="/register">{dict.login.registerHere}</Link>
         </p>
       </main>
+      <SetPasswordModal open={showSetPassword} onDone={() => (window.location.href = "/dashboard")} />
     </div>
   );
 }

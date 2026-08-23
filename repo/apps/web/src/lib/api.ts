@@ -186,6 +186,7 @@ export interface AuthUser {
   phone: string;
   role: "owner" | "staff" | "viewer";
   tenantId: string;
+  hasPassword?: boolean;
 }
 
 export interface CompanyChoice {

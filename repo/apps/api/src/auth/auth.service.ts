@@ -48,7 +48,7 @@ export class AuthService {
     phone: string,
     tenantId: string,
     password: string,
-  ): Promise<{ accessToken: string; user: Partial<User> }> {
+  ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
     const manager = this.tenantContext.getManager();
     await this.tenantContext.setTenantId(tenantId);
     const user = await manager
@@ -107,7 +107,11 @@ export class AuthService {
     return { message: 'OTP sent.' };
   }
 
-  async verifyOtp(phone: string, code: string, tenantId?: string): Promise<{ accessToken: string; user: Partial<User> }> {
+  async verifyOtp(
+    phone: string,
+    code: string,
+    tenantId?: string,
+  ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
     const manager = this.tenantContext.getManager();
     const companies = await this.listCompanies(phone);
     const selectedTenantId = tenantId ?? (companies.length === 1 ? companies[0].tenantId : undefined);
@@ -152,7 +156,10 @@ export class AuthService {
   // Re-authenticates into another company the same phone number already has an
   // active account in — no password/OTP needed, since the caller is already
   // verified (holds a valid JWT) for that phone number.
-  async switchCompany(phone: string, tenantId: string): Promise<{ accessToken: string; user: Partial<User> }> {
+  async switchCompany(
+    phone: string,
+    tenantId: string,
+  ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
     const target = await this.preAuthDataSource.manager
       .getRepository(User)
       .findOne({ where: { phone, tenantId, isActive: true } });
@@ -163,15 +170,32 @@ export class AuthService {
     return this.completeLogin(target);
   }
 
-  private async completeLogin(user: User): Promise<{ accessToken: string; user: Partial<User> }> {
+  private async completeLogin(
+    user: User,
+  ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
     const manager = this.tenantContext.getManager();
     await manager.getRepository(User).update(user.id, { lastLoginAt: new Date() });
+    // passwordHash is select:false on the entity, so re-fetch it explicitly to tell
+    // the frontend whether this account still needs an initial password set.
+    const withHash = await manager
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .addSelect('user.passwordHash')
+      .where('user.id = :id', { id: user.id })
+      .getOne();
     const payload = { sub: user.id, tenantId: user.tenantId, role: user.role, phone: user.phone };
     const accessToken = await this.jwtService.signAsync(payload);
 
     return {
       accessToken,
-      user: { id: user.id, name: user.name, phone: user.phone, role: user.role, tenantId: user.tenantId },
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        role: user.role,
+        tenantId: user.tenantId,
+        hasPassword: !!withHash?.passwordHash,
+      },
     };
   }
 }
