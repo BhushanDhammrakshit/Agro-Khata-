@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { api, ApiError, CompanyChoice } from "@/lib/api";
@@ -12,7 +11,6 @@ import { inputClass } from "@/components/ui/styles";
 import { PhoneInput, stripPrefix, withPrefix } from "@/components/PhoneInput";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { dict } = useLanguage();
   const [phone, setPhone] = useState("");
   const [companies, setCompanies] = useState<CompanyChoice[]>([]);
@@ -66,7 +64,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await api.passwordLogin(withPrefix(phone), tenantId, password);
-      router.push("/dashboard");
+      // Hard nav (not router.push): AppUserContext only fetches me/companies once
+      // on mount, so a soft nav would keep showing a stale prior session's tenant.
+      window.location.href = "/dashboard";
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed.");
     } finally {
@@ -94,7 +94,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await api.verifyOtp(withPrefix(phone), otp, tenantId);
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to verify OTP.");
     } finally {

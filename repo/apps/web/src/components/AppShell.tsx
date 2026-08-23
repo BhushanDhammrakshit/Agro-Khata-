@@ -327,9 +327,16 @@ export function AppShell({
   async function handleCompanyChange(nextTenantId: string) {
     if (nextTenantId === "register") { router.push("/register"); return; }
     if (!me || nextTenantId === me.tenantId) return;
-    await api.logout();
-    const params = new URLSearchParams({ phone: me.phone, tenantId: nextTenantId });
-    window.location.href = `/login?${params.toString()}`;
+    try {
+      await api.switchCompany(nextTenantId);
+    } catch {
+      // Session no longer has access to that company — fall back to a full re-login.
+      const params = new URLSearchParams({ phone: me.phone, tenantId: nextTenantId });
+      window.location.href = `/login?${params.toString()}`;
+      return;
+    }
+    // Hard nav so AppUserContext/the request cache reload fresh for the new tenant.
+    window.location.href = "/dashboard";
   }
 
   return (

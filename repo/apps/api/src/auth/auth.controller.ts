@@ -18,6 +18,7 @@ import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { CompanyLookupDto } from './dto/company-lookup.dto';
 import { PasswordLoginDto } from './dto/password-login.dto';
 import { SetPasswordDto } from './dto/set-password.dto';
+import { SwitchCompanyDto } from './dto/switch-company.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../common/decorators/current-user.decorator';
@@ -62,6 +63,19 @@ export class AuthController {
     const { accessToken, user } = await this.authService.verifyOtp(dto.phone, dto.otp, dto.tenantId);
     this.setAccessTokenCookie(res, accessToken);
     return { user };
+  }
+
+  @Post('switch-company')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async switchCompany(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SwitchCompanyDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, user: switchedUser } = await this.authService.switchCompany(user.phone, dto.tenantId);
+    this.setAccessTokenCookie(res, accessToken);
+    return { user: switchedUser };
   }
 
   private setAccessTokenCookie(res: Response, accessToken: string) {

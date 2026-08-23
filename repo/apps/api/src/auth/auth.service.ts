@@ -149,6 +149,20 @@ export class AuthService {
     return { message: 'Password updated.' };
   }
 
+  // Re-authenticates into another company the same phone number already has an
+  // active account in — no password/OTP needed, since the caller is already
+  // verified (holds a valid JWT) for that phone number.
+  async switchCompany(phone: string, tenantId: string): Promise<{ accessToken: string; user: Partial<User> }> {
+    const target = await this.preAuthDataSource.manager
+      .getRepository(User)
+      .findOne({ where: { phone, tenantId, isActive: true } });
+    if (!target) {
+      throw new UnauthorizedException('You do not have access to that company.');
+    }
+    await this.tenantContext.setTenantId(tenantId);
+    return this.completeLogin(target);
+  }
+
   private async completeLogin(user: User): Promise<{ accessToken: string; user: Partial<User> }> {
     const manager = this.tenantContext.getManager();
     await manager.getRepository(User).update(user.id, { lastLoginAt: new Date() });

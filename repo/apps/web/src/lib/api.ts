@@ -24,7 +24,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const isLoginAttempt = path === "/auth/password/login" || path === "/auth/otp/verify";
     if (res.status === 401 && typeof window !== "undefined" && !isLoginAttempt) {
       // Stale/invalid session (e.g. token's user no longer exists) — force a clean re-login.
-      getCache.clear();
+      clearCache();
       if (!window.location.pathname.startsWith("/login")) window.location.href = "/login";
     }
     throw new ApiError(body?.message ?? "Something went wrong.", res.status);
@@ -69,6 +69,14 @@ function invalidate(...prefixes: string[]) {
   for (const key of getCache.keys()) {
     if (prefixes.some((p) => key.startsWith(p))) getCache.delete(key);
   }
+}
+
+// Every cached response is scoped to whichever tenant was active when it was
+// fetched — must be wiped in full on logout so switching companies/logging
+// back in doesn't serve another tenant's stale parties/items/invoices/etc.
+function clearCache() {
+  getCache.clear();
+  inflight.clear();
 }
 
 export interface TenantSummary {
@@ -476,7 +484,13 @@ export const api = {
     body: JSON.stringify({ phone, otp, tenantId }),
   }),
 
-  logout: () => request<{ message: string }>("/auth/logout", { method: "POST" }).finally(() => invalidate("/auth/me", "/tenants/me")),
+  // Re-authenticates into another company the same phone already has an active
+  // account in — no password/OTP re-entry needed while the current session is valid.
+  switchCompany: (tenantId: string) =>
+    request<{ user: AuthUser }>("/auth/switch-company", { method: "POST", body: JSON.stringify({ tenantId }) })
+      .finally(clearCache),
+
+  logout: () => request<{ message: string }>("/auth/logout", { method: "POST" }).finally(clearCache),
   getMe: () => cachedRequest<AuthUser>("/auth/me", SESSION_TTL),
   updateMe: (dto: { name?: string; email?: string }) =>
     request<AuthUser>("/auth/me", { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/auth/me")),
