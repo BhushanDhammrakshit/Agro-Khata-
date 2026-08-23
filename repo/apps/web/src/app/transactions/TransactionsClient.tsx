@@ -48,7 +48,7 @@ const emptyForm = {
   remark: "",
 };
 
-const REMARK_STORAGE_KEY = "agrokhata:transaction-remarks";
+const REMARK_STORAGE_KEY = "vajabaki:transaction-remarks";
 
 function loadStoredRemarks(): string[] {
   if (typeof window === "undefined") return [];

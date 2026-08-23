@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 011: Standalone party payments (record-only, no invoice)
+-- VajaBaki — Migration 011: Standalone party payments (record-only, no invoice)
 -- ============================================================================
 -- Lets a tenant record money paid to / received from a party that isn't tied
 -- to any specific sales/purchase invoice (e.g. advances, opening-balance

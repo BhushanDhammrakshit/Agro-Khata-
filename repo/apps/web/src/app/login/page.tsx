@@ -122,7 +122,7 @@ export default function LoginPage() {
       <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-6">
         <div className="text-center">
           <div className="relative mx-auto mb-3 h-20 w-20 overflow-hidden rounded-2xl bg-white shadow-md">
-            <Image src="/AgroKhata.jpeg" alt="AgroKhata" fill className="object-contain p-1" />
+            <Image src="/VajaBaki.png" alt="VajaBaki" fill className="object-contain p-1" />
           </div>
           <h1 className="text-xl font-semibold text-slate-900">{dict.login.heading}</h1>
         </div>

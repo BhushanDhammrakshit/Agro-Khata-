@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 003: Company settings fields on tenants
+-- VajaBaki — Migration 003: Company settings fields on tenants
 -- ============================================================================
 -- Run AFTER migration-002-generic-billing.sql.
 -- Adds GSTIN, bank details, invoice prefix, terms, and signature URL to tenants.

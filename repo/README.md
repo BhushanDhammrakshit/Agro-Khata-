@@ -1,4 +1,4 @@
-# AgroKhata
+# VajaBaki
 
 Multi-tenant SaaS for agro businesses to manage vendor bills and farmer purchase entries.
 ("KAG Mall" / Khushal Agro Mall is just an example tenant company used during design — not

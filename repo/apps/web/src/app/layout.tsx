@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = { width: "device-width", initialScale: 1 };
 
 export const metadata: Metadata = {
-  title: "AgroKhata",
+  title: "VajaBaki",
   description: "Vendor bill and farmer purchase management for agro businesses.",
   icons: { icon: "/favicon.svg" },
 };

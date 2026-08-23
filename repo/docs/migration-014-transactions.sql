@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 014: Standalone Transactions (generic, no party link)
+-- VajaBaki — Migration 014: Standalone Transactions (generic, no party link)
 -- ============================================================================
 -- Freeform "log a payment to/from anyone" ledger, separate from invoices,
 -- party payments and expenses. Payer/payee are free-text names (not required

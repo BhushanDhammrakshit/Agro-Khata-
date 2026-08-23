@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata - Migration 005: Parties/Sales-Invoice extra fields + Drivers/Vehicles
+-- VajaBaki - Migration 005: Parties/Sales-Invoice extra fields + Drivers/Vehicles
 -- ============================================================================
 -- Run this after migration-004-tenant-branding.sql. Fixes further schema drift
 -- discovered between the entities and the SQL files: `parties` and

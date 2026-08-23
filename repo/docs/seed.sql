@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Demo seed data
+-- VajaBaki — Demo seed data
 -- ============================================================================
 -- Run this in the Neon SQL Editor (or any Postgres client) AFTER schema.sql has
 -- already been applied. Creates a self-contained demo tenant "Khushal Agro Mall"

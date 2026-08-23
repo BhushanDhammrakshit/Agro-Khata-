@@ -4,13 +4,13 @@ export const en = {
     loading: "Loading…",
   },
   landing: {
-    title: "AgroKhata",
+    title: "VajaBaki",
     tagline: "Vendor bills and farmer purchase entries, for agro businesses.",
     login: "Log in",
     register: "Register your company",
   },
   login: {
-    heading: "Log in to AgroKhata",
+    heading: "Log in to VajaBaki",
     phoneLabel: "Mobile number",
     phonePlaceholder: "9876543210",
     sendOtp: "Send OTP",

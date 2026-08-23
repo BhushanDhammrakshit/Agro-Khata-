@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 015: Email + password login replaces phone + OTP
+-- VajaBaki — Migration 015: Email + password login replaces phone + OTP
 -- ============================================================================
 -- Email becomes the required, tenant-unique login identifier (password login,
 -- with OTP-on-email as a second factor). Phone becomes optional contact info,

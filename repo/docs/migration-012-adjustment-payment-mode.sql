@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 012: generic adjustment/deduction payment mode
+-- VajaBaki — Migration 012: generic adjustment/deduction payment mode
 -- ============================================================================
 -- Lets any payment record (sales/purchase invoice payments, or the standalone
 -- party payments from migration-011) be marked as a non-cash adjustment or

@@ -80,7 +80,7 @@ export class UsersService {
       };
       await this.mail.send({
         to: invitee.email,
-        subject: `You've been invited to ${tenant?.name ?? 'AgroKhata'}`,
+        subject: `You've been invited to ${tenant?.name ?? 'VajaBaki'}`,
         html: buildInviteEmailHtml(params),
         text: buildInviteEmailText(params),
       });

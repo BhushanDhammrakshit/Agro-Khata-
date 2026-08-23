@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 004: Extended party profiles + invoice driver/PO fields
+-- VajaBaki — Migration 004: Extended party profiles + invoice driver/PO fields
 -- ============================================================================
 
 -- Party: customer shipping address, auto-sequence invoice/PO series, farmer code

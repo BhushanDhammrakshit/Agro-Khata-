@@ -75,7 +75,7 @@ export default function SuperadminDashboardPage() {
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-6 py-4">
-        <h1 className="text-lg font-semibold text-white">AgroKhata — Tenant companies</h1>
+        <h1 className="text-lg font-semibold text-white">VajaBaki — Tenant companies</h1>
         <Button variant="ghost" onClick={handleLogout} className="text-slate-300 hover:bg-slate-800 hover:text-white">Log out</Button>
       </header>
 

@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 007: Vehicles
+-- VajaBaki — Migration 007: Vehicles
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS vehicles (

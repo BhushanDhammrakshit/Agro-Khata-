@@ -28,14 +28,14 @@ export default () => ({
       secure: process.env.SMTP_SECURE === 'true',
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
-      from: process.env.SMTP_FROM ?? 'no-reply@agrokhata.app',
-      fromName: process.env.EMAIL_FROM_NAME ?? 'AgroKhata',
+      from: process.env.SMTP_FROM ?? 'no-reply@vajabaki.app',
+      fromName: process.env.EMAIL_FROM_NAME ?? 'VajaBaki',
     },
     // Brevo transactional email REST API - used instead of SMTP when set.
     brevo: {
       apiKey: process.env.BREVO_API_KEY,
-      from: process.env.SMTP_FROM ?? 'no-reply@agrokhata.app',
-      fromName: process.env.EMAIL_FROM_NAME ?? 'AgroKhata',
+      from: process.env.SMTP_FROM ?? 'no-reply@vajabaki.app',
+      fromName: process.env.EMAIL_FROM_NAME ?? 'VajaBaki',
     },
   },
   superadmin: {

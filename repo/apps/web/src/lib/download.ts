@@ -37,7 +37,7 @@ export async function downloadStyledExcel(opts: {
   const { filename, sheetName, title, subtitle, columns, rows, totals } = opts;
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "AgroKhata";
+  workbook.creator = "VajaBaki";
   workbook.created = new Date();
   const sheet = workbook.addWorksheet(sheetName, {
     views: [{ state: "frozen", ySplit: subtitle ? 4 : 3 }],

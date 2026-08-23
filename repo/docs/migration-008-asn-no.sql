@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 008: ASN No on sales invoices
+-- VajaBaki — Migration 008: ASN No on sales invoices
 -- ============================================================================
 
 ALTER TABLE sales_invoices

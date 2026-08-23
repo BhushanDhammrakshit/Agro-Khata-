@@ -68,7 +68,7 @@ export class OtpService {
       await transporter.sendMail({
         from: `"${this.config.get<string>('otp.smtp.fromName')}" <${this.config.get<string>('otp.smtp.from')}>`,
         to: email,
-        subject: 'Your AgroKhata login OTP',
+        subject: 'Your VajaBaki login OTP',
         text: `Your OTP is ${code}. It is valid for ${this.getTtlMinutes()} minutes. Do not share this with anyone.`,
       });
     } catch (err) {
@@ -91,7 +91,7 @@ export class OtpService {
             name: this.config.get<string>('otp.brevo.fromName'),
           },
           to: [{ email }],
-          subject: 'Your AgroKhata login OTP',
+          subject: 'Your VajaBaki login OTP',
           textContent: `Your OTP is ${code}. It is valid for ${this.getTtlMinutes()} minutes. Do not share this with anyone.`,
         }),
       });

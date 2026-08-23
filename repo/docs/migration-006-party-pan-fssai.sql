@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 006: PAN and FSSAI No on parties
+-- VajaBaki — Migration 006: PAN and FSSAI No on parties
 -- ============================================================================
 
 ALTER TABLE parties

@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata - Migration 004: Tenant invoice branding fields
+-- VajaBaki - Migration 004: Tenant invoice branding fields
 -- ============================================================================
 -- Run this after schema.sql, migration-002-generic-billing.sql, and
 -- migration-003-platform-admins.sql. Adds columns the `Tenant` entity expects

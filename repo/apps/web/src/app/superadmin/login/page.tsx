@@ -31,7 +31,7 @@ export default function SuperadminLoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-900 p-6">
       <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-700 text-lg font-bold text-white shadow-md">A</div>
-      <p className="mb-6 text-sm font-medium tracking-wide text-slate-400 uppercase">AgroKhata Superadmin</p>
+      <p className="mb-6 text-sm font-medium tracking-wide text-slate-400 uppercase">VajaBaki Superadmin</p>
       <Card className="w-full max-w-sm">
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">

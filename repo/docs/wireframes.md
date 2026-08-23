@@ -1,4 +1,4 @@
-# AgroKhata — MVP Page / Screen List
+# VajaBaki — MVP Page / Screen List
 
 No visuals — this lists every screen needed for the MVP, grouped by flow, with the
 key elements/purpose of each. Matches the schema in [schema.sql](schema.sql).

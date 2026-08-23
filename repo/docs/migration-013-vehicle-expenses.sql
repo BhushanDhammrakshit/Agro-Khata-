@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 013: link expenses to a vehicle
+-- VajaBaki — Migration 013: link expenses to a vehicle
 -- ============================================================================
 -- Lets an expense (fuel, puncture repair, toll, etc.) optionally be tagged to
 -- the vehicle it was incurred for, so it can be logged from the Vehicles tab

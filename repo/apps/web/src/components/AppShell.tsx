@@ -209,9 +209,9 @@ function Sidebar({
       <div className={`flex items-center gap-2 border-b border-slate-200 px-2 py-4 lg:px-3 ${effectiveCollapsed ? "flex-col justify-center" : "justify-between"}`}>
         <div className="flex min-w-0 items-center gap-2">
           <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white">
-            <Image src="/AgroKhata.jpeg" alt="AgroKhata" fill className="object-contain p-0.5" />
+            <Image src="/VajaBaki.png" alt="VajaBaki" fill className="object-contain p-0.5" />
           </span>
-          {!effectiveCollapsed && <p className="truncate text-lg font-semibold text-emerald-700">AgroKhata</p>}
+          {!effectiveCollapsed && <p className="truncate text-lg font-semibold text-emerald-700">VajaBaki</p>}
         </div>
         <button onClick={onToggleCollapse} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className="hidden shrink-0 cursor-pointer rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 sm:flex">

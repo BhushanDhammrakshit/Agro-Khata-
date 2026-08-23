@@ -25,7 +25,7 @@ export function buildInviteEmailHtml(params: InviteEmailParams): string {
           <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(15,61,92,0.08);">
             <tr>
               <td style="background:${BRAND_COLOR};padding:28px 32px;">
-                <span style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:0.3px;">AgroKhata</span>
+                <span style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:0.3px;">VajaBaki</span>
               </td>
             </tr>
             <tr>
@@ -36,7 +36,7 @@ export function buildInviteEmailHtml(params: InviteEmailParams): string {
                 </p>
                 <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;color:#334155;">
                   <strong>${esc(inviterName)}</strong> has added you as a <strong>${esc(role)}</strong> on
-                  <strong>${esc(tenantName)}</strong>'s AgroKhata account.
+                  <strong>${esc(tenantName)}</strong>'s VajaBaki account.
                 </p>
                 <p style="margin:0 0 24px 0;font-size:15px;line-height:1.6;color:#334155;">
                   Click below to sign in and set up your password.
@@ -45,7 +45,7 @@ export function buildInviteEmailHtml(params: InviteEmailParams): string {
                   <tr>
                     <td style="border-radius:8px;background:${ACCENT_COLOR};">
                       <a href="${esc(loginUrl)}" style="display:inline-block;padding:12px 28px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">
-                        Sign in to AgroKhata
+                        Sign in to VajaBaki
                       </a>
                     </td>
                   </tr>
@@ -61,7 +61,7 @@ export function buildInviteEmailHtml(params: InviteEmailParams): string {
             </tr>
             <tr>
               <td style="background:#eef4f8;padding:16px 32px;">
-                <p style="margin:0;font-size:12px;color:#64748b;">AgroKhata &middot; Simple billing &amp; ledgers for agri traders</p>
+                <p style="margin:0;font-size:12px;color:#64748b;">VajaBaki &middot; Simple billing &amp; ledgers for agri traders</p>
               </td>
             </tr>
           </table>
@@ -74,5 +74,5 @@ export function buildInviteEmailHtml(params: InviteEmailParams): string {
 
 export function buildInviteEmailText(params: InviteEmailParams): string {
   const { inviteeName, inviterName, tenantName, role, loginUrl } = params;
-  return `Hi ${inviteeName},\n\n${inviterName} has added you as a ${role} on ${tenantName}'s AgroKhata account.\n\nSign in here: ${loginUrl}\n\nIf you weren't expecting this invite, you can safely ignore this email.`;
+  return `Hi ${inviteeName},\n\n${inviterName} has added you as a ${role} on ${tenantName}'s VajaBaki account.\n\nSign in here: ${loginUrl}\n\nIf you weren't expecting this invite, you can safely ignore this email.`;
 }

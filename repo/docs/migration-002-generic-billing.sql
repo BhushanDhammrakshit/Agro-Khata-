@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata — Migration 002: Generic Sales/Purchase billing (Vyapar-style)
+-- VajaBaki — Migration 002: Generic Sales/Purchase billing (Vyapar-style)
 -- ============================================================================
 -- Run this AFTER schema.sql (and after seed.sql if you used it) against your
 -- existing database — it only ADDS new types/tables/columns, it does not

@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata - Migration 003: Platform administrator accounts
+-- VajaBaki - Migration 003: Platform administrator accounts
 -- ============================================================================
 -- Run this after schema.sql and migration-002-generic-billing.sql on databases
 -- created before the superadmin panel was added. Safe to run more than once.

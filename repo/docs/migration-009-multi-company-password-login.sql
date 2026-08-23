@@ -1,5 +1,5 @@
 -- ============================================================================
--- AgroKhata - Migration 009: multi-company password login
+-- VajaBaki - Migration 009: multi-company password login
 -- ============================================================================
 
 ALTER TABLE users
