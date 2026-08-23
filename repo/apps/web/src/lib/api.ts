@@ -144,6 +144,17 @@ export interface ExpenseReportRow {
   vehicle_no?: string;
 }
 
+export interface TransactionReportRow {
+  id: string;
+  transaction_date: string;
+  payer_name: string;
+  payee_name: string;
+  bank_name?: string;
+  payment_mode: string;
+  amount: string;
+  remark?: string;
+}
+
 export interface LedgerTransaction {
   id: string;
   ref_no: string;
@@ -620,6 +631,10 @@ export const api = {
   getExpensesReport: (params?: { from?: string; to?: string; vehicleId?: string }) =>
     request<{ rows: ExpenseReportRow[]; categoryTotals: { category: string; total: string }[]; vehicleTotals: { vehicle_id: string; vehicle_no: string; total: string }[] }>(
       `/reports/expenses${params ? "?" + new URLSearchParams(params as Record<string,string>).toString() : ""}`,
+    ),
+  getTransactionsReport: (params?: { from?: string; to?: string; payerName?: string; payeeName?: string; bankName?: string; paymentMode?: string }) =>
+    request<{ rows: TransactionReportRow[] }>(
+      `/reports/transactions${params ? "?" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v))).toString() : ""}`,
     ),
   getPartyLedger: (partyId: string) => request<PartyLedger>(`/reports/party/${partyId}/ledger`),
 

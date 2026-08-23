@@ -67,6 +67,7 @@ const REPORT_ITEMS = [
   { href: "/reports/stock-summary",label: "Stock Summary"},
   { href: "/reports/profit-loss",  label: "Profit & Loss"},
   { href: "/reports/expenses",     label: "Expenses"    },
+  { href: "/reports/transactions", label: "Transactions"},
 ];
 
 const SETTINGS_ITEMS = [

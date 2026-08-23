@@ -227,6 +227,32 @@ export class ReportsService {
     return { rows, categoryTotals, vehicleTotals };
   }
 
+  async getTransactionsReport(filters: {
+    from?: string; to?: string; payerName?: string; payeeName?: string;
+    bankName?: string; paymentMode?: string;
+  }) {
+    const mgr = this.tenantContext.getManager();
+    const tid = this.tenantContext.getTenantIdOrThrow();
+    const params: unknown[] = [tid];
+    let where = 't.tenant_id=$1';
+    if (filters.from)        { params.push(filters.from);        where += ` AND t.transaction_date>=$${params.length}`; }
+    if (filters.to)          { params.push(filters.to);          where += ` AND t.transaction_date<=$${params.length}`; }
+    if (filters.payerName)   { params.push(`%${filters.payerName}%`);   where += ` AND t.payer_name ILIKE $${params.length}`; }
+    if (filters.payeeName)   { params.push(`%${filters.payeeName}%`);   where += ` AND t.payee_name ILIKE $${params.length}`; }
+    if (filters.bankName)    { params.push(`%${filters.bankName}%`);    where += ` AND t.bank_name ILIKE $${params.length}`; }
+    if (filters.paymentMode) { params.push(filters.paymentMode);        where += ` AND t.payment_mode=$${params.length}`; }
+
+    const rows = await mgr.query(
+      `SELECT t.id, t.transaction_date, t.payer_name, t.payee_name, t.bank_name,
+              t.payment_mode, t.amount, t.remark
+       FROM transactions t
+       WHERE ${where}
+       ORDER BY t.transaction_date DESC, t.created_at DESC`,
+      params,
+    );
+    return { rows };
+  }
+
   async getPartyLedger(partyId: string) {
     const mgr = this.tenantContext.getManager();
     const tid = this.tenantContext.getTenantIdOrThrow();

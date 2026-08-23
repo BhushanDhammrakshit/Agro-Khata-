@@ -47,6 +47,18 @@ export class ReportsController {
     return this.reportsService.getExpensesReport(from, to, vehicleId);
   }
 
+  @Get('transactions')
+  getTransactions(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('payerName') payerName?: string,
+    @Query('payeeName') payeeName?: string,
+    @Query('bankName') bankName?: string,
+    @Query('paymentMode') paymentMode?: string,
+  ) {
+    return this.reportsService.getTransactionsReport({ from, to, payerName, payeeName, bankName, paymentMode });
+  }
+
   @Get('party/:id/ledger')
   getPartyLedger(@Param('id') id: string) {
     return this.reportsService.getPartyLedger(id);

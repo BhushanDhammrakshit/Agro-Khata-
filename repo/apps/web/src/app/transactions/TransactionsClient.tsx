@@ -48,6 +48,25 @@ const emptyForm = {
   remark: "",
 };
 
+const REMARK_STORAGE_KEY = "agrokhata:transaction-remarks";
+
+function loadStoredRemarks(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(REMARK_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberRemark(remark: string) {
+  if (typeof window === "undefined") return;
+  const existing = loadStoredRemarks();
+  const updated = [remark, ...existing.filter((r) => r !== remark)].slice(0, 50);
+  window.localStorage.setItem(REMARK_STORAGE_KEY, JSON.stringify(updated));
+}
+
 export function TransactionsClient({ initialTransactions, payeeSuggestions, bankSuggestions }: { initialTransactions: Transaction[]; payeeSuggestions: NameSuggestion[]; bankSuggestions: string[] }) {
   const { me } = useAppUser();
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
@@ -64,6 +83,15 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
     const fromTransactions = transactions.map((t) => t.bankName).filter((b): b is string => !!b);
     return Array.from(new Set([...bankSuggestions, ...fromTransactions])).sort((a, b) => a.localeCompare(b));
   }, [bankSuggestions, transactions]);
+
+  // Remarks have no server-side source (unlike parties/drivers), so past ones
+  // are remembered in localStorage in addition to whatever's in loaded transactions.
+  const [storedRemarks, setStoredRemarks] = useState<string[]>([]);
+  useEffect(() => { setStoredRemarks(loadStoredRemarks()); }, []);
+  const remarkSuggestions = useMemo(() => {
+    const fromTransactions = transactions.map((t) => t.remark).filter((r): r is string => !!r);
+    return Array.from(new Set([...storedRemarks, ...fromTransactions]));
+  }, [storedRemarks, transactions]);
 
   // Defaults "Name of payer" to the logged-in user, since they're the one logging the record.
   useEffect(() => {
@@ -111,6 +139,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
       };
       if (editingId) await api.updateTransaction(editingId, dto);
       else await api.createTransaction(dto);
+      if (dto.remark) rememberRemark(dto.remark);
       resetForm();
       load();
     } catch (err) {
@@ -181,7 +210,13 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
             </div>
             <div className="flex flex-col gap-1.5 sm:col-span-2 lg:col-span-3">
               <label className="text-sm font-medium text-slate-700">Remark</label>
-              <input placeholder="Reason / notes" value={form.remark} onChange={(e) => setForm((f) => ({ ...f, remark: e.target.value }))} className={inputClass} />
+              <NameSuggestInput
+                placeholder="Reason / notes"
+                value={form.remark}
+                onChange={(v) => setForm((f) => ({ ...f, remark: v }))}
+                suggestions={remarkSuggestions}
+                className={inputClass}
+              />
             </div>
             <div className="col-span-full flex items-end justify-end gap-2">
               {editingId && <Button type="button" variant="secondary" onClick={resetForm}>Cancel</Button>}
