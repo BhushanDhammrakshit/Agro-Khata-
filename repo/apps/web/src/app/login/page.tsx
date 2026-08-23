@@ -8,12 +8,11 @@ import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/styles";
-import { PhoneInput, stripPrefix, withPrefix } from "@/components/PhoneInput";
 import { SetPasswordModal } from "@/components/SetPasswordModal";
 
 export default function LoginPage() {
   const { dict } = useLanguage();
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [companies, setCompanies] = useState<CompanyChoice[]>([]);
   const [tenantId, setTenantId] = useState("");
   const [password, setPassword] = useState("");
@@ -26,12 +25,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const prefilledPhone = params.get("phone");
+    const prefilledEmail = params.get("email");
     const prefilledTenantId = params.get("tenantId");
-    if (!prefilledPhone) return;
+    if (!prefilledEmail) return;
 
-    setPhone(stripPrefix(prefilledPhone));
-    api.listCompanies(prefilledPhone).then((choices) => {
+    setEmail(prefilledEmail);
+    api.listCompanies(prefilledEmail).then((choices) => {
       setCompanies(choices);
       setTenantId(
         choices.some((choice) => choice.tenantId === prefilledTenantId)
@@ -46,9 +45,9 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const choices = await api.listCompanies(withPrefix(phone));
+      const choices = await api.listCompanies(email);
       if (choices.length === 0) {
-        setError("No account found for this mobile number.");
+        setError("No account found for this email address.");
         return;
       }
       setCompanies(choices);
@@ -65,7 +64,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await api.passwordLogin(withPrefix(phone), tenantId, password);
+      await api.passwordLogin(email, tenantId, password);
       // Hard nav (not router.push): AppUserContext only fetches me/companies once
       // on mount, so a soft nav would keep showing a stale prior session's tenant.
       window.location.href = "/dashboard";
@@ -81,7 +80,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      await api.requestOtp(withPrefix(phone), tenantId);
+      await api.requestOtp(email, tenantId);
       setOtpSent(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to send OTP.");
@@ -95,7 +94,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const { user } = await api.verifyOtp(withPrefix(phone), otp, tenantId);
+      const { user } = await api.verifyOtp(email, otp, tenantId);
       if (!user.hasPassword) {
         setShowSetPassword(true);
         return;
@@ -108,7 +107,7 @@ export default function LoginPage() {
     }
   }
 
-  function resetPhone() {
+  function resetEmail() {
     setCompanies([]);
     setTenantId("");
     setPassword("");
@@ -132,8 +131,9 @@ export default function LoginPage() {
           {companies.length === 0 ? (
             <form className="flex flex-col gap-4" onSubmit={findCompanies}>
               <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
-                {dict.login.phoneLabel}
-                <PhoneInput required value={phone} onChange={setPhone} />
+                Email address
+                <input required type="email" autoComplete="email" value={email}
+                  onChange={(e) => setEmail(e.target.value)} className={inputClass} />
               </label>
               {error && <p className="text-sm text-red-600">{error}</p>}
               <Button type="submit" disabled={loading}>
@@ -144,10 +144,10 @@ export default function LoginPage() {
             <form className="flex flex-col gap-4" onSubmit={useOtp ? handleVerifyOtp : loginWithPassword}>
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-700">Mobile number</span>
-                  <button type="button" onClick={resetPhone} className="cursor-pointer text-xs font-medium text-emerald-700 hover:underline">Change</button>
+                  <span className="text-sm font-medium text-slate-700">Email address</span>
+                  <button type="button" onClick={resetEmail} className="cursor-pointer text-xs font-medium text-emerald-700 hover:underline">Change</button>
                 </div>
-                <p className="mt-1 text-sm text-slate-500">+91 {phone}</p>
+                <p className="mt-1 text-sm text-slate-500">{email}</p>
               </div>
 
               <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
@@ -173,7 +173,7 @@ export default function LoginPage() {
                     className={`${inputClass} tracking-widest`} />
                 </label>
               ) : (
-                <p className="text-sm text-slate-600">We will send an OTP to +91 {phone}.</p>
+                <p className="text-sm text-slate-600">We will send an OTP to {email}.</p>
               )}
 
               {error && <p className="text-sm text-red-600">{error}</p>}

@@ -1,8 +1,8 @@
-import { IsOptional, IsPhoneNumber, IsUUID, Length } from 'class-validator';
+import { IsEmail, IsOptional, IsUUID, Length } from 'class-validator';
 
 export class VerifyOtpDto {
-  @IsPhoneNumber(undefined, { message: 'Enter a valid mobile number, e.g. +919876543210' })
-  phone: string;
+  @IsEmail(undefined, { message: 'Enter a valid email address.' })
+  email: string;
 
   @Length(6, 6, { message: 'OTP must be 6 digits' })
   otp: string;

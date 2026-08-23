@@ -22,6 +22,21 @@ export default () => ({
   otp: {
     ttlMinutes: parseInt(process.env.OTP_TTL_MINUTES ?? '5', 10),
     maxAttempts: parseInt(process.env.OTP_MAX_ATTEMPTS ?? '5', 10),
+    smtp: {
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT ?? '587', 10),
+      secure: process.env.SMTP_SECURE === 'true',
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+      from: process.env.SMTP_FROM ?? 'no-reply@agrokhata.app',
+      fromName: process.env.EMAIL_FROM_NAME ?? 'AgroKhata',
+    },
+    // Brevo transactional email REST API - used instead of SMTP when set.
+    brevo: {
+      apiKey: process.env.BREVO_API_KEY,
+      from: process.env.SMTP_FROM ?? 'no-reply@agrokhata.app',
+      fromName: process.env.EMAIL_FROM_NAME ?? 'AgroKhata',
+    },
   },
   superadmin: {
     jwtSecret: process.env.SUPERADMIN_JWT_SECRET ?? process.env.JWT_SECRET ?? 'dev-secret-change-me',

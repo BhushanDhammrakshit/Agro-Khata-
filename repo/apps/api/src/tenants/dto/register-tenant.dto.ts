@@ -25,12 +25,12 @@ export class RegisterTenantDto {
   @MinLength(2)
   ownerName: string;
 
-  @IsPhoneNumber(undefined, { message: 'Enter a valid mobile number, e.g. +919876543210' })
-  ownerPhone: string;
-
   @IsOptional()
-  @IsEmail()
-  ownerEmail?: string;
+  @IsPhoneNumber(undefined, { message: 'Enter a valid mobile number, e.g. +919876543210' })
+  ownerPhone?: string;
+
+  @IsEmail(undefined, { message: 'Enter a valid email address.' })
+  ownerEmail: string;
 
   @IsString()
   @MinLength(8)

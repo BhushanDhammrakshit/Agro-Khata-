@@ -36,20 +36,20 @@ export class AuthController {
   @Post('otp/request')
   @HttpCode(HttpStatus.OK)
   requestOtp(@Body() dto: RequestOtpDto) {
-    return this.authService.requestOtp(dto.phone, dto.tenantId);
+    return this.authService.requestOtp(dto.email, dto.tenantId);
   }
 
   @Post('companies')
   @HttpCode(HttpStatus.OK)
   listCompanies(@Body() dto: CompanyLookupDto) {
-    return this.authService.listCompanies(dto.phone);
+    return this.authService.listCompanies(dto.email);
   }
 
   @Post('password/login')
   @HttpCode(HttpStatus.OK)
   async passwordLogin(@Body() dto: PasswordLoginDto, @Res({ passthrough: true }) res: Response) {
     const { accessToken, user } = await this.authService.passwordLogin(
-      dto.phone,
+      dto.email,
       dto.tenantId,
       dto.password,
     );
@@ -60,7 +60,7 @@ export class AuthController {
   @Post('otp/verify')
   @HttpCode(HttpStatus.OK)
   async verifyOtp(@Body() dto: VerifyOtpDto, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, user } = await this.authService.verifyOtp(dto.phone, dto.otp, dto.tenantId);
+    const { accessToken, user } = await this.authService.verifyOtp(dto.email, dto.otp, dto.tenantId);
     this.setAccessTokenCookie(res, accessToken);
     return { user };
   }
@@ -73,7 +73,7 @@ export class AuthController {
     @Body() dto: SwitchCompanyDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, user: switchedUser } = await this.authService.switchCompany(user.phone, dto.tenantId);
+    const { accessToken, user: switchedUser } = await this.authService.switchCompany(user.email, dto.tenantId);
     this.setAccessTokenCookie(res, accessToken);
     return { user: switchedUser };
   }

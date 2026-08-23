@@ -4,7 +4,7 @@ export interface AuthenticatedUser {
   sub: string; // user id
   tenantId: string;
   role: string;
-  phone: string;
+  email: string;
 }
 
 export const CurrentUser = createParamDecorator(

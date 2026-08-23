@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
-import { PhoneInput, withPrefix, stripPrefix } from "@/components/PhoneInput";
 
 const ROLE_LABELS: Record<AuthUser["role"], string> = {
   owner: "Owner",
@@ -28,7 +27,7 @@ export default function TeamPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [showInvite, setShowInvite] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", role: "staff" as AuthUser["role"] });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", role: "staff" as AuthUser["role"] });
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
 
@@ -48,12 +47,12 @@ export default function TeamPage() {
     try {
       const added = await api.inviteUser({
         name: form.name,
-        phone: withPrefix(form.phone),
-        email: form.email || undefined,
+        email: form.email,
+        phone: form.phone || undefined,
         role: form.role,
       });
       setMembers((prev) => [...prev, added]);
-      setForm({ name: "", phone: "", email: "", role: "staff" });
+      setForm({ name: "", email: "", phone: "", role: "staff" });
       setShowInvite(false);
     } catch (err: unknown) {
       setInviteError(err instanceof Error ? err.message : "Failed to invite user.");
@@ -113,22 +112,24 @@ export default function TeamPage() {
               </label>
 
               <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
-                Mobile Number
-                <PhoneInput
-                  required
-                  value={form.phone}
-                  onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
-                />
-              </label>
-
-              <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
-                Email (optional)
+                Email
                 <input
+                  required
                   type="email"
                   className={inputClass}
                   placeholder="email@example.com"
                   value={form.email}
                   onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                />
+              </label>
+
+              <label className="flex flex-col gap-1.5 text-sm font-medium text-slate-700">
+                Mobile Number (optional)
+                <input
+                  className={inputClass}
+                  placeholder="+919876543210"
+                  value={form.phone}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                 />
               </label>
 
@@ -172,7 +173,7 @@ export default function TeamPage() {
               <thead>
                 <tr className="border-b border-slate-100 text-left text-xs font-semibold uppercase tracking-wide text-slate-400">
                   <th className="pb-2 pr-4">Name</th>
-                  <th className="pb-2 pr-4">Mobile</th>
+                  <th className="pb-2 pr-4">Email</th>
                   <th className="pb-2 pr-4">Role</th>
                   <th className="pb-2 pr-4">Status</th>
                   {isOwner && <th className="pb-2">Actions</th>}
@@ -188,7 +189,7 @@ export default function TeamPage() {
                       )}
                     </td>
                     <td className="py-3 pr-4 text-slate-500">
-                      {stripPrefix(member.phone)}
+                      {member.email}
                     </td>
                     <td className="py-3 pr-4">
                       {isOwner && member.id !== me?.id && member.role !== "owner" ? (

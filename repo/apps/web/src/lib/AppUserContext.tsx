@@ -22,7 +22,7 @@ export function AppUserProvider({ children }: { children: React.ReactNode }) {
     api.prefetch();
     api.getMe().then((user) => {
       setMe(user);
-      return api.listCompanies(user.phone);
+      return api.listCompanies(user.email);
     }).then(setCompanies).catch(() => null);
   }, []);
 

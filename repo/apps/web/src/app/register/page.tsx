@@ -9,7 +9,6 @@ import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/styles";
-import { PhoneInput, withPrefix } from "@/components/PhoneInput";
 
 const initialForm = {
   companyName: "",
@@ -18,7 +17,6 @@ const initialForm = {
   contactEmail: "",
   pan: "",
   ownerName: "",
-  ownerPhone: "",
   ownerEmail: "",
   password: "",
   confirmPassword: "",
@@ -51,8 +49,7 @@ export default function RegisterPage() {
         contactEmail: form.contactEmail || undefined,
         pan: form.pan || undefined,
         ownerName: form.ownerName,
-        ownerPhone: withPrefix(form.ownerPhone),
-        ownerEmail: form.ownerEmail || undefined,
+        ownerEmail: form.ownerEmail,
         password: form.password,
       });
       router.push("/login");
@@ -93,8 +90,7 @@ export default function RegisterPage() {
               <legend className="mb-1 text-sm font-semibold text-slate-700">{dict.register.ownerSection}</legend>
               <input required placeholder={dict.register.ownerName} value={form.ownerName}
                 onChange={(e) => update("ownerName", e.target.value)} className={inputClass} />
-              <PhoneInput required value={form.ownerPhone} onChange={(v) => update("ownerPhone", v)} />
-              <input placeholder={dict.register.ownerEmail} type="email" value={form.ownerEmail}
+              <input required placeholder="Email address" type="email" value={form.ownerEmail}
                 onChange={(e) => update("ownerEmail", e.target.value)} className={inputClass} />
               <input required minLength={8} placeholder="Password (minimum 8 characters)" type="password"
                 autoComplete="new-password" value={form.password}

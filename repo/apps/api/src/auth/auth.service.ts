@@ -30,7 +30,7 @@ export class AuthService {
     @InjectDataSource(SUPERADMIN_CONNECTION) private readonly preAuthDataSource: DataSource,
   ) {}
 
-  async listCompanies(phone: string): Promise<CompanyChoice[]> {
+  async listCompanies(email: string): Promise<CompanyChoice[]> {
     return this.preAuthDataSource.manager
       .getRepository(User)
       .createQueryBuilder('user')
@@ -38,14 +38,14 @@ export class AuthService {
       .select('user.tenant_id', 'tenantId')
       .addSelect('tenant.name', 'companyName')
       .addSelect('user.role', 'role')
-      .where('user.phone = :phone', { phone })
+      .where('user.email = :email', { email })
       .andWhere('user.is_active = true')
       .orderBy('tenant.name', 'ASC')
       .getRawMany<CompanyChoice>();
   }
 
   async passwordLogin(
-    phone: string,
+    email: string,
     tenantId: string,
     password: string,
   ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
@@ -55,21 +55,21 @@ export class AuthService {
       .getRepository(User)
       .createQueryBuilder('user')
       .addSelect('user.passwordHash')
-      .where('user.phone = :phone', { phone })
+      .where('user.email = :email', { email })
       .andWhere('user.tenantId = :tenantId', { tenantId })
       .andWhere('user.isActive = true')
       .getOne();
 
     if (!user?.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
-      throw new UnauthorizedException('Invalid company, mobile number, or password.');
+      throw new UnauthorizedException('Invalid company, email, or password.');
     }
 
     return this.completeLogin(user);
   }
 
-  async requestOtp(phone: string, tenantId?: string): Promise<{ message: string }> {
+  async requestOtp(email: string, tenantId?: string): Promise<{ message: string }> {
     const manager = this.tenantContext.getManager();
-    const companies = await this.listCompanies(phone);
+    const companies = await this.listCompanies(email);
     if (!tenantId && companies.length > 1) {
       throw new BadRequestException('Select a company before requesting an OTP.');
     }
@@ -79,12 +79,12 @@ export class AuthService {
     }
     const user = selectedTenantId
       ? await manager.getRepository(User).findOne({
-          where: { phone, tenantId: selectedTenantId, isActive: true },
+          where: { email, tenantId: selectedTenantId, isActive: true },
         })
       : null;
     if (!user) {
       throw new NotFoundException(
-        'No account found for this mobile number. Register your company first.',
+        'No account found for this email address. Register your company first.',
       );
     }
 
@@ -96,38 +96,38 @@ export class AuthService {
       manager.getRepository(OtpRequest).create({
         tenantId: user.tenantId,
         userId: user.id,
-        phone,
+        email,
         purpose: OtpPurpose.LOGIN,
         otpHash,
         expiresAt,
       }),
     );
 
-    await this.otpService.deliver(phone, code);
+    await this.otpService.deliver(email, code);
     return { message: 'OTP sent.' };
   }
 
   async verifyOtp(
-    phone: string,
+    email: string,
     code: string,
     tenantId?: string,
   ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
     const manager = this.tenantContext.getManager();
-    const companies = await this.listCompanies(phone);
+    const companies = await this.listCompanies(email);
     const selectedTenantId = tenantId ?? (companies.length === 1 ? companies[0].tenantId : undefined);
     if (!selectedTenantId) {
       throw new BadRequestException('Select a company before verifying an OTP.');
     }
     await this.tenantContext.setTenantId(selectedTenantId);
     const user = await manager.getRepository(User).findOne({
-      where: { phone, tenantId: selectedTenantId, isActive: true },
+      where: { email, tenantId: selectedTenantId, isActive: true },
     });
     if (!user) {
-      throw new UnauthorizedException('Invalid mobile number or OTP.');
+      throw new UnauthorizedException('Invalid email or OTP.');
     }
 
     const otpRequest = await manager.getRepository(OtpRequest).findOne({
-      where: { phone, consumedAt: IsNull() },
+      where: { email, consumedAt: IsNull() },
       order: { createdAt: 'DESC' },
     });
     if (!otpRequest || otpRequest.expiresAt.getTime() < Date.now()) {
@@ -153,16 +153,16 @@ export class AuthService {
     return { message: 'Password updated.' };
   }
 
-  // Re-authenticates into another company the same phone number already has an
+  // Re-authenticates into another company the same email already has an
   // active account in — no password/OTP needed, since the caller is already
-  // verified (holds a valid JWT) for that phone number.
+  // verified (holds a valid JWT) for that email.
   async switchCompany(
-    phone: string,
+    email: string,
     tenantId: string,
   ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
     const target = await this.preAuthDataSource.manager
       .getRepository(User)
-      .findOne({ where: { phone, tenantId, isActive: true } });
+      .findOne({ where: { email, tenantId, isActive: true } });
     if (!target) {
       throw new UnauthorizedException('You do not have access to that company.');
     }
@@ -183,7 +183,7 @@ export class AuthService {
       .addSelect('user.passwordHash')
       .where('user.id = :id', { id: user.id })
       .getOne();
-    const payload = { sub: user.id, tenantId: user.tenantId, role: user.role, phone: user.phone };
+    const payload = { sub: user.id, tenantId: user.tenantId, role: user.role, email: user.email };
     const accessToken = await this.jwtService.signAsync(payload);
 
     return {
@@ -191,7 +191,7 @@ export class AuthService {
       user: {
         id: user.id,
         name: user.name,
-        phone: user.phone,
+        email: user.email,
         role: user.role,
         tenantId: user.tenantId,
         hasPassword: !!withHash?.passwordHash,

@@ -58,13 +58,13 @@ export class TenantsService {
           action: 'user.created',
           entityType: 'user',
           entityId: owner.id,
-          afterData: { name: owner.name, phone: owner.phone, role: owner.role },
+          afterData: { name: owner.name, email: owner.email, role: owner.role },
         }),
       ]);
 
       return {
         tenant,
-        owner: { id: owner.id, name: owner.name, phone: owner.phone, role: owner.role },
+        owner: { id: owner.id, name: owner.name, email: owner.email, role: owner.role },
       };
     });
   }

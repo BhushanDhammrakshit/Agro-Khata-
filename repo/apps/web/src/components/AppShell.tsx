@@ -331,7 +331,7 @@ export function AppShell({
       await api.switchCompany(nextTenantId);
     } catch {
       // Session no longer has access to that company — fall back to a full re-login.
-      const params = new URLSearchParams({ phone: me.phone, tenantId: nextTenantId });
+      const params = new URLSearchParams({ email: me.email, tenantId: nextTenantId });
       window.location.href = `/login?${params.toString()}`;
       return;
     }

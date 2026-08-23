@@ -40,9 +40,9 @@ export class SuperadminTenantsService {
   }
 
   async create(dto: SuperadminCreateTenantDto): Promise<{ tenant: Tenant; owner: Partial<User> }> {
-    const existing = await this.usersRepo.findOne({ where: { phone: dto.ownerPhone } });
+    const existing = await this.usersRepo.findOne({ where: { email: dto.ownerEmail } });
     if (existing) {
-      throw new ConflictException('This mobile number is already registered.');
+      throw new ConflictException('This email address is already registered.');
     }
 
     return this.dataSource.transaction(async (manager) => {
@@ -67,7 +67,7 @@ export class SuperadminTenantsService {
         }),
       );
 
-      return { tenant, owner: { id: owner.id, name: owner.name, phone: owner.phone, role: owner.role } };
+      return { tenant, owner: { id: owner.id, name: owner.name, email: owner.email, role: owner.role } };
     });
   }
 

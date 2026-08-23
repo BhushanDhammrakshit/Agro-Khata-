@@ -14,14 +14,15 @@ export class User {
   @Column({ name: 'tenant_id' })
   tenantId: string;
 
-  @Column()
-  phone: string;
+  @Column({ nullable: true })
+  phone?: string;
 
   @Column()
   name: string;
 
-  @Column({ nullable: true })
-  email?: string;
+  // Required, unique-per-tenant login identifier (password + OTP-on-email).
+  @Column()
+  email: string;
 
   @Column({ name: 'password_hash', nullable: true, select: false })
   passwordHash?: string;

@@ -6,12 +6,12 @@ export class InviteUserDto {
   @MinLength(2)
   name: string;
 
-  @IsPhoneNumber(undefined, { message: 'Enter a valid mobile number, e.g. +919876543210' })
-  phone: string;
+  @IsEmail(undefined, { message: 'Enter a valid email address.' })
+  email: string;
 
   @IsOptional()
-  @IsEmail()
-  email?: string;
+  @IsPhoneNumber(undefined, { message: 'Enter a valid mobile number, e.g. +919876543210' })
+  phone?: string;
 
   @IsEnum(UserRole)
   role: UserRole;

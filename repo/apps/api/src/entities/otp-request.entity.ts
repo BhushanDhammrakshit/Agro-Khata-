@@ -16,7 +16,7 @@ export class OtpRequest {
   userId?: string;
 
   @Column()
-  phone: string;
+  email: string;
 
   @Column({ type: 'enum', enum: OtpPurpose, enumName: 'otp_purpose', default: OtpPurpose.LOGIN })
   purpose: OtpPurpose;

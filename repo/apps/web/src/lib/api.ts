@@ -183,7 +183,7 @@ export interface PartyLedger {
 export interface AuthUser {
   id: string;
   name: string;
-  phone: string;
+  email: string;
   role: "owner" | "staff" | "viewer";
   tenantId: string;
   hasPassword?: boolean;
@@ -198,8 +198,8 @@ export interface CompanyChoice {
 export interface TeamMember {
   id: string;
   name: string;
-  phone: string;
-  email?: string;
+  email: string;
+  phone?: string;
   role: AuthUser["role"];
   isActive: boolean;
   createdAt: string;
@@ -464,28 +464,28 @@ export interface CreateTransactionDto {
 }
 
 export const api = {
-  listCompanies: (phone: string) => request<CompanyChoice[]>("/auth/companies", {
+  listCompanies: (email: string) => request<CompanyChoice[]>("/auth/companies", {
     method: "POST",
-    body: JSON.stringify({ phone }),
+    body: JSON.stringify({ email }),
   }),
 
-  passwordLogin: (phone: string, tenantId: string, password: string) =>
+  passwordLogin: (email: string, tenantId: string, password: string) =>
     request<{ user: AuthUser }>("/auth/password/login", {
       method: "POST",
-      body: JSON.stringify({ phone, tenantId, password }),
+      body: JSON.stringify({ email, tenantId, password }),
     }),
 
-  requestOtp: (phone: string, tenantId?: string) => request<{ message: string }>("/auth/otp/request", {
+  requestOtp: (email: string, tenantId?: string) => request<{ message: string }>("/auth/otp/request", {
     method: "POST",
-    body: JSON.stringify({ phone, tenantId }),
+    body: JSON.stringify({ email, tenantId }),
   }),
 
-  verifyOtp: (phone: string, otp: string, tenantId?: string) => request<{ user: AuthUser }>("/auth/otp/verify", {
+  verifyOtp: (email: string, otp: string, tenantId?: string) => request<{ user: AuthUser }>("/auth/otp/verify", {
     method: "POST",
-    body: JSON.stringify({ phone, otp, tenantId }),
+    body: JSON.stringify({ email, otp, tenantId }),
   }),
 
-  // Re-authenticates into another company the same phone already has an active
+  // Re-authenticates into another company the same email already has an active
   // account in — no password/OTP re-entry needed while the current session is valid.
   switchCompany: (tenantId: string) =>
     request<{ user: AuthUser }>("/auth/switch-company", { method: "POST", body: JSON.stringify({ tenantId }) })
@@ -505,8 +505,8 @@ export const api = {
     contactEmail?: string;
     pan?: string;
     ownerName: string;
-    ownerPhone: string;
-    ownerEmail?: string;
+    ownerPhone?: string;
+    ownerEmail: string;
     password: string;
   }) => request<{ tenant: TenantSummary; owner: Partial<AuthUser> }>("/tenants/register", {
     method: "POST",
@@ -655,7 +655,7 @@ export const api = {
 
   // Team members
   listUsers: () => request<TeamMember[]>("/users"),
-  inviteUser: (dto: { name: string; phone: string; email?: string; role: AuthUser["role"] }) =>
+  inviteUser: (dto: { name: string; email: string; phone?: string; role: AuthUser["role"] }) =>
     request<TeamMember>("/users", { method: "POST", body: JSON.stringify(dto) }),
   updateUser: (id: string, dto: { role?: AuthUser["role"]; isActive?: boolean }) =>
     request<TeamMember>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(dto) }),

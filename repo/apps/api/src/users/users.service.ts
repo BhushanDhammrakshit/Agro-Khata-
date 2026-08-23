@@ -38,21 +38,21 @@ export class UsersService {
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
 
-    const existing = await manager.getRepository(User).findOne({ where: { phone: dto.phone } });
+    const existing = await manager.getRepository(User).findOne({ where: { email: dto.email } });
     if (existing) {
-      throw new ConflictException('This mobile number is already registered.');
+      throw new ConflictException('This email address is already registered.');
     }
 
     const user = await manager.getRepository(User).save(
       manager.getRepository(User).create({
         tenantId,
         name: dto.name,
-        phone: dto.phone,
         email: dto.email,
+        phone: dto.phone,
         role: dto.role,
       }),
     );
-    await this.auditLog.record({ action: 'user.invited', entityType: 'user', entityId: user.id, after: { name: user.name, phone: user.phone, role: user.role } });
+    await this.auditLog.record({ action: 'user.invited', entityType: 'user', entityId: user.id, after: { name: user.name, email: user.email, role: user.role } });
     return user;
   }
 
