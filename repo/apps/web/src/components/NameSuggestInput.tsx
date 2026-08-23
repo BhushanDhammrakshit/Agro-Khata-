@@ -3,10 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useFloatingPosition } from "@/lib/use-floating-position";
 
+export interface NameSuggestion {
+  name: string;
+  tag?: string;
+}
+
 interface Props {
   value: string;
   onChange: (value: string) => void;
-  suggestions: string[];
+  suggestions: (string | NameSuggestion)[];
   placeholder?: string;
   className?: string;
   required?: boolean;
@@ -14,6 +19,8 @@ interface Props {
 
 // Plain-text input with a filtered dropdown of suggested names (no fixed
 // list of valid values — any freeform name can still be typed/submitted).
+// Suggestions may carry a small "tag" (e.g. Customer/Supplier/Driver) shown
+// next to the name so the user knows who each suggestion refers to.
 export function NameSuggestInput({ value, onChange, suggestions, placeholder, className, required }: Props) {
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -29,9 +36,11 @@ export function NameSuggestInput({ value, onChange, suggestions, placeholder, cl
     return () => document.removeEventListener("mousedown", close);
   }, [open]);
 
+  const normalized: NameSuggestion[] = suggestions.map((s) => (typeof s === "string" ? { name: s } : s));
+
   const filtered = (value.trim()
-    ? suggestions.filter((s) => s.toLowerCase().includes(value.toLowerCase()))
-    : suggestions
+    ? normalized.filter((s) => s.name.toLowerCase().includes(value.toLowerCase()))
+    : normalized
   ).slice(0, 8);
 
   return (
@@ -59,11 +68,12 @@ export function NameSuggestInput({ value, onChange, suggestions, placeholder, cl
           }}
           className="overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg text-sm"
         >
-          {filtered.map((name) => (
-            <li key={name}
-              onMouseDown={(e) => { e.preventDefault(); onChange(name); setOpen(false); }}
-              className="cursor-pointer px-3 py-2 text-slate-800 hover:bg-emerald-50">
-              {name}
+          {filtered.map((s, i) => (
+            <li key={`${s.name}-${i}`}
+              onMouseDown={(e) => { e.preventDefault(); onChange(s.name); setOpen(false); }}
+              className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 hover:bg-emerald-50">
+              <span className="text-slate-800">{s.name}</span>
+              {s.tag && <span className="shrink-0 text-xs lowercase text-slate-400">{s.tag}</span>}
             </li>
           ))}
         </ul>

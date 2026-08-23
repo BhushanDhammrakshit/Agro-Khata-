@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { DatePicker } from "@/components/ui/DatePicker";
-import { NameSuggestInput } from "@/components/NameSuggestInput";
+import { NameSuggestInput, NameSuggestion } from "@/components/NameSuggestInput";
 import { formatCompactINR, formatINR } from "@/lib/currency";
 import { useAppUser } from "@/lib/AppUserContext";
 
@@ -48,7 +48,7 @@ const emptyForm = {
   remark: "",
 };
 
-export function TransactionsClient({ initialTransactions, payeeSuggestions, bankSuggestions }: { initialTransactions: Transaction[]; payeeSuggestions: string[]; bankSuggestions: string[] }) {
+export function TransactionsClient({ initialTransactions, payeeSuggestions, bankSuggestions }: { initialTransactions: Transaction[]; payeeSuggestions: NameSuggestion[]; bankSuggestions: string[] }) {
   const { me } = useAppUser();
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [error, setError] = useState<string | null>(null);

@@ -1,6 +1,13 @@
 import { redirect } from "next/navigation";
 import { serverApi } from "@/lib/server-api";
+import type { NameSuggestion } from "@/components/NameSuggestInput";
 import { TransactionsClient } from "./TransactionsClient";
+
+function partyTag(partyType: "customer" | "supplier" | "both") {
+  if (partyType === "customer") return "customer";
+  if (partyType === "supplier") return "supplier";
+  return "customer & supplier";
+}
 
 export default async function TransactionsPage() {
   const [transactions, parties, drivers] = await Promise.all([
@@ -12,9 +19,10 @@ export default async function TransactionsPage() {
     serverApi.listDrivers().catch(() => []),
   ]);
 
-  const payeeSuggestions = Array.from(
-    new Set([...parties.map((p) => p.name), ...drivers.map((d) => d.name)]),
-  ).sort((a, b) => a.localeCompare(b));
+  const payeeSuggestions: NameSuggestion[] = [
+    ...parties.map((p) => ({ name: p.name, tag: partyTag(p.partyType) })),
+    ...drivers.map((d) => ({ name: d.name, tag: "driver" })),
+  ];
 
   const bankSuggestions = Array.from(
     new Set(parties.map((p) => p.bankName).filter((b): b is string => !!b)),
