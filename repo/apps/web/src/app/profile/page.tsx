@@ -19,7 +19,7 @@ export default function ProfilePage() {
       setUser(u);
       setName(u.name);
       setEmail((u as AuthUser & { email?: string }).email ?? "");
-    });
+    }).catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load profile."));
   }, []);
 
   async function handleSave(e: React.FormEvent) {
