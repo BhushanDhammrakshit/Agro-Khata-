@@ -4,5 +4,6 @@ export enum PaymentMode {
   UPI = 'upi',
   CHEQUE = 'cheque',
   ADJUSTMENT = 'adjustment',
+  ONLINE = 'online',
   OTHER = 'other',
 }

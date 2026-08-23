@@ -251,7 +251,7 @@ export interface Item {
 }
 
 export type InvoiceStatus = "draft" | "sent" | "partially_paid" | "paid" | "overdue" | "cancelled";
-export type PaymentMode = "cash" | "bank_transfer" | "upi" | "cheque" | "adjustment" | "other";
+export type PaymentMode = "cash" | "bank_transfer" | "upi" | "cheque" | "adjustment" | "online" | "other";
 
 export interface InvoiceLineItemInput {
   itemId?: string;
@@ -419,6 +419,30 @@ export interface Expense {
   createdAt: string;
 }
 
+// Standalone, freeform "log a payment to/from anyone" record — not tied to
+// any Party/invoice; payer/payee are plain text.
+export interface Transaction {
+  id: string;
+  transactionDate: string;
+  payerName: string;
+  payeeName: string;
+  bankName?: string;
+  paymentMode: PaymentMode;
+  amount: string;
+  remark?: string;
+  createdAt: string;
+}
+
+export interface CreateTransactionDto {
+  transactionDate: string;
+  payerName: string;
+  payeeName: string;
+  bankName?: string;
+  paymentMode: PaymentMode;
+  amount: number;
+  remark?: string;
+}
+
 export const api = {
   listCompanies: (phone: string) => request<CompanyChoice[]>("/auth/companies", {
     method: "POST",
@@ -544,6 +568,13 @@ export const api = {
     request<Expense>("/expenses", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/expenses", "/reports/dashboard")),
   updateExpense: (id: string, dto: { category: string; description?: string; amount: number; expenseDate: string; paymentMode: PaymentMode; vehicleId?: string }) =>
     request<Expense>(`/expenses/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/expenses", "/reports/dashboard")),
+
+  // Transactions (standalone, freeform payer/payee ledger)
+  listTransactions: () => cachedRequest<Transaction[]>("/transactions", LIST_TTL),
+  createTransaction: (dto: CreateTransactionDto) =>
+    request<Transaction>("/transactions", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/transactions")),
+  updateTransaction: (id: string, dto: CreateTransactionDto) =>
+    request<Transaction>(`/transactions/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/transactions")),
 
   // Drivers
   listDrivers: () => cachedRequest<Driver[]>("/drivers"),

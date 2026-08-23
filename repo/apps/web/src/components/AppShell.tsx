@@ -20,6 +20,7 @@ const Icon = {
   PurchInv:   <><path d="M9 12h6M9 16h4m5-11v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7l4-4h9a2 2 0 0 1 2 2Z" /></>,
   Expenses:   <><path d="M3 10h18M7 15h.01M11 15h2m-7 5h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2Z" /></>,
   Payments:   <><path d="M12 8v8m-3-5h6m-6 2h6" /><rect width="18" height="14" x="3" y="5" rx="2" /></>,
+  Transactions: <><path d="M7 8h13M7 8l3-3M7 8l3 3M17 16H4M17 16l-3-3M17 16l-3 3" /></>,
   Reports:    <><path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2Zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2Z" /></>,
   Settings:   <><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /><path d="M19.622 10.395l-1.097-2.65L20 6l-2-2-1.735 1.483-2.707-1.113L12.935 2h-1.954l-.632 2.401-2.645 1.115L6 4 4 6l1.453 1.789-1.08 2.657L2 11v2l2.401.656L5.516 16.3 4 18l2 2 1.791-1.46 2.606 1.072L11 22h2l.604-2.401 2.651-1.072L18 20l2-2-1.432-1.727 1.05-2.614L22 13v-2l-2.378-.605Z" /></>,
   Profile:    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12Zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8Z" />,
@@ -54,6 +55,7 @@ const NAV_ITEMS = [
   { href: "/sales-invoices",    label: "Sales Invoices",    icon: Icon.SalesInv   },
   { href: "/purchase-invoices", label: "Purchase Invoices", icon: Icon.PurchInv   },
   { href: "/payments",          label: "Payments",          icon: Icon.Payments   },
+  { href: "/transactions",      label: "Transactions",      icon: Icon.Transactions },
   { href: "/expenses",          label: "Expenses",          icon: Icon.Expenses   },
 ];
 

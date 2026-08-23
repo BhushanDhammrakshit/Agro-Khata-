@@ -18,6 +18,7 @@ import { Expense } from '../entities/expense.entity';
 import { StockLedger } from '../entities/stock-ledger.entity';
 import { Driver } from '../entities/driver.entity';
 import { Vehicle } from '../entities/vehicle.entity';
+import { Transaction } from '../entities/transaction.entity';
 
 const ENTITIES = [
   Tenant, User, OtpRequest, Item, AuditLog,
@@ -27,6 +28,7 @@ const ENTITIES = [
   Expense, StockLedger,
   Driver,
   Vehicle,
+  Transaction,
 ];
 
 @Module({
