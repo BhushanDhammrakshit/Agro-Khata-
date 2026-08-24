@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { api, ApiError, AuthUser, CreatePartyPaymentDto, Party, PartyLedger, PartyPaymentDirection, PaymentMode } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
@@ -48,6 +49,7 @@ const SECTIONS = ["Basic", "Invoice", "Bank"];
 
 export default function PartyDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const from = useSearchParams().get("from");
   const [tab, setTab] = useState<"profile" | "ledger">("profile");
   const [party, setParty] = useState<Party | null>(null);
   const [me, setMe] = useState<AuthUser | null>(null);
@@ -125,10 +127,17 @@ export default function PartyDetailPage({ params }: { params: Promise<{ id: stri
   const isSupplier = party?.partyType === "supplier" || party?.partyType === "both";
   const balance = ledger?.closingBalance ?? 0;
 
+  // /parties itself isn't linked from the nav — send the back link to wherever this party type is actually managed.
+  // Prefer the `from` param set by the Customers/Suppliers list links so this is correct
+  // immediately, before the party fetch (and its partyType) resolves.
+  const isCustomer = from ? from === "customers" : party?.partyType === "customer";
+  const backHref = isCustomer ? "/customers" : "/suppliers";
+  const backLabel = isCustomer ? "← Customers" : "← Suppliers";
+
   return (
     <AppShell title={party?.name ?? "Party Profile"}>
       <div className="mx-auto max-w-3xl">
-        <Link href="/parties" className="mb-4 inline-block text-sm font-medium text-slate-600 hover:text-slate-900">← Parties</Link>
+        <Link href={backHref} className="mb-4 inline-block text-sm font-medium text-slate-600 hover:text-slate-900">{backLabel}</Link>
 
         {/* Tabs */}
         <div className="mb-5 flex rounded-lg border border-slate-200 bg-white overflow-hidden text-sm w-fit">

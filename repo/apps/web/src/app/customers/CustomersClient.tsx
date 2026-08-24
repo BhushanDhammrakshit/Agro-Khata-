@@ -142,7 +142,7 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
                   <td className={tdClass}>{(p.poPrefix ?? "") + (p.nextPoSeq ?? "")}</td>
                   <td className={tdClass}><Badge tone={p.isActive ? "green" : "slate"}>{p.isActive ? "Active" : "Inactive"}</Badge></td>
                   <td className={tdClass}>
-                    <Link href={`/parties/${p.id}`} className="text-emerald-700 hover:underline">Edit / Ledger</Link>
+                    <Link href={`/parties/${p.id}?from=customers`} className="text-emerald-700 hover:underline">Edit / Ledger</Link>
                   </td>
                 </tr>
               ))}
