@@ -6,6 +6,9 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ActionsMenu, ActionsMenuItem } from "@/components/ui/ActionsMenu";
+import { EditIcon, DeleteIcon, ListIcon } from "@/components/ui/icons";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { AutocompleteInput } from "@/components/ui/AutocompleteInput";
 import { DatePicker } from "@/components/ui/DatePicker";
@@ -28,6 +31,8 @@ function VehicleExpensesPanel({ vehicleId }: { vehicleId: string }) {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyExpenseForm);
   const loaded = useRef(false);
+  const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   if (!loaded.current) {
     loaded.current = true;
@@ -61,6 +66,20 @@ function VehicleExpensesPanel({ vehicleId }: { vehicleId: string }) {
     }
   }
 
+  async function handleDeleteExpense() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.deleteExpense(deleteTarget.id);
+      setDeleteTarget(null);
+      reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete expense.");
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
   return (
     <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Add Vehicle Expense</p>
@@ -99,12 +118,13 @@ function VehicleExpensesPanel({ vehicleId }: { vehicleId: string }) {
               <th className={thClass}>Description</th>
               <th className={thClass}>Amount</th>
               <th className={thClass}>Mode</th>
+              <th className={thClass}></th>
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={5} className={tdClass + " text-center text-slate-400"}>Loading…</td></tr>}
+            {loading && <tr><td colSpan={6} className={tdClass + " text-center text-slate-400"}>Loading…</td></tr>}
             {!loading && expenses.length === 0 && (
-              <tr><td colSpan={5} className={tdClass + " text-center text-slate-400"}>No expenses logged for this vehicle yet.</td></tr>
+              <tr><td colSpan={6} className={tdClass + " text-center text-slate-400"}>No expenses logged for this vehicle yet.</td></tr>
             )}
             {expenses.map((e) => (
               <tr key={e.id} className="hover:bg-white">
@@ -113,11 +133,31 @@ function VehicleExpensesPanel({ vehicleId }: { vehicleId: string }) {
                 <td className={tdClass}>{e.description ?? "—"}</td>
                 <td className={tdClass}>{formatINR(e.amount)}</td>
                 <td className={tdClass}>{e.paymentMode}</td>
+                <td className={tdClass}>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(e)}
+                    className="text-sm font-medium text-red-600 hover:underline"
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete expense?"
+        message={`This will permanently delete this ${deleteTarget?.category} expense of ${deleteTarget ? formatINR(deleteTarget.amount) : ""}.`}
+        confirmLabel="Delete"
+        danger
+        busy={deleting}
+        onConfirm={handleDeleteExpense}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
@@ -131,6 +171,8 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
   const formRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({ vehicleNo: "", name: "", loadCapacity: "" });
   const [expandedVehicleId, setExpandedVehicleId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   function toggleExpenses(vehicleId: string) {
     setExpandedVehicleId((current) => (current === vehicleId ? null : vehicleId));
@@ -175,6 +217,30 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
   }
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.deleteVehicle(deleteTarget.id);
+      if (editingId === deleteTarget.id) resetForm();
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete vehicle.");
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function menuItems(vehicle: Vehicle): ActionsMenuItem[] {
+    return [
+      { key: "edit", label: "Edit", icon: EditIcon, onClick: () => beginEdit(vehicle) },
+      { key: "expenses", label: expandedVehicleId === vehicle.id ? "Hide expenses" : "Expenses", icon: ListIcon, onClick: () => toggleExpenses(vehicle.id) },
+      { key: "delete", label: "Delete", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(vehicle) },
+    ];
+  }
 
   return (
     <AppShell title="Vehicles">
@@ -230,9 +296,9 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
                   <p className="text-xs font-medium text-slate-400">Vehicle number</p>
                   <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{vehicle.vehicleNo}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
+                <div className="flex shrink-0 items-center gap-2">
                   <Badge tone={vehicle.isActive ? "green" : "slate"}>{vehicle.isActive ? "Active" : "Inactive"}</Badge>
-                  <button type="button" onClick={() => beginEdit(vehicle)} className="text-xs font-medium text-emerald-700 hover:underline">Edit</button>
+                  <ActionsMenu items={menuItems(vehicle)} />
                 </div>
               </div>
               <div className="mt-5 grid grid-cols-2 gap-4">
@@ -246,7 +312,7 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
                 </div>
               </div>
               <button type="button" onClick={() => toggleExpenses(vehicle.id)} className="mt-4 text-xs font-medium text-emerald-700 hover:underline">
-                {expandedVehicleId === vehicle.id ? "Hide expenses" : "Expenses"}
+                {expandedVehicleId === vehicle.id ? "Hide expenses" : "View expenses"}
               </button>
               {expandedVehicleId === vehicle.id && (
                 <div className="mt-3">
@@ -281,10 +347,7 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
                     <td className={tdClass}>{v.loadCapacity ?? "—"}</td>
                     <td className={tdClass}><Badge tone={v.isActive ? "green" : "slate"}>{v.isActive ? "Active" : "Inactive"}</Badge></td>
                     <td className={tdClass}>
-                      <button type="button" onClick={() => beginEdit(v)} className="text-sm font-medium text-emerald-700 hover:underline">Edit</button>
-                      <button type="button" onClick={() => toggleExpenses(v.id)} className="ml-3 text-sm font-medium text-emerald-700 hover:underline">
-                        {expandedVehicleId === v.id ? "Hide expenses" : "Expenses"}
-                      </button>
+                      <ActionsMenu items={menuItems(v)} />
                     </td>
                   </tr>
                   {expandedVehicleId === v.id && (
@@ -300,6 +363,17 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete vehicle?"
+        message={`This will permanently delete "${deleteTarget?.vehicleNo}". This cannot be undone.`}
+        confirmLabel="Delete"
+        danger
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </AppShell>
   );
 }

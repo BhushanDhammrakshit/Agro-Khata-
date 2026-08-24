@@ -2,6 +2,9 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { AuditLogService } from '../common/audit/audit-log.service';
 import { Item } from '../entities/item.entity';
+import { SalesInvoiceItem } from '../entities/sales-invoice-item.entity';
+import { PurchaseInvoiceItem } from '../entities/purchase-invoice-item.entity';
+import { StockLedger } from '../entities/stock-ledger.entity';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 
@@ -69,5 +72,22 @@ export class ItemsService {
     const after = await manager.getRepository(Item).findOneByOrFail({ id: itemId });
     await this.auditLog.record({ action: 'item.updated', entityType: 'item', entityId: itemId, before, after });
     return after;
+  }
+
+  async remove(itemId: string): Promise<{ id: string }> {
+    const item = await this.findOneOrThrow(itemId);
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const [salesCount, purchaseCount, stockCount] = await Promise.all([
+      manager.getRepository(SalesInvoiceItem).count({ where: { tenantId, itemId } }),
+      manager.getRepository(PurchaseInvoiceItem).count({ where: { tenantId, itemId } }),
+      manager.getRepository(StockLedger).count({ where: { tenantId, itemId } }),
+    ]);
+    if (salesCount > 0 || purchaseCount > 0 || stockCount > 0) {
+      throw new ConflictException('Cannot delete: this item is used in existing invoices or stock records.');
+    }
+    await manager.getRepository(Item).delete({ id: itemId, tenantId });
+    await this.auditLog.record({ action: 'item.deleted', entityType: 'item', entityId: itemId, before: item });
+    return { id: itemId };
   }
 }

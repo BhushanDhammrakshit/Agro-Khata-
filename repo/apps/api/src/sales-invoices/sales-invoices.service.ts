@@ -152,16 +152,17 @@ export class SalesInvoicesService {
     return { ...invoice, items };
   }
 
-  // Full replace of an invoice's header + line items — only allowed before any payment is
-  // recorded against it, since editing totals afterward would invalidate existing payments.
+  // Full replace of an invoice's header + line items. Blocked once fully paid or cancelled;
+  // partially paid invoices can still be edited as long as the new total doesn't drop below
+  // what's already been paid (status is recomputed against the existing paid amount below).
   async update(id: string, dto: UpdateSalesInvoiceDto): Promise<SalesInvoice & { items: SalesInvoiceItem[] }> {
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
     const userId = this.tenantContext.getUserId();
     const invoice = await this.getOrThrow(id);
 
-    if (invoice.status === InvoiceStatus.PAID || invoice.status === InvoiceStatus.PARTIALLY_PAID) {
-      throw new BadRequestException('Paid or partially paid invoices cannot be edited.');
+    if (invoice.status === InvoiceStatus.PAID) {
+      throw new BadRequestException('Fully paid invoices cannot be edited.');
     }
     if (invoice.status === InvoiceStatus.CANCELLED) {
       throw new BadRequestException('Cancelled invoices cannot be edited.');
@@ -195,6 +196,11 @@ export class SalesInvoicesService {
     const sgstAmount = isGst && !dto.isInterState ? totalGst / 2 : 0;
     const igstAmount = isGst && dto.isInterState ? totalGst : 0;
     const totalAmount = subTotal + totalGst;
+
+    const paidAmount = parseFloat(invoice.paidAmount);
+    if (paidAmount > 0 && totalAmount < paidAmount) {
+      throw new BadRequestException(`Total amount cannot be less than the ₹${paidAmount.toFixed(2)} already paid on this invoice.`);
+    }
 
     const itemRepo = manager.getRepository(SalesInvoiceItem);
     const stockRepo = manager.getRepository(StockLedger);
@@ -273,6 +279,7 @@ export class SalesInvoicesService {
       poNo: dto.poNo,
       poDate: dto.poDate,
       asnNo: dto.asnNo,
+      ...(paidAmount > 0 ? { status: paidAmount >= totalAmount ? InvoiceStatus.PAID : InvoiceStatus.PARTIALLY_PAID } : {}),
     });
 
     const after = await manager.getRepository(SalesInvoice).findOneByOrFail({ id });
@@ -281,17 +288,17 @@ export class SalesInvoicesService {
     return { ...after, items };
   }
 
-  // Reverses stock effects and deletes the invoice (items/payments cascade via FK).
-  // Only allowed before any payment is recorded — deleting a paid invoice would silently
-  // orphan its payment history.
+  // Reverses stock effects and deletes the invoice — payments/items cascade via FK.
+  // Only fully paid invoices are protected; deleting a partially paid one intentionally
+  // discards its payment history along with it (cascade delete on sales_invoice_payments).
   async remove(id: string): Promise<{ id: string }> {
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
     const userId = this.tenantContext.getUserId();
     const invoice = await this.getOrThrow(id);
 
-    if (invoice.status === InvoiceStatus.PAID || invoice.status === InvoiceStatus.PARTIALLY_PAID) {
-      throw new BadRequestException('Paid or partially paid invoices cannot be deleted.');
+    if (invoice.status === InvoiceStatus.PAID) {
+      throw new BadRequestException('Fully paid invoices cannot be deleted.');
     }
 
     const itemRepo = manager.getRepository(SalesInvoiceItem);

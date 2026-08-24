@@ -6,6 +6,9 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ActionsMenu, ActionsMenuItem } from "@/components/ui/ActionsMenu";
+import { EditIcon, DeleteIcon } from "@/components/ui/icons";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 import { PhoneInput, withPrefix, stripPrefix } from "@/components/PhoneInput";
 
@@ -17,6 +20,8 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
   const [formOpen, setFormOpen] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({ name: "", licenceNo: "", phone: "" });
+  const [deleteTarget, setDeleteTarget] = useState<Driver | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   function load() {
     api.listDrivers().then(setDrivers)
@@ -57,6 +62,29 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
   }
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.deleteDriver(deleteTarget.id);
+      if (editingId === deleteTarget.id) resetForm();
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete driver.");
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function menuItems(driver: Driver): ActionsMenuItem[] {
+    return [
+      { key: "edit", label: "Edit", icon: EditIcon, onClick: () => beginEdit(driver) },
+      { key: "delete", label: "Delete", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(driver) },
+    ];
+  }
 
   return (
     <AppShell title="Drivers">
@@ -111,9 +139,9 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
                   <p className="text-xs font-medium text-slate-400">Driver</p>
                   <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{driver.name}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
+                <div className="flex shrink-0 items-center gap-2">
                   <Badge tone={driver.isActive ? "green" : "slate"}>{driver.isActive ? "Active" : "Inactive"}</Badge>
-                  <button type="button" onClick={() => beginEdit(driver)} className="text-xs font-medium text-emerald-700 hover:underline">Edit</button>
+                  <ActionsMenu items={menuItems(driver)} />
                 </div>
               </div>
               <div className="mt-5 grid grid-cols-2 gap-4">
@@ -152,13 +180,26 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
                   <td className={tdClass}>{d.licenceNo ?? "—"}</td>
                   <td className={tdClass}>{d.phone ? stripPrefix(d.phone) : "—"}</td>
                   <td className={tdClass}><Badge tone={d.isActive ? "green" : "slate"}>{d.isActive ? "Active" : "Inactive"}</Badge></td>
-                  <td className={tdClass}><button type="button" onClick={() => beginEdit(d)} className="text-sm font-medium text-emerald-700 hover:underline">Edit</button></td>
+                  <td className={tdClass}>
+                    <ActionsMenu items={menuItems(d)} />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete driver?"
+        message={`This will permanently delete "${deleteTarget?.name}". This cannot be undone.`}
+        confirmLabel="Delete"
+        danger
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </AppShell>
   );
 }

@@ -163,8 +163,8 @@ export class PurchaseInvoicesService {
     const userId = this.tenantContext.getUserId();
     const invoice = await this.getOrThrow(id);
 
-    if (invoice.status === InvoiceStatus.PAID || invoice.status === InvoiceStatus.PARTIALLY_PAID) {
-      throw new BadRequestException('Paid or partially paid invoices cannot be edited.');
+    if (invoice.status === InvoiceStatus.PAID) {
+      throw new BadRequestException('Fully paid invoices cannot be edited.');
     }
     if (invoice.status === InvoiceStatus.CANCELLED) {
       throw new BadRequestException('Cancelled invoices cannot be edited.');
@@ -198,6 +198,11 @@ export class PurchaseInvoicesService {
     const sgstAmount = isGst && !dto.isInterState ? totalGst / 2 : 0;
     const igstAmount = isGst && dto.isInterState ? totalGst : 0;
     const totalAmount = subTotal + totalGst;
+
+    const paidAmount = parseFloat(invoice.paidAmount);
+    if (paidAmount > 0 && totalAmount < paidAmount) {
+      throw new BadRequestException(`Total amount cannot be less than the ₹${paidAmount.toFixed(2)} already paid on this invoice.`);
+    }
 
     const itemRepo = manager.getRepository(PurchaseInvoiceItem);
     const stockRepo = manager.getRepository(StockLedger);
@@ -269,6 +274,7 @@ export class PurchaseInvoicesService {
       igstAmount: igstAmount.toFixed(2),
       totalAmount: totalAmount.toFixed(2),
       notes: dto.notes,
+      ...(paidAmount > 0 ? { status: paidAmount >= totalAmount ? InvoiceStatus.PAID : InvoiceStatus.PARTIALLY_PAID } : {}),
     });
 
     const after = await manager.getRepository(PurchaseInvoice).findOneByOrFail({ id });
@@ -277,17 +283,17 @@ export class PurchaseInvoicesService {
     return { ...after, items };
   }
 
-  // Reverses stock effects and deletes the invoice (items/payments cascade via FK).
-  // Only allowed before any payment is recorded — deleting a paid invoice would silently
-  // orphan its payment history.
+  // Reverses stock effects and deletes the invoice — payments/items cascade via FK.
+  // Only fully paid invoices are protected; deleting a partially paid one intentionally
+  // discards its payment history along with it (cascade delete on purchase_invoice_payments).
   async remove(id: string): Promise<{ id: string }> {
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
     const userId = this.tenantContext.getUserId();
     const invoice = await this.getOrThrow(id);
 
-    if (invoice.status === InvoiceStatus.PAID || invoice.status === InvoiceStatus.PARTIALLY_PAID) {
-      throw new BadRequestException('Paid or partially paid invoices cannot be deleted.');
+    if (invoice.status === InvoiceStatus.PAID) {
+      throw new BadRequestException('Fully paid invoices cannot be deleted.');
     }
 
     const itemRepo = manager.getRepository(PurchaseInvoiceItem);

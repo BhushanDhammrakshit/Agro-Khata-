@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -27,5 +27,11 @@ export class ExpensesController {
   @Roles(UserRole.OWNER, UserRole.STAFF)
   update(@Param('id') id: string, @Body() dto: UpdateExpenseDto) {
     return this.expensesService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.OWNER, UserRole.STAFF)
+  remove(@Param('id') id: string) {
+    return this.expensesService.remove(id);
   }
 }

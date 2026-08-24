@@ -22,7 +22,7 @@ interface LineItem {
   gstRate: string;
 }
 
-const NOT_EDITABLE_STATUSES = ["paid", "partially_paid", "cancelled"];
+const NOT_EDITABLE_STATUSES = ["paid", "cancelled"];
 
 export default function EditSalesInvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

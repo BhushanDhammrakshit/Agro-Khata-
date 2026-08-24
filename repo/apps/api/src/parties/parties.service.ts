@@ -170,4 +170,21 @@ export class PartiesService {
       order: { paidDate: 'DESC', createdAt: 'DESC' },
     });
   }
+
+  async remove(partyId: string): Promise<{ id: string }> {
+    const party = await this.findOneOrThrow(partyId);
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const [salesCount, purchaseCount, paymentCount] = await Promise.all([
+      manager.getRepository(SalesInvoice).count({ where: { tenantId, partyId } }),
+      manager.getRepository(PurchaseInvoice).count({ where: { tenantId, partyId } }),
+      manager.getRepository(PartyPayment).count({ where: { tenantId, partyId } }),
+    ]);
+    if (salesCount > 0 || purchaseCount > 0 || paymentCount > 0) {
+      throw new ConflictException('Cannot delete: this party has existing invoices or payment records.');
+    }
+    await manager.getRepository(Party).delete({ id: partyId, tenantId });
+    await this.auditLog.record({ action: 'party.deleted', entityType: 'party', entityId: partyId, before: party });
+    return { id: partyId };
+  }
 }

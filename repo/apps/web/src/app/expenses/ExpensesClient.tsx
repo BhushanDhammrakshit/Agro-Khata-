@@ -6,6 +6,9 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ActionsMenu, ActionsMenuItem } from "@/components/ui/ActionsMenu";
+import { EditIcon, DeleteIcon } from "@/components/ui/icons";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { formatCompactINR, formatINR } from "@/lib/currency";
@@ -34,6 +37,8 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   function load() {
     api.listExpenses().then(setExpenses).catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load expenses."));
@@ -78,6 +83,29 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
     } finally {
       setCreating(false);
     }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.deleteExpense(deleteTarget.id);
+      if (editingId === deleteTarget.id) resetForm();
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete expense.");
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function menuItems(expense: Expense): ActionsMenuItem[] {
+    return [
+      { key: "edit", label: "Edit", icon: EditIcon, onClick: () => beginEdit(expense) },
+      { key: "delete", label: "Delete", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(expense) },
+    ];
   }
 
   return (
@@ -147,9 +175,9 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
                   <p className="text-xs font-medium text-slate-400">Category</p>
                   <p className="mt-0.5 truncate text-lg font-semibold text-slate-900">{expense.category}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
+                <div className="flex shrink-0 items-center gap-2">
                   <p className="text-sm text-slate-400">{formatDate(expense.expenseDate)}</p>
-                  <button type="button" onClick={() => beginEdit(expense)} className="text-xs font-medium text-emerald-700 hover:underline">Edit</button>
+                  <ActionsMenu items={menuItems(expense)} />
                 </div>
               </div>
               <p className="mt-2 line-clamp-2 min-h-5 text-sm text-slate-500">{expense.description ?? "No description"}</p>
@@ -188,7 +216,9 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
                   <td className={tdClass}>{e.description ?? "—"}</td>
                   <td className={tdClass}>₹{e.amount}</td>
                   <td className={tdClass}>{e.paymentMode}</td>
-                  <td className={tdClass}><button type="button" onClick={() => beginEdit(e)} className="text-sm font-medium text-emerald-700 hover:underline">Edit</button></td>
+                  <td className={tdClass}>
+                    <ActionsMenu items={menuItems(e)} />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -196,6 +226,17 @@ export function ExpensesClient({ initialExpenses }: { initialExpenses: Expense[]
           {expenses.length === 0 && <p className="p-4 text-sm text-slate-500">No expenses yet.</p>}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete expense?"
+        message={`This will permanently delete this ${deleteTarget?.category} expense. This cannot be undone.`}
+        confirmLabel="Delete"
+        danger
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </AppShell>
   );
 }

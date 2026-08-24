@@ -59,4 +59,15 @@ export class TransactionsService {
     await this.auditLog.record({ action: 'transaction.updated', entityType: 'transaction', entityId: id, before, after });
     return after;
   }
+
+  async remove(id: string): Promise<{ id: string }> {
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const repository = manager.getRepository(Transaction);
+    const before = await repository.findOne({ where: { id, tenantId } });
+    if (!before) throw new NotFoundException('Transaction not found.');
+    await repository.delete({ id, tenantId });
+    await this.auditLog.record({ action: 'transaction.deleted', entityType: 'transaction', entityId: id, before });
+    return { id };
+  }
 }

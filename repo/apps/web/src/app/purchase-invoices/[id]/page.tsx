@@ -131,13 +131,13 @@ export default function PurchaseInvoiceDetailPage({ params }: { params: Promise<
         <Link href="/purchase-invoices" className="text-sm font-medium text-slate-600 hover:text-slate-900">← Purchase Invoices</Link>
 
         <div className="flex justify-end gap-2 print:hidden">
-          {invoice.status !== "paid" && invoice.status !== "partially_paid" && invoice.status !== "cancelled" && (
+          {invoice.status !== "paid" && invoice.status !== "cancelled" && (
             <Link href={`/purchase-invoices/${invoice.id}/edit`}
               className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
               ✏️ Edit
             </Link>
           )}
-          {invoice.status !== "paid" && invoice.status !== "partially_paid" && (
+          {invoice.status !== "paid" && (
             <button onClick={() => setConfirmingDelete(true)} disabled={deleting} aria-busy={deleting}
               className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60">
               🗑 {deleting ? "Deleting…" : "Delete"}

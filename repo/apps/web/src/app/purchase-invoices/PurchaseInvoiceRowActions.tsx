@@ -50,8 +50,8 @@ export function PurchaseInvoiceRowActions({ invoice, compact = false }: Purchase
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const canEdit = invoice.status !== "paid" && invoice.status !== "partially_paid" && invoice.status !== "cancelled";
-  const canDelete = invoice.status !== "paid" && invoice.status !== "partially_paid";
+  const canEdit = invoice.status !== "paid" && invoice.status !== "cancelled";
+  const canDelete = invoice.status !== "paid";
 
   // Warm the PDF cache once the row scrolls into view — gives mobile taps (which lack hover and
   // barely precede touchstart) a much bigger head start than touchstart alone, so navigator.share()

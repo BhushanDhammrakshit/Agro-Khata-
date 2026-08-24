@@ -526,6 +526,7 @@ export const api = {
     request<{ invoiceNo: string; poNo: string }>(`/parties/${id}/next-numbers?invoiceType=${invoiceType}`),
   createParty: (dto: Partial<Party>) => request<Party>("/parties", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/parties")),
   updateParty: (id: string, dto: Partial<Party>) => request<Party>(`/parties/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/parties")),
+  deleteParty: (id: string) => request<{ id: string }>(`/parties/${id}`, { method: "DELETE" }).finally(() => invalidate("/parties")),
   updateFarmerCode: (id: string, farmerCode: string) =>
     request<Party>(`/parties/${id}/farmer-code`, { method: "PATCH", body: JSON.stringify({ farmerCode }) }).finally(() => invalidate("/parties")),
   listPartyPayments: (id: string) => cachedRequest<PartyPayment[]>(`/parties/${id}/payments`),
@@ -549,6 +550,8 @@ export const api = {
     name: string; uom: string; defaultRate: number; hsnCode: string; gstRate: number;
     salePrice: number; lowStockAlertQty: number; isActive: boolean;
   }>) => request<Item>(`/items/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/items")),
+  deleteItem: (id: string) =>
+    request<{ id: string }>(`/items/${id}`, { method: "DELETE" }).finally(() => invalidate("/items")),
 
   // Sales Invoices (to a customer)
   listSalesInvoices: (filters?: { partyId?: string; status?: InvoiceStatus }) => {
@@ -594,6 +597,8 @@ export const api = {
     request<Expense>("/expenses", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/expenses", "/reports/dashboard")),
   updateExpense: (id: string, dto: { category: string; description?: string; amount: number; expenseDate: string; paymentMode: PaymentMode; vehicleId?: string }) =>
     request<Expense>(`/expenses/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/expenses", "/reports/dashboard")),
+  deleteExpense: (id: string) =>
+    request<{ id: string }>(`/expenses/${id}`, { method: "DELETE" }).finally(() => invalidate("/expenses", "/reports/dashboard")),
 
   // Transactions (standalone, freeform payer/payee ledger)
   listTransactions: () => cachedRequest<Transaction[]>("/transactions", LIST_TTL),
@@ -601,6 +606,8 @@ export const api = {
     request<Transaction>("/transactions", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/transactions")),
   updateTransaction: (id: string, dto: CreateTransactionDto) =>
     request<Transaction>(`/transactions/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/transactions")),
+  deleteTransaction: (id: string) =>
+    request<{ id: string }>(`/transactions/${id}`, { method: "DELETE" }).finally(() => invalidate("/transactions")),
 
   // Drivers
   listDrivers: () => cachedRequest<Driver[]>("/drivers"),
@@ -608,12 +615,16 @@ export const api = {
     request<Driver>("/drivers", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/drivers")),
   updateDriver: (id: string, dto: Partial<Driver>) =>
     request<Driver>(`/drivers/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/drivers")),
+  deleteDriver: (id: string) =>
+    request<{ id: string }>(`/drivers/${id}`, { method: "DELETE" }).finally(() => invalidate("/drivers")),
 
   listVehicles: () => cachedRequest<Vehicle[]>("/vehicles"),
   createVehicle: (dto: { vehicleNo: string; name?: string; loadCapacity?: string }) =>
     request<Vehicle>("/vehicles", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/vehicles")),
   updateVehicle: (id: string, dto: Partial<Vehicle>) =>
     request<Vehicle>(`/vehicles/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/vehicles")),
+  deleteVehicle: (id: string) =>
+    request<{ id: string }>(`/vehicles/${id}`, { method: "DELETE" }).finally(() => invalidate("/vehicles")),
 
   // Warm the cache with reference + session data so it's ready across the app on load.
   prefetch: () => {

@@ -58,4 +58,15 @@ export class ExpensesService {
     await this.auditLog.record({ action: 'expense.updated', entityType: 'expense', entityId: id, before, after });
     return after;
   }
+
+  async remove(id: string): Promise<{ id: string }> {
+    const manager = this.tenantContext.getManager();
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const repository = manager.getRepository(Expense);
+    const before = await repository.findOne({ where: { id, tenantId } });
+    if (!before) throw new NotFoundException('Expense not found.');
+    await repository.delete({ id, tenantId });
+    await this.auditLog.record({ action: 'expense.deleted', entityType: 'expense', entityId: id, before });
+    return { id };
+  }
 }

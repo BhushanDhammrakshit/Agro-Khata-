@@ -1,16 +1,20 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api, ApiError, Party } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ActionsMenu, ActionsMenuItem } from "@/components/ui/ActionsMenu";
+import { EditIcon, DeleteIcon } from "@/components/ui/icons";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 import { PhoneInput, withPrefix, stripPrefix } from "@/components/PhoneInput";
 
 export function CustomersClient({ initialParties }: { initialParties: Party[] }) {
+  const router = useRouter();
   const [parties, setParties] = useState<Party[]>(initialParties);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -21,6 +25,8 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
     gstin: "", pan: "", fssaiNo: "",
     poPrefix: "PO-", nextPoSeq: "1",
   });
+  const [deleteTarget, setDeleteTarget] = useState<Party | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   function load() {
     api.listParties("customer").then(setParties)
@@ -52,6 +58,28 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
   }
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.deleteParty(deleteTarget.id);
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete customer.");
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function menuItems(party: Party): ActionsMenuItem[] {
+    return [
+      { key: "edit", label: "Edit / Ledger", icon: EditIcon, onClick: () => router.push(`/parties/${party.id}?from=customers`) },
+      { key: "delete", label: "Delete", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(party) },
+    ];
+  }
 
   return (
     <AppShell title="Customers">
@@ -142,7 +170,7 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
                   <td className={tdClass}>{(p.poPrefix ?? "") + (p.nextPoSeq ?? "")}</td>
                   <td className={tdClass}><Badge tone={p.isActive ? "green" : "slate"}>{p.isActive ? "Active" : "Inactive"}</Badge></td>
                   <td className={tdClass}>
-                    <Link href={`/parties/${p.id}?from=customers`} className="text-emerald-700 hover:underline">Edit / Ledger</Link>
+                    <ActionsMenu items={menuItems(p)} />
                   </td>
                 </tr>
               ))}
@@ -150,6 +178,17 @@ export function CustomersClient({ initialParties }: { initialParties: Party[] })
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete customer?"
+        message={`This will permanently delete "${deleteTarget?.name}". This cannot be undone.`}
+        confirmLabel="Delete"
+        danger
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </AppShell>
   );
 }

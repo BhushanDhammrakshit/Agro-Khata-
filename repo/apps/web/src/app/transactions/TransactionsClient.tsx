@@ -6,6 +6,9 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ActionsMenu, ActionsMenuItem } from "@/components/ui/ActionsMenu";
+import { EditIcon, DeleteIcon } from "@/components/ui/icons";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { NameSuggestInput, NameSuggestion } from "@/components/NameSuggestInput";
@@ -76,6 +79,8 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Combines bank names already on file (parties) with ones typed into past
   // transactions, so anything the user has ever entered gets suggested back.
@@ -147,6 +152,29 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await api.deleteTransaction(deleteTarget.id);
+      if (editingId === deleteTarget.id) resetForm();
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete transaction.");
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function menuItems(transaction: Transaction): ActionsMenuItem[] {
+    return [
+      { key: "edit", label: "Edit", icon: EditIcon, onClick: () => beginEdit(transaction) },
+      { key: "delete", label: "Delete", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(transaction) },
+    ];
   }
 
   return (
@@ -237,7 +265,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
                   <p className="text-xs font-medium text-slate-400">#{index + 1} · {formatDate(t.transactionDate)}</p>
                   <p className="mt-0.5 truncate text-base font-semibold text-slate-900">{t.payerName} → {t.payeeName}</p>
                 </div>
-                <button type="button" onClick={() => beginEdit(t)} className="shrink-0 text-xs font-medium text-emerald-700 hover:underline">Edit</button>
+                <ActionsMenu items={menuItems(t)} />
               </div>
               <p className="mt-2 line-clamp-2 min-h-5 text-sm text-slate-500">{t.remark ?? "No remark"}</p>
               <div className="mt-5 grid grid-cols-3 gap-4 border-t border-slate-100 pt-3">
@@ -285,7 +313,9 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
                   <td className={tdClass}>{formatPaymentMode(t.paymentMode)}</td>
                   <td className={tdClass}>{formatINR(t.amount)}</td>
                   <td className={tdClass}>{t.remark ?? "—"}</td>
-                  <td className={tdClass}><button type="button" onClick={() => beginEdit(t)} className="text-sm font-medium text-emerald-700 hover:underline">Edit</button></td>
+                  <td className={tdClass}>
+                    <ActionsMenu items={menuItems(t)} />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -293,6 +323,17 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
           {transactions.length === 0 && <p className="p-4 text-sm text-slate-500">No transactions logged yet.</p>}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete transaction?"
+        message={`This will permanently delete this transaction (${deleteTarget?.payerName} \u2192 ${deleteTarget?.payeeName}). This cannot be undone.`}
+        confirmLabel="Delete"
+        danger
+        busy={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </AppShell>
   );
 }

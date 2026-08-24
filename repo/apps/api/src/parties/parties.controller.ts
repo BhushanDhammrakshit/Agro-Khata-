@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -58,5 +58,11 @@ export class PartiesController {
   @Roles(...WRITE_ROLES)
   recordPayment(@Param('id') id: string, @Body() dto: CreatePartyPaymentDto) {
     return this.partiesService.recordPayment(id, dto);
+  }
+
+  @Delete(':id')
+  @Roles(...WRITE_ROLES)
+  remove(@Param('id') id: string) {
+    return this.partiesService.remove(id);
   }
 }
