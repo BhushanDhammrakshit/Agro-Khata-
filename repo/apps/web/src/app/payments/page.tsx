@@ -119,7 +119,7 @@ export default function PaymentsPage() {
               />
             </div>
             {partyId && (
-              <div className={`sm:col-span-2 flex items-center justify-between rounded-lg border px-4 py-3 ${direction === "customer" ? "border-blue-200 bg-blue-50" : "border-orange-200 bg-orange-50"}`}>
+              <div className={`sm:col-span-2 flex items-center justify-between rounded-lg border px-4 py-3 ${direction === "customer" ? "border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/40" : "border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/40"}`}>
                 <span className={`text-sm font-medium ${direction === "customer" ? "text-blue-700" : "text-orange-700"}`}>
                   {direction === "customer" ? "Amount to receive from" : "Amount to pay to"} {selectedParty?.name}
                 </span>

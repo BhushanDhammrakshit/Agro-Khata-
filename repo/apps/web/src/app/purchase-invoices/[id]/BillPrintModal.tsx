@@ -70,7 +70,7 @@ export function BillPrintModal({ invoiceId, onClose }: { invoiceId: string; onCl
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-3xl rounded-xl bg-white shadow-2xl">
+      <div className="invoice-light w-full max-w-3xl rounded-xl bg-white shadow-2xl">
 
         {/* Modal toolbar */}
         <div className="flex flex-col gap-2 border-b border-slate-200 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">

@@ -49,7 +49,7 @@ function OutstandingReport() {
           <tbody>
             {rows.length === 0 && <tr><td colSpan={8} className={tdClass + " text-center text-slate-400"}>No outstanding {type}s</td></tr>}
             {rows.map(r => (
-              <tr key={r.id} className={`hover:bg-slate-50 ${r.is_overdue ? "bg-red-50" : ""}`}>
+              <tr key={r.id} className={`hover:bg-slate-50 ${r.is_overdue ? "bg-red-50 dark:bg-red-950/30" : ""}`}>
                 <td className={tdClass}>
                   <Link href={`/${type === "receivable" ? "sales" : "purchase"}-invoices/${r.id}`} className="text-emerald-700 hover:underline">{r.invoice_no}</Link>
                 </td>

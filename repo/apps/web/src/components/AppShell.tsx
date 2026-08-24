@@ -7,6 +7,8 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import type { AuthUser, CompanyChoice } from "@/lib/api";
 import { useAppUser } from "@/lib/AppUserContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 /* ─── icons ─────────────────────────────────────────────────────────────── */
 const Icon = {
@@ -105,23 +107,23 @@ function CompanyDropdown({
       <div ref={ref} className="relative flex justify-center">
         <button onClick={() => setOpen((o) => !o)}
           title={currentName}
-          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-xs font-bold text-emerald-700 shadow-sm hover:border-emerald-400">
+          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white text-xs font-bold text-emerald-700 shadow-sm hover:border-emerald-400 dark:text-emerald-400">
           {currentName.slice(0, 1).toUpperCase()}
         </button>
         {open && (
           <div className="absolute left-full top-0 z-50 ml-2 w-56 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
             {companies.map((c) => (
               <button key={c.tenantId} onClick={() => { setOpen(false); onSelect(c.tenantId); }}
-                className={`flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 ${c.tenantId === me.tenantId ? "font-semibold text-emerald-700" : "text-slate-700"}`}>
+                className={`flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 ${c.tenantId === me.tenantId ? "font-semibold text-emerald-700 dark:text-emerald-400" : "text-slate-700"}`}>
                 {c.tenantId === me.tenantId
-                  ? <svg className="h-3.5 w-3.5 shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">{Icon.Check}</svg>
+                  ? <svg className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" viewBox="0 0 20 20" fill="currentColor">{Icon.Check}</svg>
                   : <span className="w-3.5 shrink-0" />}
                 <span className="truncate">{c.companyName}</span>
               </button>
             ))}
             <div className="my-1 border-t border-slate-100" />
             <button onClick={() => { setOpen(false); onSelect("register"); }}
-              className="flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-sm text-emerald-700 hover:bg-emerald-50">
+              className="flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-sm text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30">
               <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">{Icon.Plus}</svg>
               Register another company
             </button>
@@ -134,7 +136,7 @@ function CompanyDropdown({
   return (
     <div ref={ref} className="relative">
       <button onClick={() => setOpen((o) => !o)}
-        className="flex w-full cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-emerald-400 hover:text-emerald-700 focus:outline-none">
+        className="flex w-full cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-emerald-400 hover:text-emerald-700 focus:outline-none dark:hover:text-emerald-400">
         <span className="truncate">{currentName}</span>
         <svg className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor">{Icon.ChevronD}</svg>
       </button>
@@ -142,16 +144,16 @@ function CompanyDropdown({
         <div className="absolute left-0 top-full z-50 mt-1.5 w-56 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
           {companies.map((c) => (
             <button key={c.tenantId} onClick={() => { setOpen(false); onSelect(c.tenantId); }}
-              className={`flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 ${c.tenantId === me.tenantId ? "font-semibold text-emerald-700" : "text-slate-700"}`}>
+              className={`flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 ${c.tenantId === me.tenantId ? "font-semibold text-emerald-700 dark:text-emerald-400" : "text-slate-700"}`}>
               {c.tenantId === me.tenantId
-                ? <svg className="h-3.5 w-3.5 shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">{Icon.Check}</svg>
+                ? <svg className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" viewBox="0 0 20 20" fill="currentColor">{Icon.Check}</svg>
                 : <span className="w-3.5 shrink-0" />}
               <span className="truncate">{c.companyName}</span>
             </button>
           ))}
           <div className="my-1 border-t border-slate-100" />
           <button onClick={() => { setOpen(false); onSelect("register"); }}
-            className="flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-sm text-emerald-700 hover:bg-emerald-50">
+            className="flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-sm text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/30">
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">{Icon.Plus}</svg>
             Register another company
           </button>
@@ -196,7 +198,7 @@ function Sidebar({
     return (
       <Link key={href} href={href} title={label}
         className={`group flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition-colors
-          ${active ? "bg-emerald-50 text-emerald-700" : "text-slate-600 hover:bg-slate-100"}`}>
+          ${active ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" : "text-slate-600 hover:bg-slate-100"}`}>
         {icon && <span className="shrink-0"><SvgIcon d={icon} /></span>}
         <span className={effectiveCollapsed ? "hidden" : "truncate"}>{label}</span>
       </Link>
@@ -211,7 +213,7 @@ function Sidebar({
           <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white">
             <Image src="/VajaBaki.png" alt="VajaBaki" fill className="object-contain p-0.5" />
           </span>
-          {!effectiveCollapsed && <p className="truncate text-lg font-semibold text-emerald-700">VajaBaki</p>}
+          {!effectiveCollapsed && <p className="truncate text-lg font-semibold text-emerald-700 dark:text-emerald-400">VajaBaki</p>}
         </div>
         <button onClick={onToggleCollapse} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className="hidden shrink-0 cursor-pointer rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 sm:flex">
@@ -247,7 +249,7 @@ function Sidebar({
         {reportsOpen && REPORT_ITEMS.map((item) => (
           <Link key={item.href} href={item.href} title={item.label}
             className={`flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition-colors
-              ${pathname?.startsWith(item.href) ? "bg-emerald-50 text-emerald-700" : "text-slate-600 hover:bg-slate-100"}`}>
+              ${pathname?.startsWith(item.href) ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" : "text-slate-600 hover:bg-slate-100"}`}>
             {!effectiveCollapsed && <span className="ml-1 h-1.5 w-1.5 rounded-full bg-current" />}
             {label(item.label)}
           </Link>
@@ -258,7 +260,7 @@ function Sidebar({
         {SETTINGS_ITEMS.map((item) => (
           <Link key={item.href} href={item.href} title={item.label}
             className={`flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition-colors
-              ${pathname?.startsWith(item.href) ? "bg-emerald-50 text-emerald-700" : "text-slate-600 hover:bg-slate-100"}`}>
+              ${pathname?.startsWith(item.href) ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" : "text-slate-600 hover:bg-slate-100"}`}>
             <SvgIcon d={Icon.Settings} />
             {label(item.label)}
           </Link>
@@ -269,12 +271,15 @@ function Sidebar({
       <div className="border-t border-slate-200 p-2 space-y-0.5 lg:p-3">
         <Link href="/profile" title="My Profile"
           className={`flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition-colors
-            ${pathname === "/profile" ? "bg-emerald-50 text-emerald-700" : "text-slate-600 hover:bg-slate-100"}`}>
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">
+            ${pathname === "/profile" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" : "text-slate-600 hover:bg-slate-100"}`}>
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400">
             {initials}
           </span>
           {label(me?.name ?? "My Profile")}
         </Link>
+        <div className={effectiveCollapsed ? "flex justify-center" : ""}>
+          <ThemeToggle collapsed={effectiveCollapsed} />
+        </div>
         <button onClick={handleLogout} title="Log out"
           className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">
           <SvgIcon d={Icon.Logout} />
@@ -302,6 +307,8 @@ export function AppShell({
   const { me, companies } = useAppUser();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("sidebar-collapsed") === "1") setCollapsed(true);
@@ -319,9 +326,15 @@ export function AppShell({
     ? me.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
     : "?";
 
-  async function handleLogout() {
-    await api.logout();
-    router.push("/login");
+  async function performLogout() {
+    setLoggingOut(true);
+    try {
+      await api.logout();
+      router.push("/login");
+    } finally {
+      setLoggingOut(false);
+      setConfirmingLogout(false);
+    }
   }
 
   async function handleCompanyChange(nextTenantId: string) {
@@ -350,7 +363,7 @@ export function AppShell({
         me={me}
         companies={companies}
         onCompanySelect={handleCompanyChange}
-        handleLogout={handleLogout}
+        handleLogout={() => setConfirmingLogout(true)}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((c) => !c)}
         mobileOpen={mobileOpen}
@@ -374,6 +387,18 @@ export function AppShell({
         </header>
         <main className="flex-1 p-4 sm:p-6">{children}</main>
       </div>
+
+      <ConfirmDialog
+        open={confirmingLogout}
+        title="Log out"
+        message="Are you sure you want to log out of your account?"
+        confirmLabel={loggingOut ? "Logging out…" : "Log out"}
+        cancelLabel="Cancel"
+        danger
+        busy={loggingOut}
+        onConfirm={performLogout}
+        onCancel={() => setConfirmingLogout(false)}
+      />
     </div>
   );
 }

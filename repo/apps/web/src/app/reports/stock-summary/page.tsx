@@ -45,7 +45,7 @@ export default function StockSummaryPage() {
           <tbody>
             {filtered.length === 0 && <tr><td colSpan={8} className={tdClass + " text-center text-slate-400"}>No items found</td></tr>}
             {filtered.map(r => (
-              <tr key={r.id} className={`hover:bg-slate-50 ${r.is_low_stock ? "bg-red-50" : ""}`}>
+              <tr key={r.id} className={`hover:bg-slate-50 ${r.is_low_stock ? "bg-red-50 dark:bg-red-950/30" : ""}`}>
                 <td className={tdClass + " font-medium"}>{r.name}</td>
                 <td className={tdClass}>{r.uom}</td>
                 <td className={tdClass}>{fmtN(r.opening_stock)}</td>

@@ -102,14 +102,14 @@ export function PartyCombobox({ partyType, parties, value, onChange, onPartyCrea
           {filtered.map((p) => (
             <li key={p.id}
               onMouseDown={(e) => { e.preventDefault(); select(p); }}
-              className="flex cursor-pointer items-center gap-2 px-3 py-2 hover:bg-emerald-50">
+              className="flex cursor-pointer items-center gap-2 px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
               <span className="font-medium text-slate-900">{p.name}</span>
               {p.phone && <span className="text-xs text-slate-400">{p.phone}</span>}
             </li>
           ))}
           {showCreate && (
             <li onMouseDown={(e) => { e.preventDefault(); handleCreate(); }}
-              className="flex cursor-pointer items-center gap-2 border-t border-slate-100 px-3 py-2 hover:bg-emerald-50 text-emerald-700 font-medium">
+              className="flex cursor-pointer items-center gap-2 border-t border-slate-100 px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 font-medium">
               {creating ? "Creating…" : `+ Create "${query.trim()}"`}
             </li>
           )}

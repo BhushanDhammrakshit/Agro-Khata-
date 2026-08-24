@@ -39,7 +39,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href="/sales-invoices/new" className="flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm font-medium text-emerald-700 hover:bg-emerald-100">
+        <Link href="/sales-invoices/new" className="flex items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400 dark:hover:bg-emerald-950/70">
           + New Sale Invoice
         </Link>
         <Link href="/purchase-invoices/new" className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-5 text-sm font-medium text-slate-700 hover:bg-slate-50">
@@ -54,21 +54,21 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Link href="/reports/outstanding?type=receivable" className="flex items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 hover:bg-blue-100">
+        <Link href="/reports/outstanding?type=receivable" className="flex items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:hover:bg-blue-950/70">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-blue-800">Outstanding Receivables</p>
-            <p className="text-xs text-blue-600">Customers who owe you</p>
+            <p className="text-sm font-medium text-blue-800 dark:text-blue-300">Outstanding Receivables</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400">Customers who owe you</p>
           </div>
-          <span className="shrink-0 break-words text-right text-lg font-semibold text-blue-700" title={kpis ? formatINR(kpis.totalReceivable) : undefined}>
+          <span className="shrink-0 break-words text-right text-lg font-semibold text-blue-700 dark:text-blue-300" title={kpis ? formatINR(kpis.totalReceivable) : undefined}>
             {kpis ? formatCompactINR(kpis.totalReceivable) : "—"}
           </span>
         </Link>
-        <Link href="/reports/outstanding?type=payable" className="flex items-center justify-between gap-3 rounded-xl border border-orange-100 bg-orange-50 p-4 hover:bg-orange-100">
+        <Link href="/reports/outstanding?type=payable" className="flex items-center justify-between gap-3 rounded-xl border border-orange-100 bg-orange-50 p-4 hover:bg-orange-100 dark:border-orange-900 dark:bg-orange-950/40 dark:hover:bg-orange-950/70">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-orange-800">Outstanding Payables</p>
-            <p className="text-xs text-orange-600">Suppliers you owe</p>
+            <p className="text-sm font-medium text-orange-800 dark:text-orange-300">Outstanding Payables</p>
+            <p className="text-xs text-orange-600 dark:text-orange-400">Suppliers you owe</p>
           </div>
-          <span className="shrink-0 break-words text-right text-lg font-semibold text-orange-700" title={kpis ? formatINR(kpis.totalPayable) : undefined}>
+          <span className="shrink-0 break-words text-right text-lg font-semibold text-orange-700 dark:text-orange-300" title={kpis ? formatINR(kpis.totalPayable) : undefined}>
             {kpis ? formatCompactINR(kpis.totalPayable) : "—"}
           </span>
         </Link>

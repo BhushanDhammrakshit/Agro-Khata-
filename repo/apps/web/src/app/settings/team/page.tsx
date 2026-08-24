@@ -208,7 +208,7 @@ export default function TeamPage() {
                       )}
                     </td>
                     <td className="py-3 pr-4">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${member.isActive ? "bg-green-50 text-green-700" : "bg-red-50 text-red-500"}`}>
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${member.isActive ? "bg-green-50 text-green-700 dark:bg-green-950/50 dark:text-green-400" : "bg-red-50 text-red-500 dark:bg-red-950/50 dark:text-red-400"}`}>
                         {member.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
@@ -217,7 +217,11 @@ export default function TeamPage() {
                         {member.id !== me?.id && member.role !== "owner" && (
                           <button
                             onClick={() => toggleActive(member)}
-                            className="cursor-pointer text-xs font-medium text-slate-500 hover:text-red-600 hover:underline"
+                            className={`inline-flex cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${
+                              member.isActive
+                                ? "border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+                                : "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                            }`}
                           >
                             {member.isActive ? "Deactivate" : "Activate"}
                           </button>

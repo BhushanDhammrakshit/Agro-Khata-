@@ -4,6 +4,10 @@ import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import { AppUserProvider } from "@/lib/AppUserContext";
 import { RouteProgress } from "@/components/RouteProgress";
+import { ThemeProvider } from "@/lib/ThemeProvider";
+
+// Runs before hydration so the correct theme class is set immediately (no flash of the wrong theme).
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("vajabaki-theme");if(!t){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}if(t==="dark"){document.documentElement.classList.add("dark");}}catch(e){}})();`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,12 +32,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         <RouteProgress />
-        <LanguageProvider>
-          <AppUserProvider>{children}</AppUserProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AppUserProvider>{children}</AppUserProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

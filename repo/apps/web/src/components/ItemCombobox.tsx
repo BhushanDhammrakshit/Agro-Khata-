@@ -60,7 +60,7 @@ export function ItemCombobox({ items, value, onTextChange, onSelect, placeholder
           {filtered.map((it) => (
             <li key={it.id}
               onMouseDown={(e) => { e.preventDefault(); onSelect(it); setOpen(false); }}
-              className="cursor-pointer px-3 py-2 hover:bg-emerald-50">
+              className="cursor-pointer px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
               <div className="flex items-center justify-between gap-3">
                 <span className="font-medium text-slate-900">{it.name}</span>
                 <span className="text-xs text-slate-400">

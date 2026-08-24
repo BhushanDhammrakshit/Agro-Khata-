@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: toggling `.dark` on <html> (see ThemeProvider) drives every `dark:` variant. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+}
+
+.dark {
+  --background: #000000;
+  --foreground: #e4e4e7;
 }
 
 @theme inline {
@@ -17,6 +25,49 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
+
+/* Retrofit dark mode across pages that only use plain (non `dark:`-prefixed)
+   slate/white utility classes, without having to touch every page file.
+   Selectors match on the literal Tailwind class name, scoped under `.dark`,
+   so any element already carrying its own explicit `dark:` override keeps
+   winning wherever one was added on purpose (e.g. AppShell/Badge accents). */
+.dark .bg-white { background-color: #0d0d0f; }
+.dark .bg-slate-50 { background-color: #000000; }
+.dark .bg-slate-100 { background-color: #1c1c1f; }
+.dark .hover\:bg-slate-50:hover { background-color: #18181b; }
+.dark .hover\:bg-slate-100:hover { background-color: #232326; }
+
+.dark .text-slate-900 { color: #fafafa; }
+.dark .text-slate-800 { color: #f4f4f5; }
+.dark .text-slate-700 { color: #e4e4e7; }
+.dark .text-slate-600 { color: #d4d4d8; }
+.dark .text-slate-500 { color: #a1a1aa; }
+.dark .text-slate-400 { color: #9ca3af; }
+
+.dark .border-slate-100 { border-color: #262629; }
+.dark .border-slate-200 { border-color: #2c2c30; }
+.dark .border-slate-300 { border-color: #3f3f46; }
+
+.dark .disabled\:bg-slate-50:disabled { background-color: #17171a; }
+.dark .disabled\:text-slate-400:disabled { color: #52525b; }
+.dark .placeholder\:text-slate-400::placeholder { color: #6b6b70; }
+
+/* Invoice/bill previews must always render exactly like the printed PDF —
+   never dark-themed. Wrap that markup in `.invoice-light` to opt it, and
+   everything inside it, back out of the dark-mode catch-all above. */
+.dark .invoice-light,
+.dark .invoice-light .bg-white { background-color: #ffffff; }
+.dark .invoice-light .bg-slate-50 { background-color: #f8fafc; }
+.dark .invoice-light .bg-slate-100 { background-color: #f1f5f9; }
+.dark .invoice-light .text-slate-900 { color: #0f172a; }
+.dark .invoice-light .text-slate-800 { color: #1e293b; }
+.dark .invoice-light .text-slate-700 { color: #334155; }
+.dark .invoice-light .text-slate-600 { color: #475569; }
+.dark .invoice-light .text-slate-500 { color: #64748b; }
+.dark .invoice-light .text-slate-400 { color: #94a3b8; }
+.dark .invoice-light .border-slate-100 { border-color: #f1f5f9; }
+.dark .invoice-light .border-slate-200 { border-color: #e2e8f0; }
+.dark .invoice-light .border-slate-300 { border-color: #cbd5e1; }
 
 /* Tables always render at full column width; the wrapper handles the scroll */
 table {

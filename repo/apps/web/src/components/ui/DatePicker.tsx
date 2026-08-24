@@ -130,7 +130,7 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
                     selectedDate && isSameDay(date, selectedDate)
                       ? "bg-emerald-600 text-white shadow-sm"
                       : isSameDay(date, new Date())
-                        ? "border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        ? "border border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                         : "text-slate-700 hover:bg-slate-100"
                   }`}
                 >
@@ -140,7 +140,7 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
             </div>
 
             <div className="mt-3 flex justify-end border-t border-slate-100 pt-2">
-              <button type="button" onClick={() => selectDate(new Date())} className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">Today</button>
+              <button type="button" onClick={() => selectDate(new Date())} className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">Today</button>
             </div>
           </div>
         </div>

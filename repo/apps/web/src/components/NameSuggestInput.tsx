@@ -71,7 +71,7 @@ export function NameSuggestInput({ value, onChange, suggestions, placeholder, cl
           {filtered.map((s, i) => (
             <li key={`${s.name}-${i}`}
               onMouseDown={(e) => { e.preventDefault(); onChange(s.name); setOpen(false); }}
-              className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 hover:bg-emerald-50">
+              className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
               <span className="text-slate-800">{s.name}</span>
               {s.tag && <span className="shrink-0 text-xs lowercase text-slate-400">{s.tag}</span>}
             </li>

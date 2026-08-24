@@ -69,7 +69,7 @@ export default function ProfilePage() {
           <div>
             <p className="text-lg font-semibold text-slate-900">{user?.name ?? "—"}</p>
             <p className="text-sm text-slate-500">{user?.email}</p>
-            <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium capitalize text-emerald-700">
+            <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium capitalize text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
               {user?.role}
             </span>
           </div>

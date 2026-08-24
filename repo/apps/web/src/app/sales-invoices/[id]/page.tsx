@@ -219,12 +219,12 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        {/* Invoice document */}
+        {/* Invoice document (on-screen view only — the Print/Download PDF modal below always renders the light print layout) */}
         <Card className="overflow-hidden !p-0">
           {/* Header band */}
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-slate-50 px-6 py-5">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-emerald-50 to-slate-50 px-6 py-5 dark:border-slate-700 dark:from-emerald-950/30 dark:to-transparent">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-emerald-700">Tax Invoice</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">Tax Invoice</p>
               <h2 className="mt-0.5 text-2xl font-bold text-slate-900">{invoice.invoiceNo}</h2>
               <p className="mt-1 text-sm text-slate-500">
                 Dated {invoice.invoiceDate}
@@ -233,7 +233,7 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
             </div>
             <div className="text-right">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Amount Due</p>
-              <p className={`text-2xl font-bold ${parseFloat(invoice.balanceAmount) > 0 ? "text-rose-600" : "text-emerald-600"}`}>
+              <p className={`text-2xl font-bold ${parseFloat(invoice.balanceAmount) > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
                 {inr(invoice.balanceAmount)}
               </p>
               <Badge tone={INVOICE_STATUS_TONE[invoice.status]}>{formatStatusLabel(invoice.status)}</Badge>
@@ -321,10 +321,10 @@ export default function SalesInvoiceDetailPage({ params }: { params: Promise<{ i
             <div className="flex w-full max-w-xs justify-between text-base font-bold text-slate-900">
               <span>Total</span><span className="tabular-nums">{inr(invoice.totalAmount)}</span>
             </div>
-            <div className="flex w-full max-w-xs justify-between text-emerald-700">
+            <div className="flex w-full max-w-xs justify-between text-emerald-700 dark:text-emerald-400">
               <span>Paid</span><span className="tabular-nums">{inr(invoice.paidAmount)}</span>
             </div>
-            <div className="flex w-full max-w-xs justify-between font-semibold text-rose-600">
+            <div className="flex w-full max-w-xs justify-between font-semibold text-rose-600 dark:text-rose-400">
               <span>Balance</span><span className="tabular-nums">{inr(invoice.balanceAmount)}</span>
             </div>
           </div>

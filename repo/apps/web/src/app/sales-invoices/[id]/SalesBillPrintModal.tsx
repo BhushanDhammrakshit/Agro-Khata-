@@ -77,7 +77,7 @@ export function SalesBillPrintModal({ invoiceId, onClose }: { invoiceId: string;
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-5xl rounded-xl bg-white shadow-2xl">
+      <div className="invoice-light w-full max-w-5xl rounded-xl bg-white shadow-2xl">
 
         {/* Toolbar */}
         <div className="flex flex-col gap-2 border-b border-slate-200 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">

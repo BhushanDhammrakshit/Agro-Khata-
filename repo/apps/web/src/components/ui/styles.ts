@@ -14,4 +14,4 @@ export const thClass = "border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-l
 
 export const tdClass = "border-b border-slate-100 px-4 py-3 text-sm text-slate-700";
 
-export const linkClass = "font-medium text-emerald-700 hover:text-emerald-800 hover:underline";
+export const linkClass = "font-medium text-emerald-700 hover:text-emerald-800 hover:underline dark:text-emerald-400 dark:hover:text-emerald-300";
