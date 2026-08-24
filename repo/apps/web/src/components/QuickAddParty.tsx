@@ -23,10 +23,8 @@ export function PartyCombobox({ partyType, parties, value, onChange, onPartyCrea
   const rect = useFloatingPosition(inputRef, open);
 
   useEffect(() => {
-    if (value) {
-      const p = parties.find((p) => p.id === value);
-      if (p) setQuery(p.name);
-    }
+    const p = value ? parties.find((p) => p.id === value) : undefined;
+    setQuery(p?.name ?? "");
   }, [value, parties]);
 
   useEffect(() => {
