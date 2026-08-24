@@ -211,6 +211,7 @@ export interface AuditLogEntry {
   entityType: string;
   entityId: string;
   createdAt: string;
+  performedByName: string | null;
 }
 
 export type PartyType = "customer" | "supplier" | "both";

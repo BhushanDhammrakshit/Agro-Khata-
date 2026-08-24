@@ -51,6 +51,7 @@ export const en = {
     columnTime: "Time",
     columnAction: "Action",
     columnEntity: "Entity",
+    columnUser: "Performed By",
   },
   language: {
     label: "Language",

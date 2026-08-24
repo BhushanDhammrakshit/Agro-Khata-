@@ -40,6 +40,7 @@ export default function AuditLogPage() {
                 <th className={thClass}>{dict.auditLog.columnTime}</th>
                 <th className={thClass}>{dict.auditLog.columnAction}</th>
                 <th className={thClass}>{dict.auditLog.columnEntity}</th>
+                <th className={thClass}>{dict.auditLog.columnUser}</th>
               </tr>
             </thead>
             <tbody>
@@ -48,6 +49,7 @@ export default function AuditLogPage() {
                   <td className={`${tdClass} whitespace-nowrap`}>{new Date(entry.createdAt).toLocaleString()}</td>
                   <td className={tdClass}>{entry.action}</td>
                   <td className={tdClass}>{entry.entityType}</td>
+                  <td className={tdClass}>{entry.performedByName ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

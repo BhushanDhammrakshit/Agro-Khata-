@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TenantContextService } from '../tenant-context/tenant-context.service';
 import { AuditLog } from '../../entities/audit-log.entity';
+import { User } from '../../entities/user.entity';
 
 export interface RecordAuditLogInput {
   action: string;
@@ -8,6 +9,10 @@ export interface RecordAuditLogInput {
   entityId: string;
   before?: unknown;
   after?: unknown;
+}
+
+export interface AuditLogWithPerformer extends AuditLog {
+  performedByName: string | null;
 }
 
 /**
@@ -39,13 +44,24 @@ export class AuditLogService {
     );
   }
 
-  async list(): Promise<AuditLog[]> {
+  async list(): Promise<AuditLogWithPerformer[]> {
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
-    return manager.getRepository(AuditLog).find({
+    const logs = await manager.getRepository(AuditLog).find({
       where: { tenantId },
       order: { createdAt: 'DESC' },
       take: 200,
+    });
+
+    const userIds = Array.from(new Set(logs.map((log) => log.userId).filter((id): id is string => !!id)));
+    const users = userIds.length
+      ? await manager.getRepository(User).find({ where: { tenantId }, select: { id: true, name: true, email: true } })
+      : [];
+    const usersById = new Map(users.map((user) => [user.id, user]));
+
+    return logs.map((log) => {
+      const user = log.userId ? usersById.get(log.userId) : undefined;
+      return { ...log, performedByName: user ? `${user.name} (${user.email})` : null };
     });
   }
 }
