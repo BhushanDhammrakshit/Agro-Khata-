@@ -2,6 +2,10 @@
 // allowing its httpOnly authentication cookie to belong to the web hostname.
 const API_URL = "/api";
 
+// Pre-auth pages that never require a session — a 401 here (e.g. AppUserProvider's
+// background getMe() call) must NOT bounce the visitor to /login.
+const PUBLIC_PATHS = ["/", "/login", "/register", "/contact", "/superadmin/login"];
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -22,7 +26,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     // Only these two legitimately return 401 for a wrong password/OTP during login itself.
     const isLoginAttempt = path === "/auth/password/login" || path === "/auth/otp/verify";
-    if (res.status === 401 && typeof window !== "undefined" && !isLoginAttempt) {
+    const onPublicPage = typeof window !== "undefined" && PUBLIC_PATHS.includes(window.location.pathname);
+    if (res.status === 401 && typeof window !== "undefined" && !isLoginAttempt && !onPublicPage) {
       // Stale/invalid session (e.g. token's user no longer exists) — force a clean re-login.
       clearCache();
       if (!window.location.pathname.startsWith("/login")) window.location.href = "/login";
