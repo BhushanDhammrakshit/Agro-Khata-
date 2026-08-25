@@ -5,9 +5,53 @@ export const en = {
   },
   landing: {
     title: "VajaBaki",
+    heading: "GST Billing & Vendor Ledger Software for Agro Businesses",
     tagline: "Vendor bills and farmer purchase entries, for agro businesses.",
+    subheading:
+      "VajaBaki helps mandis, agro traders, and vendors create GST-compliant sales & purchase invoices, track party ledgers, expenses, drivers and vehicles, and generate business reports — all from one simple, mobile-friendly app.",
     login: "Log in",
     register: "Register your company",
+    contactUs: "Contact us",
+    feedback: "Feedback",
+    supportEmail: "agrokhataservices@gmail.com",
+    badge: "Built for mandis, agro traders & vendors",
+    ctaHeading: "Ready to simplify your billing?",
+    ctaSubheading: "Register your company and start invoicing in minutes — no credit card required.",
+    featuresHeading: "Everything your agro business needs, in one place",
+    featuresSubheading: "One app to replace your invoice books, ledgers, and spreadsheets.",
+    features: [
+      {
+        icon: "invoice",
+        title: "GST Invoicing",
+        description: "Create GST-compliant sales and purchase invoices with item-wise tax breakdown in seconds.",
+      },
+      {
+        icon: "ledger",
+        title: "Party Ledger",
+        description: "Track customer and supplier balances, payments, and outstanding dues automatically.",
+      },
+      {
+        icon: "wallet",
+        title: "Expense Tracking",
+        description: "Log business and vehicle expenses to keep every rupee accounted for.",
+      },
+      {
+        icon: "truck",
+        title: "Driver & Vehicle Records",
+        description: "Manage drivers, vehicles, and dispatch details linked to every invoice.",
+      },
+      {
+        icon: "chart",
+        title: "Business Reports",
+        description: "Get sales, purchase, and outstanding-payment reports exportable to Excel, whenever you need them.",
+      },
+      {
+        icon: "building",
+        title: "Multi-Company Support",
+        description: "Run multiple companies or branches from a single login with role-based team access.",
+      },
+    ],
+    footerTagline: "Simple billing and ledger software built for agro traders, mandis, and vendors.",
   },
   login: {
     heading: "Log in to VajaBaki",

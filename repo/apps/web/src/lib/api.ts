@@ -499,6 +499,9 @@ export const api = {
   setPassword: (password: string) =>
     request<{ message: string }>("/auth/password", { method: "PATCH", body: JSON.stringify({ password }) }),
 
+  sendContactMessage: (dto: { name: string; email: string; type: "contact" | "feedback"; message: string }) =>
+    request<{ message: string }>("/contact", { method: "POST", body: JSON.stringify(dto) }),
+
   registerTenant: (dto: {
     companyName: string;
     legalName: string;

@@ -27,6 +27,7 @@ export default function robots(): MetadataRoute.Robots {
         "/superadmin",
         "/invoice-pdf",
         "/api",
+        "/contact",
       ],
     },
     sitemap: `${BASE_URL}/sitemap.xml`,

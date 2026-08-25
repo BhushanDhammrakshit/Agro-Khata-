@@ -7,6 +7,7 @@ export interface SendMailOptions {
   subject: string;
   html: string;
   text: string;
+  replyTo?: string;
 }
 
 /**
@@ -58,6 +59,7 @@ export class MailService {
         subject: options.subject,
         html: options.html,
         text: options.text,
+        replyTo: options.replyTo,
       });
     } catch (err) {
       this.logger.error(`Mail send failed for ${options.to}: ${(err as Error).message}`);
@@ -82,6 +84,7 @@ export class MailService {
           subject: options.subject,
           htmlContent: options.html,
           textContent: options.text,
+          ...(options.replyTo ? { replyTo: { email: options.replyTo } } : {}),
         }),
       });
       if (!response.ok) {

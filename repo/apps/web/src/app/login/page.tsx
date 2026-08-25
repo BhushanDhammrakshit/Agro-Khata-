@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/styles";
 import { SetPasswordModal } from "@/components/SetPasswordModal";
+import { ForceLightTheme } from "@/components/ForceLightTheme";
 
 export default function LoginPage() {
   const { dict } = useLanguage();
@@ -119,11 +120,22 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
-      <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-6">
+      <ForceLightTheme />
+      <header className="w-full p-4">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Back to home
+        </Link>
+      </header>
+      <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-6 pt-0">
         <div className="text-center">
-          <div className="relative mx-auto mb-3 h-20 w-20 overflow-hidden rounded-2xl bg-white shadow-md">
-            <Image src="/VajaBaki.png" alt="VajaBaki" fill className="object-contain p-1" />
-          </div>
+          <Link href="/" className="inline-block">
+            <div className="relative mx-auto mb-3 h-20 w-20 overflow-hidden rounded-2xl bg-white shadow-md">
+              <Image src="/VajaBaki.png" alt="VajaBaki" fill className="object-contain p-1" />
+            </div>
+          </Link>
           <h1 className="text-xl font-semibold text-slate-900">{dict.login.heading}</h1>
         </div>
 

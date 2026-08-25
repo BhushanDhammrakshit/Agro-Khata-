@@ -11,6 +11,8 @@ function applyTheme(theme: Theme) {
 
 const ThemeContext = createContext<{ theme: Theme; toggleTheme: () => void; setTheme: (t: Theme) => void } | null>(null);
 
+const PUBLIC_LIGHT_ONLY_PATHS = new Set(["/", "/login", "/register"]);
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
 
@@ -18,7 +20,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
     const initial = stored ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     setThemeState(initial);
-    applyTheme(initial);
+    // Pre-auth pages (landing/login/register) always render light — theme is a per-user preference.
+    if (!PUBLIC_LIGHT_ONLY_PATHS.has(window.location.pathname)) {
+      applyTheme(initial);
+    }
   }, []);
 
   const setTheme = useCallback((next: Theme) => {

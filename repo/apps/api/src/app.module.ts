@@ -23,6 +23,7 @@ import { ReportsModule } from './reports/reports.module';
 import { DriversModule } from './drivers/drivers.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     DriversModule,
     VehiclesModule,
     TransactionsModule,
+    ContactModule,
   ],
   controllers: [AppController],
   providers: [
