@@ -44,7 +44,17 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "VajaBaki" }],
   applicationName: "VajaBaki",
-  icons: { icon: "/favicon.svg" },
+  // Google Search does NOT support SVG favicons — it needs a PNG/ICO fallback,
+  // otherwise it silently shows a generic placeholder icon in search results.
+  // favicon.png is a rendered copy of favicon.svg (same design, rasterized).
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
