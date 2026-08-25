@@ -11,11 +11,11 @@ export default async function DashboardPage() {
   ]);
 
   const kpiCards = [
-    { label: "Sales This Month",     value: kpis?.salesThisMonth,     color: "text-emerald-700", href: "/sales-invoices"                        },
+    { label: "Sales This Month",     value: kpis?.salesThisMonth,     color: "text-emerald-700 dark:text-emerald-400", href: "/sales-invoices"                        },
     { label: "Purchases This Month", value: kpis?.purchasesThisMonth, color: "text-slate-800",   href: "/purchase-invoices"                     },
-    { label: "Total Receivable",     value: kpis?.totalReceivable,    color: "text-blue-700",   href: "/reports/outstanding?type=receivable"   },
-    { label: "Total Payable",        value: kpis?.totalPayable,       color: "text-orange-700", href: "/reports/outstanding?type=payable"       },
-    { label: "Expenses This Month",  value: kpis?.expensesThisMonth,  color: "text-red-600",    href: "/expenses"                               },
+    { label: "Total Receivable",     value: kpis?.totalReceivable,    color: "text-blue-700 dark:text-blue-400",   href: "/reports/outstanding?type=receivable"   },
+    { label: "Total Payable",        value: kpis?.totalPayable,       color: "text-orange-700 dark:text-orange-400", href: "/reports/outstanding?type=payable"       },
+    { label: "Expenses This Month",  value: kpis?.expensesThisMonth,  color: "text-red-600 dark:text-red-400",    href: "/expenses"                               },
   ];
 
   return (

@@ -26,6 +26,48 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
+/* Site-wide thin scrollbar matching the emerald accent theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #10b981 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #10b981;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #059669;
+}
+
+.dark * {
+  scrollbar-color: #34d399 #0d0d0f;
+}
+
+.dark *::-webkit-scrollbar-track {
+  background: #0d0d0f;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+  background-color: #34d399;
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background-color: #10b981;
+}
+
 /* Retrofit dark mode across pages that only use plain (non `dark:`-prefixed)
    slate/white utility classes, without having to touch every page file.
    Selectors match on the literal Tailwind class name, scoped under `.dark`,
