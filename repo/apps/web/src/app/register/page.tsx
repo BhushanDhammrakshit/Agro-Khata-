@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/styles";
 import { ForceLightTheme } from "@/components/ForceLightTheme";
+import { useAppUser } from "@/lib/AppUserContext";
 
 const initialForm = {
   companyName: "",
@@ -26,9 +27,22 @@ const initialForm = {
 export default function RegisterPage() {
   const router = useRouter();
   const { dict } = useLanguage();
+  const { me } = useAppUser();
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Only prefilled when arriving here already signed in (e.g. via "Register
+  // another company" from the sidebar) — the standalone landing-page flow has
+  // no `me` yet, so those fields stay blank. Still fully editable either way.
+  useEffect(() => {
+    if (!me) return;
+    setForm((f) => ({
+      ...f,
+      ownerName: f.ownerName || me.name || "",
+      ownerEmail: f.ownerEmail || me.email || "",
+    }));
+  }, [me]);
 
   function update<K extends keyof typeof initialForm>(key: K, value: string) {
     setForm((f) => ({ ...f, [key]: value }));
