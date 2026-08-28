@@ -46,4 +46,10 @@ export default () => ({
     bootstrapPassword: process.env.SUPERADMIN_BOOTSTRAP_PASSWORD,
     bootstrapName: process.env.SUPERADMIN_BOOTSTRAP_NAME ?? 'Platform Admin',
   },
+  backup: {
+    azureStorageConnectionString: process.env.AZURE_STORAGE_CONNECTION_STRING,
+    containerName: process.env.BACKUP_STORAGE_CONTAINER ?? 'db-backups',
+    // Default 730 days (2 years) of weekly backups kept before pruning.
+    retentionDays: parseInt(process.env.BACKUP_RETENTION_DAYS ?? '730', 10),
+  },
 });

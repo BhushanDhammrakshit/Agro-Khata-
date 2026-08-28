@@ -2,12 +2,19 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
+export interface MailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+}
+
 export interface SendMailOptions {
   to: string;
   subject: string;
   html: string;
   text: string;
   replyTo?: string;
+  attachments?: MailAttachment[];
 }
 
 /**
@@ -60,6 +67,11 @@ export class MailService {
         html: options.html,
         text: options.text,
         replyTo: options.replyTo,
+        attachments: options.attachments?.map((a) => ({
+          filename: a.filename,
+          content: a.content,
+          contentType: a.contentType,
+        })),
       });
     } catch (err) {
       this.logger.error(`Mail send failed for ${options.to}: ${(err as Error).message}`);
@@ -85,6 +97,14 @@ export class MailService {
           htmlContent: options.html,
           textContent: options.text,
           ...(options.replyTo ? { replyTo: { email: options.replyTo } } : {}),
+          ...(options.attachments?.length
+            ? {
+                attachment: options.attachments.map((a) => ({
+                  content: a.content.toString('base64'),
+                  name: a.filename,
+                })),
+              }
+            : {}),
         }),
       });
       if (!response.ok) {

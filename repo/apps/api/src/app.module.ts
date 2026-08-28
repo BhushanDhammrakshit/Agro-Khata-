@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -24,10 +25,12 @@ import { DriversModule } from './drivers/drivers.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { ContactModule } from './contact/contact.module';
+import { BackupModule } from './backup/backup.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+    ScheduleModule.forRoot(),
     TenantContextModule,
     AuditLogModule,
     MailModule,
@@ -47,6 +50,7 @@ import { ContactModule } from './contact/contact.module';
     VehiclesModule,
     TransactionsModule,
     ContactModule,
+    BackupModule,
   ],
   controllers: [AppController],
   providers: [

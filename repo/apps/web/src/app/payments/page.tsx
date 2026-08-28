@@ -7,13 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { CustomSelect } from "@/components/ui/CustomSelect";
-import { DatePicker } from "@/components/ui/DatePicker";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
-import { PartyCombobox } from "@/components/QuickAddParty";
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function fmt(v: string | number) {
   const n = typeof v === "string" ? parseFloat(v) : v;
@@ -28,7 +22,7 @@ export default function PaymentsPage() {
   const [partyId, setPartyId] = useState("");
   const [outstanding, setOutstanding] = useState<Invoice[]>([]);
   const [amount, setAmount] = useState("");
-  const [paidDate, setPaidDate] = useState(todayIso());
+  const [paidDate, setPaidDate] = useState("");
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("bank_transfer");
   const [referenceNo, setReferenceNo] = useState("");
   const [notes, setNotes] = useState("");
@@ -88,7 +82,7 @@ export default function PaymentsPage() {
 
   return (
     <AppShell title="Payments">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6">
+      <div className="mx-auto flex max-w-2xl flex-col gap-6">
         <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden text-sm w-fit">
           {(["customer", "supplier"] as const).map((d) => (
             <button key={d} onClick={() => setDirection(d)}
@@ -109,17 +103,15 @@ export default function PaymentsPage() {
           <form className="grid grid-cols-1 gap-3 sm:grid-cols-2" onSubmit={handleSubmit}>
             <div className="sm:col-span-2">
               <label className="mb-1.5 block text-sm font-medium text-slate-700">{direction === "customer" ? "Customer" : "Supplier"}</label>
-              <PartyCombobox
-                partyType={partyTypeFilter}
-                parties={parties}
+              <CustomSelect
                 value={partyId}
-                onChange={(id) => { setPartyId(id); setResult(null); }}
-                onPartyCreated={(p) => { setParties((prev) => [...prev, p]); setPartyId(p.id); setResult(null); }}
-                placeholder={`Search ${direction === "customer" ? "customer" : "supplier"}…`}
+                onChange={setPartyId}
+                options={[{ value: "", label: `Select a ${direction}…` }, ...parties.map((p) => ({ value: p.id, label: p.name }))]}
+                className="w-full"
               />
             </div>
             {partyId && (
-              <div className={`sm:col-span-2 flex items-center justify-between rounded-lg border px-4 py-3 ${direction === "customer" ? "border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/40" : "border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/40"}`}>
+              <div className={`sm:col-span-2 flex items-center justify-between rounded-lg border px-4 py-3 ${direction === "customer" ? "border-blue-200 bg-blue-50" : "border-orange-200 bg-orange-50"}`}>
                 <span className={`text-sm font-medium ${direction === "customer" ? "text-blue-700" : "text-orange-700"}`}>
                   {direction === "customer" ? "Amount to receive from" : "Amount to pay to"} {selectedParty?.name}
                 </span>
@@ -128,8 +120,8 @@ export default function PaymentsPage() {
             )}
             <input required type="number" step="0.01" placeholder="Amount" value={amount}
               onChange={(e) => setAmount(e.target.value)} className={inputClass} />
-            <DatePicker required value={paidDate}
-              onChange={setPaidDate} />
+            <input required type="date" value={paidDate}
+              onChange={(e) => setPaidDate(e.target.value)} className={inputClass} />
             <CustomSelect
               value={paymentMode}
               onChange={(val) => setPaymentMode(val as PaymentMode)}

@@ -18,7 +18,7 @@ export default function ProfilePage() {
     api.getMe().then((u) => {
       setUser(u);
       setName(u.name);
-      setEmail(u.email);
+      setEmail((u as AuthUser & { email?: string }).email ?? "");
     }).catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load profile."));
   }, []);
 
@@ -28,7 +28,7 @@ export default function ProfilePage() {
     setError(null);
     setSaved(false);
     try {
-      const updated = await api.updateMe({ name, email });
+      const updated = await api.updateMe({ name, email: email || undefined });
       setUser(updated);
       setSaved(true);
     } catch (err: unknown) {
@@ -68,8 +68,8 @@ export default function ProfilePage() {
           </div>
           <div>
             <p className="text-lg font-semibold text-slate-900">{user?.name ?? "—"}</p>
-            <p className="text-sm text-slate-500">{user?.email}</p>
-            <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium capitalize text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
+            <p className="text-sm text-slate-500">{user?.phone}</p>
+            <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium capitalize text-emerald-700">
               {user?.role}
             </span>
           </div>
@@ -92,15 +92,26 @@ export default function ProfilePage() {
           </div>
 
           <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Mobile Number</label>
             <input
-              required
+              value={user?.phone ?? ""}
+              disabled
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400"
+            />
+            <p className="mt-1 text-xs text-slate-400">Mobile number cannot be changed.</p>
+          </div>
+
+          <div className="mb-6">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Email <span className="font-normal text-slate-400">(optional)</span>
+            </label>
+            <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
             />
-            <p className="mt-1 text-xs text-slate-400">Used to log in — changing this changes your login email.</p>
           </div>
 
           {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
