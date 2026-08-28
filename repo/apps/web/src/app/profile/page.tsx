@@ -18,7 +18,7 @@ export default function ProfilePage() {
     api.getMe().then((u) => {
       setUser(u);
       setName(u.name);
-      setEmail((u as AuthUser & { email?: string }).email ?? "");
+      setEmail(u.email);
     }).catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load profile."));
   }, []);
 
@@ -68,7 +68,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <p className="text-lg font-semibold text-slate-900">{user?.name ?? "—"}</p>
-            <p className="text-sm text-slate-500">{user?.phone}</p>
+            <p className="text-sm text-slate-500">{user?.email}</p>
             <span className="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium capitalize text-emerald-700">
               {user?.role}
             </span>
@@ -91,22 +91,11 @@ export default function ProfilePage() {
             />
           </div>
 
-          <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">Mobile Number</label>
-            <input
-              value={user?.phone ?? ""}
-              disabled
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400"
-            />
-            <p className="mt-1 text-xs text-slate-400">Mobile number cannot be changed.</p>
-          </div>
-
           <div className="mb-6">
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              Email <span className="font-normal text-slate-400">(optional)</span>
-            </label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
             <input
               type="email"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
