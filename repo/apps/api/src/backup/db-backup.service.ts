@@ -17,7 +17,7 @@ const BACKUP_TABLES = [
 ];
 
 /**
- * Weekly logical DB backup: dumps every table above to a single gzipped JSON
+ * Daily logical DB backup: dumps every table above to a single gzipped JSON
  * blob in Azure Blob Storage. Uses the superadmin (BYPASSRLS) connection so
  * the snapshot covers ALL tenants in one file. Runs in-process (no separate
  * WebJob/Function) via @nestjs/schedule — requires the App Service plan to
@@ -39,9 +39,9 @@ export class DbBackupService {
     return BlobServiceClient.fromConnectionString(connectionString).getContainerClient(containerName);
   }
 
-  // Sunday 2:00 AM server time.
-  @Cron('0 0 2 * * 0')
-  async runWeeklyBackup(): Promise<void> {
+  // Every day, 2:00 AM server time.
+  @Cron('0 0 2 * * *')
+  async runDailyBackup(): Promise<void> {
     const container = this.getContainerClient();
     if (!container) {
       this.logger.warn('Skipping DB backup: AZURE_STORAGE_CONNECTION_STRING is not configured.');
@@ -70,7 +70,7 @@ export class DbBackupService {
   }
 
   // Keeps every backup younger than the retention window (default 730 days / 2 years); only
-  // deletes ones that have aged past it, regardless of how many weekly backups exist in between.
+  // deletes ones that have aged past it, regardless of how many daily backups exist in between.
   private async pruneOldBackups(container: ContainerClient): Promise<void> {
     const retentionDays = this.config.get<number>('backup.retentionDays') ?? 730;
     const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
