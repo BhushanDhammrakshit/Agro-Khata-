@@ -19,6 +19,8 @@ export interface MonthlyReportEmailParams {
   transactions: { total: string; count: number };
   totalReceivable: string;
   totalPayable: string;
+  title?: string;
+  footerNote?: string;
 }
 
 function row(label: string, amount: string, count?: number): string {
@@ -34,7 +36,18 @@ function row(label: string, amount: string, count?: number): string {
 }
 
 export function buildMonthlyReportEmailHtml(params: MonthlyReportEmailParams): string {
-  const { tenantName, periodLabel, sales, purchases, expenses, transactions, totalReceivable, totalPayable } = params;
+  const {
+    tenantName,
+    periodLabel,
+    sales,
+    purchases,
+    expenses,
+    transactions,
+    totalReceivable,
+    totalPayable,
+    title = 'Monthly Summary',
+    footerNote = 'This is an automated monthly summary. Sign in to VajaBaki for the full breakdown.',
+  } = params;
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -50,7 +63,7 @@ export function buildMonthlyReportEmailHtml(params: MonthlyReportEmailParams): s
             </tr>
             <tr>
               <td style="padding:32px;">
-                <h1 style="margin:0 0 4px 0;font-size:20px;color:#0f172a;">Monthly Summary</h1>
+                <h1 style="margin:0 0 4px 0;font-size:20px;color:#0f172a;">${esc(title)}</h1>
                 <p style="margin:0 0 24px 0;font-size:14px;color:#64748b;">
                   ${esc(tenantName)} &middot; ${esc(periodLabel)}
                 </p>
@@ -71,7 +84,7 @@ export function buildMonthlyReportEmailHtml(params: MonthlyReportEmailParams): s
                   </tr>
                 </table>
                 <p style="margin:24px 0 0 0;font-size:12px;color:#94a3b8;">
-                  This is an automated monthly summary. Sign in to VajaBaki for the full breakdown.
+                  ${esc(footerNote)}
                 </p>
               </td>
             </tr>

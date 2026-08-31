@@ -14,7 +14,7 @@ interface TenantRow {
 }
 
 /**
- * Monthly transactions/invoices summary emailed to each tenant's owner.
+ * Weekly and monthly transactions/invoices summary emailed to each tenant's owner.
  * Uses the superadmin (BYPASSRLS) connection to query across tenants
  * outside of any HTTP request/tenant context, then reuses MailService.
  */
@@ -37,9 +37,26 @@ export class MonthlyReportService {
 
     for (const tenant of tenants) {
       try {
-        await this.sendReportForTenant(tenant, from, to, label);
+        await this.sendReportForTenant(tenant, from, to, label, 'Monthly');
       } catch (err) {
         this.logger.error(`Monthly report failed for tenant ${tenant.id}: ${(err as Error).message}`);
+      }
+    }
+  }
+
+  // Every Monday, 9:00 AM IST — reports on the PREVIOUS calendar week (Mon-Sun).
+  @Cron('0 0 9 * * 1', { timeZone: 'Asia/Kolkata' })
+  async sendWeeklyReports(): Promise<void> {
+    const tenants: TenantRow[] = await this.dataSource.query(
+      `SELECT id, name, contact_email FROM tenants`,
+    );
+    const { from, to, label } = previousWeekRange();
+
+    for (const tenant of tenants) {
+      try {
+        await this.sendReportForTenant(tenant, from, to, label, 'Weekly');
+      } catch (err) {
+        this.logger.error(`Weekly report failed for tenant ${tenant.id}: ${(err as Error).message}`);
       }
     }
   }
@@ -49,10 +66,11 @@ export class MonthlyReportService {
     from: string,
     to: string,
     label: string,
+    reportType: 'Monthly' | 'Weekly',
   ): Promise<void> {
     const ownerEmail = tenant.contact_email ?? (await this.findOwnerEmail(tenant.id));
     if (!ownerEmail) {
-      this.logger.warn(`No owner email for tenant ${tenant.id} (${tenant.name}) — skipping monthly report.`);
+      this.logger.warn(`No owner email for tenant ${tenant.id} (${tenant.name}) — skipping ${reportType.toLowerCase()} report.`);
       return;
     }
 
@@ -98,16 +116,18 @@ export class MonthlyReportService {
       transactions: { total: transactions.total, count: Number(transactions.count) },
       totalReceivable: receivable.total,
       totalPayable: payable.total,
+      title: `${reportType} Summary`,
+      footerNote: `This is an automated ${reportType.toLowerCase()} summary. Sign in to VajaBaki for the full breakdown.`,
     });
 
     const attachments = await this.buildAttachments(tenant.id, from, to);
 
     await this.mail.send({
       to: ownerEmail,
-      subject: `${tenant.name} — Monthly Summary (${label})`,
+      subject: `${tenant.name} — ${reportType} Summary (${label})`,
       html,
       text:
-        `Monthly summary for ${label} — ${tenant.name}\n` +
+        `${reportType} summary for ${label} — ${tenant.name}\n` +
         `Sales: ${sales.total} (${sales.count} invoices)\n` +
         `Purchases: ${purchases.total} (${purchases.count} invoices)\n` +
         `Expenses: ${expenses.total} (${expenses.count} entries)\n` +
@@ -232,4 +252,16 @@ function previousMonthRange(): { from: string; to: string; label: string } {
   const iso = (d: Date) => d.toISOString().slice(0, 10);
   const label = firstOfPrevMonth.toLocaleString('en-US', { month: 'long', year: 'numeric' });
   return { from: iso(firstOfPrevMonth), to: iso(lastOfPrevMonth), label };
+}
+
+// Mon-Sun window ending yesterday (cron fires Monday morning, so "previous week" is the last full Mon-Sun).
+function previousWeekRange(): { from: string; to: string; label: string } {
+  const now = new Date();
+  const dayOfWeek = now.getDay() === 0 ? 7 : now.getDay(); // ISO: Mon=1..Sun=7
+  const thisMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (dayOfWeek - 1));
+  const prevMonday = new Date(thisMonday.getFullYear(), thisMonday.getMonth(), thisMonday.getDate() - 7);
+  const prevSunday = new Date(thisMonday.getTime() - 1);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const label = `${iso(prevMonday)} to ${iso(prevSunday)}`;
+  return { from: iso(prevMonday), to: iso(prevSunday), label };
 }
