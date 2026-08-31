@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 
 function fmt(v: string | number) {
@@ -120,8 +121,7 @@ export default function PaymentsPage() {
             )}
             <input required type="number" step="0.01" placeholder="Amount" value={amount}
               onChange={(e) => setAmount(e.target.value)} className={inputClass} />
-            <input required type="date" value={paidDate}
-              onChange={(e) => setPaidDate(e.target.value)} className={inputClass} />
+            <DatePicker required value={paidDate} onChange={setPaidDate} />
             <CustomSelect
               value={paymentMode}
               onChange={(val) => setPaymentMode(val as PaymentMode)}

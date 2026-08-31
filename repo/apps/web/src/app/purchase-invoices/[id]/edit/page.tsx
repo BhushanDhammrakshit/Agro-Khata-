@@ -183,6 +183,7 @@ export default function EditPurchaseInvoicePage({ params }: { params: Promise<{ 
                     <ItemCombobox
                       items={catalog}
                       value={row.itemName}
+                      uom={row.uom}
                       className={inputClass}
                       onTextChange={(name) => updateLine(i, { itemName: name, itemId: undefined })}
                       onSelect={(it) => updateLine(i, {
@@ -192,6 +193,7 @@ export default function EditPurchaseInvoicePage({ params }: { params: Promise<{ 
                         rate: it.defaultRate ?? it.salePrice ?? "",
                         gstRate: it.gstRate ?? "0",
                       })}
+                      onCreated={(it) => setCatalog((prev) => [...prev, it])}
                     />
                   </div>
                   <input required placeholder="UOM" value={row.uom} onChange={(e) => updateLine(i, { uom: e.target.value })} className={inputClass} />

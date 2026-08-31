@@ -1,26 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { api, Item } from "@/lib/api";
 import { useFloatingPosition } from "@/lib/use-floating-position";
 
-interface Props {
-  items: Item[];
-  value: string;
-  uom?: string;
-  onTextChange: (name: string) => void;
-  onSelect: (item: Item) => void;
-  onCreated?: (item: Item) => void;
+interface Props<T extends { id: string }> {
+  entities: T[];
+  value: string; // free-text name typed / selected
+  getLabel: (entity: T) => string;
+  getSubLabel?: (entity: T) => string | undefined;
+  onTextChange: (text: string) => void;
+  onSelect: (entity: T) => void;
+  onCreate: (name: string) => Promise<T>;
+  onCreated: (entity: T) => void;
   placeholder?: string;
+  createLabel: string; // e.g. "driver", "vehicle"
   className?: string;
 }
 
-export function ItemCombobox({ items, value, uom, onTextChange, onSelect, onCreated, placeholder, className }: Props) {
+export function NameCombobox<T extends { id: string }>({
+  entities, value, getLabel, getSubLabel, onTextChange, onSelect, onCreate, onCreated, placeholder, createLabel, className,
+}: Props<T>) {
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const rect = useFloatingPosition(inputRef, open, 240);
+  const rect = useFloatingPosition(inputRef, open);
 
   useEffect(() => {
     if (!open) return;
@@ -33,19 +37,19 @@ export function ItemCombobox({ items, value, uom, onTextChange, onSelect, onCrea
   }, [open]);
 
   const filtered = value.trim()
-    ? items.filter((i) => i.name.toLowerCase().includes(value.toLowerCase()))
-    : items;
+    ? entities.filter((e) => getLabel(e).toLowerCase().includes(value.toLowerCase()))
+    : entities;
 
-  const exactMatch = items.some((i) => i.name.toLowerCase() === value.trim().toLowerCase());
+  const exactMatch = entities.some((e) => getLabel(e).toLowerCase() === value.trim().toLowerCase());
   const showCreate = value.trim().length > 0 && !exactMatch;
 
   async function handleCreate() {
     setCreating(true);
     setError(null);
     try {
-      const item = await api.createItem({ name: value.trim(), uom: uom?.trim() || "pcs" });
-      onCreated?.(item);
-      onSelect(item);
+      const entity = await onCreate(value.trim());
+      onCreated(entity);
+      onSelect(entity);
       setOpen(false);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to create.");
@@ -58,14 +62,15 @@ export function ItemCombobox({ items, value, uom, onTextChange, onSelect, onCrea
     <div className="relative">
       <input
         ref={inputRef}
-        required
+        type="text"
         value={value}
-        placeholder={placeholder ?? "Item"}
+        placeholder={placeholder ?? `Search or create ${createLabel}…`}
         autoComplete="off"
-        className={className}
+        className={className ?? "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"}
         onChange={(e) => { onTextChange(e.target.value); setOpen(true); setError(null); }}
         onFocus={() => setOpen(true)}
       />
+
       {open && (filtered.length > 0 || showCreate) && rect && (
         <ul
           style={{
@@ -79,20 +84,12 @@ export function ItemCombobox({ items, value, uom, onTextChange, onSelect, onCrea
           }}
           className="overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg text-sm"
         >
-          {filtered.map((it) => (
-            <li key={it.id}
-              onMouseDown={(e) => { e.preventDefault(); onSelect(it); setOpen(false); }}
-              className="cursor-pointer px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
-              <div className="flex items-center justify-between gap-3">
-                <span className="font-medium text-slate-900">{it.name}</span>
-                <span className="text-xs text-slate-400">
-                  {it.salePrice ? `₹${it.salePrice}` : it.defaultRate ? `₹${it.defaultRate}` : ""} / {it.uom}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Stock: {parseFloat(it.currentStock).toLocaleString("en-IN")}
-                {parseFloat(it.gstRate) > 0 && ` · GST ${it.gstRate}%`}
-              </p>
+          {filtered.map((entity) => (
+            <li key={entity.id}
+              onMouseDown={(e) => { e.preventDefault(); onSelect(entity); setOpen(false); }}
+              className="flex cursor-pointer items-center gap-2 px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">
+              <span className="font-medium text-slate-900">{getLabel(entity)}</span>
+              {getSubLabel?.(entity) && <span className="text-xs text-slate-400">{getSubLabel(entity)}</span>}
             </li>
           ))}
           {showCreate && (
@@ -103,6 +100,7 @@ export function ItemCombobox({ items, value, uom, onTextChange, onSelect, onCrea
           )}
         </ul>
       )}
+
       {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );

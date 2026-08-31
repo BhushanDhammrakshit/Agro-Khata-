@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  allowedDevOrigins: ["127.0.0.1", "localhost"], // dev server rejects _next/static + HMR websocket from origins not in this list
   output: "standalone", // Azure App Service: self-contained server.js, avoids Oryx's node_modules repackaging
   serverExternalPackages: ["puppeteer", "puppeteer-core", "@sparticuz/chromium"], // keep Chromium out of the bundle; it's loaded at runtime
   // @sparticuz/chromium's Chromium binary is a Brotli blob decompressed at runtime from a

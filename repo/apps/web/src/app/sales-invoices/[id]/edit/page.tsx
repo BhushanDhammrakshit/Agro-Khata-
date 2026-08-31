@@ -9,9 +9,9 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { inputClass } from "@/components/ui/styles";
 import { DatePicker } from "@/components/ui/DatePicker";
-import { CustomSelect } from "@/components/ui/CustomSelect";
 import { PartyCombobox } from "@/components/QuickAddParty";
 import { ItemCombobox } from "@/components/ItemCombobox";
+import { NameCombobox } from "@/components/NameCombobox";
 
 interface LineItem {
   itemId?: string;
@@ -211,15 +211,18 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Driver</label>
-                <CustomSelect
-                  value={driverId}
-                  onChange={(val) => {
-                    setDriverId(val);
-                    const d = drivers.find((x) => x.id === val);
-                    setDriverName(d?.name ?? "");
-                  }}
-                  placeholder="Select saved driver…"
-                  options={drivers.map((d) => ({ value: d.id, label: d.name + (d.phone ? ` — ${d.phone}` : "") }))}
+                <NameCombobox
+                  entities={drivers}
+                  value={driverName}
+                  getLabel={(d) => d.name}
+                  getSubLabel={(d) => d.phone}
+                  onTextChange={(name) => { setDriverName(name); setDriverId(""); }}
+                  onSelect={(d) => { setDriverId(d.id); setDriverName(d.name); }}
+                  onCreate={(name) => api.createDriver({ name })}
+                  onCreated={(d) => setDrivers((prev) => [...prev, d])}
+                  placeholder="Search or create driver…"
+                  createLabel="driver"
+                  className={inputClass}
                 />
                 <Link href="/drivers" className="mt-1 inline-block text-xs font-medium text-emerald-700 hover:underline">
                   + Manage drivers
@@ -227,36 +230,23 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Vehicle</label>
-                <CustomSelect
-                  value={vehicleId}
-                  onChange={(val) => {
-                    setVehicleId(val);
-                    const v = vehicles.find((x) => x.id === val);
-                    setVehicleNo(v?.vehicleNo ?? "");
-                  }}
-                  placeholder="Select saved vehicle…"
-                  options={vehicles.map((v) => ({ value: v.id, label: v.vehicleNo + (v.name ? ` — ${v.name}` : "") + (v.loadCapacity ? ` (${v.loadCapacity})` : "") }))}
+                <NameCombobox
+                  entities={vehicles}
+                  value={vehicleNo}
+                  getLabel={(v) => v.vehicleNo}
+                  getSubLabel={(v) => v.name}
+                  onTextChange={(no) => { setVehicleNo(no); setVehicleId(""); }}
+                  onSelect={(v) => { setVehicleId(v.id); setVehicleNo(v.vehicleNo); }}
+                  onCreate={(vehicleNo) => api.createVehicle({ vehicleNo })}
+                  onCreated={(v) => setVehicles((prev) => [...prev, v])}
+                  placeholder="Search or create vehicle…"
+                  createLabel="vehicle"
+                  className={inputClass}
                 />
                 <Link href="/vehicles" className="mt-1 inline-block text-xs font-medium text-emerald-700 hover:underline">
                   + Manage vehicles
                 </Link>
               </div>
-              {!vehicleId && (
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    Vehicle Number <span className="font-normal text-slate-400">(if not in list)</span>
-                  </label>
-                  <input value={vehicleNo} onChange={(e) => setVehicleNo(e.target.value)} placeholder="MH-12 AB 1234" className={inputClass} />
-                </div>
-              )}
-              {!driverId && (
-                <div className="sm:col-span-2">
-                  <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                    Driver Name <span className="font-normal text-slate-400">(if not in list)</span>
-                  </label>
-                  <input value={driverName} onChange={(e) => setDriverName(e.target.value)} placeholder="Ramesh Kumar" className={inputClass} />
-                </div>
-              )}
             </div>
           </Card>
 
@@ -269,6 +259,7 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
                   <ItemCombobox
                     items={catalog}
                     value={row.itemName}
+                    uom={row.uom}
                     className={inputClass}
                     onTextChange={(name) => updateLine(i, { itemName: name, itemId: undefined })}
                     onSelect={(it) => updateLine(i, {
@@ -278,6 +269,7 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
                       rate: it.salePrice ?? it.defaultRate ?? "",
                       gstRate: it.gstRate ?? "0",
                     })}
+                    onCreated={(it) => setCatalog((prev) => [...prev, it])}
                   />
                   <input required placeholder="UOM" value={row.uom} onChange={(e) => updateLine(i, { uom: e.target.value })} className={inputClass} />
                   <input required type="number" step="0.001" placeholder="Qty" value={row.qty} onChange={(e) => updateLine(i, { qty: e.target.value })} className={inputClass} />
