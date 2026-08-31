@@ -145,7 +145,7 @@ export default function EditPurchaseInvoicePage({ params }: { params: Promise<{ 
                 <label className="text-sm font-medium text-slate-700">Supplier</label>
                 <PartyCombobox
                   partyType="supplier"
-                  parties={parties}
+                  parties={parties.filter((p) => p.isActive || p.id === partyId)}
                   value={partyId}
                   onChange={setPartyId}
                   onPartyCreated={(party) => setParties((previous) => [...previous, party])}
@@ -181,7 +181,7 @@ export default function EditPurchaseInvoicePage({ params }: { params: Promise<{ 
                 <div key={i} className={`mb-3 grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-2 sm:mb-2 sm:bg-transparent sm:p-0 ${isGstInvoice ? "sm:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]" : "sm:grid-cols-[2fr_1fr_1fr_1fr_auto]"}`}>
                   <div className="col-span-2 sm:col-span-1">
                     <ItemCombobox
-                      items={catalog}
+                      items={catalog.filter((it) => it.isActive || it.id === row.itemId)}
                       value={row.itemName}
                       uom={row.uom}
                       className={inputClass}

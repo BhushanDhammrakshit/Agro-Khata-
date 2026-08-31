@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ActionsMenu, ActionsMenuItem } from "@/components/ui/ActionsMenu";
-import { EditIcon, DeleteIcon } from "@/components/ui/icons";
+import { EditIcon, DeleteIcon, RestoreIcon } from "@/components/ui/icons";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 
 export function SuppliersClient({ initialParties }: { initialParties: Party[] }) {
@@ -63,17 +63,28 @@ export function SuppliersClient({ initialParties }: { initialParties: Party[] })
       setDeleteTarget(null);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to delete supplier.");
+      setError(err instanceof ApiError ? err.message : `Failed to ${deleteTarget.canDelete ? "delete" : "deactivate"} supplier.`);
       setDeleteTarget(null);
     } finally {
       setDeleting(false);
     }
   }
 
+  async function handleReactivate(party: Party) {
+    try {
+      await api.reactivateParty(party.id);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to reactivate supplier.");
+    }
+  }
+
   function menuItems(party: Party): ActionsMenuItem[] {
     return [
       { key: "edit", label: "Edit / Ledger", icon: EditIcon, onClick: () => router.push(`/parties/${party.id}?from=suppliers`) },
-      { key: "delete", label: "Delete", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(party) },
+      party.isActive
+        ? { key: "deactivate", label: party.canDelete ? "Delete" : "Deactivate", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(party) }
+        : { key: "reactivate", label: "Reactivate", icon: RestoreIcon, onClick: () => handleReactivate(party) },
     ];
   }
 
@@ -172,9 +183,11 @@ export function SuppliersClient({ initialParties }: { initialParties: Party[] })
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete supplier?"
-        message={`This will permanently delete "${deleteTarget?.name}". This cannot be undone.`}
-        confirmLabel="Delete"
+        title={deleteTarget?.canDelete ? "Delete supplier?" : "Deactivate supplier?"}
+        message={deleteTarget?.canDelete
+          ? `This will permanently delete "${deleteTarget?.name}". This cannot be undone.`
+          : `"${deleteTarget?.name}" has past invoices or payments, so it will be deactivated instead — hidden from new invoices, but kept in history.`}
+        confirmLabel={deleteTarget?.canDelete ? "Delete" : "Deactivate"}
         danger
         busy={deleting}
         onConfirm={handleDelete}

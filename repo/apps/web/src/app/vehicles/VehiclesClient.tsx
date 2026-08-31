@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ActionsMenu, ActionsMenuItem } from "@/components/ui/ActionsMenu";
-import { EditIcon, DeleteIcon, ListIcon } from "@/components/ui/icons";
+import { EditIcon, DeleteIcon, ListIcon, RestoreIcon } from "@/components/ui/icons";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 import { AutocompleteInput } from "@/components/ui/AutocompleteInput";
 import { DatePicker } from "@/components/ui/DatePicker";
@@ -227,10 +227,19 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
       setDeleteTarget(null);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to delete vehicle.");
+      setError(err instanceof ApiError ? err.message : `Failed to ${deleteTarget.canDelete ? "delete" : "deactivate"} vehicle.`);
       setDeleteTarget(null);
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleReactivate(vehicle: Vehicle) {
+    try {
+      await api.reactivateVehicle(vehicle.id);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to reactivate vehicle.");
     }
   }
 
@@ -238,7 +247,9 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
     return [
       { key: "edit", label: "Edit", icon: EditIcon, onClick: () => beginEdit(vehicle) },
       { key: "expenses", label: expandedVehicleId === vehicle.id ? "Hide expenses" : "Expenses", icon: ListIcon, onClick: () => toggleExpenses(vehicle.id) },
-      { key: "delete", label: "Delete", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(vehicle) },
+      vehicle.isActive
+        ? { key: "deactivate", label: vehicle.canDelete ? "Delete" : "Deactivate", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(vehicle) }
+        : { key: "reactivate", label: "Reactivate", icon: RestoreIcon, onClick: () => handleReactivate(vehicle) },
     ];
   }
 
@@ -366,9 +377,11 @@ export function VehiclesClient({ initialVehicles }: { initialVehicles: Vehicle[]
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete vehicle?"
-        message={`This will permanently delete "${deleteTarget?.vehicleNo}". This cannot be undone.`}
-        confirmLabel="Delete"
+        title={deleteTarget?.canDelete ? "Delete vehicle?" : "Deactivate vehicle?"}
+        message={deleteTarget?.canDelete
+          ? `This will permanently delete "${deleteTarget?.vehicleNo}". This cannot be undone.`
+          : `"${deleteTarget?.vehicleNo}" is used on past expenses or invoices, so it will be deactivated instead — hidden from new invoices/expenses, but kept in history.`}
+        confirmLabel={deleteTarget?.canDelete ? "Delete" : "Deactivate"}
         danger
         busy={deleting}
         onConfirm={handleDelete}

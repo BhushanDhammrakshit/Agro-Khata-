@@ -5,9 +5,10 @@ import { api, ApiError, Item } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ActionsMenu, ActionsMenuItem } from "@/components/ui/ActionsMenu";
-import { EditIcon, DeleteIcon } from "@/components/ui/icons";
+import { EditIcon, DeleteIcon, RestoreIcon } from "@/components/ui/icons";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 
 export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
@@ -76,17 +77,28 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
       setDeleteTarget(null);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to delete item.");
+      setError(err instanceof ApiError ? err.message : `Failed to ${deleteTarget.canDelete ? "delete" : "deactivate"} item.`);
       setDeleteTarget(null);
     } finally {
       setDeleting(false);
     }
   }
 
+  async function handleReactivate(item: Item) {
+    try {
+      await api.reactivateItem(item.id);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to reactivate item.");
+    }
+  }
+
   function menuItems(item: Item): ActionsMenuItem[] {
     return [
       { key: "edit", label: "Edit", icon: EditIcon, onClick: () => beginEdit(item) },
-      { key: "delete", label: "Delete", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(item) },
+      item.isActive
+        ? { key: "deactivate", label: item.canDelete ? "Delete" : "Deactivate", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(item) }
+        : { key: "reactivate", label: "Reactivate", icon: RestoreIcon, onClick: () => handleReactivate(item) },
     ];
   }
 
@@ -153,6 +165,7 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{item.uom}</span>
+                  <Badge tone={item.isActive ? "green" : "slate"}>{item.isActive ? "Active" : "Inactive"}</Badge>
                   <ActionsMenu items={menuItems(item)} />
                 </div>
               </div>
@@ -189,6 +202,7 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
                 <th className={thClass}>GST %</th>
                 <th className={thClass}>HSN</th>
                 <th className={thClass}>Stock</th>
+                <th className={thClass}>Status</th>
                 <th className={thClass}>Actions</th>
               </tr>
             </thead>
@@ -201,6 +215,7 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
                   <td className={tdClass}>{i.gstRate}%</td>
                   <td className={tdClass}>{i.hsnCode ?? "—"}</td>
                   <td className={tdClass}>{i.currentStock}</td>
+                  <td className={tdClass}><Badge tone={i.isActive ? "green" : "slate"}>{i.isActive ? "Active" : "Inactive"}</Badge></td>
                   <td className={tdClass}>
                     <ActionsMenu items={menuItems(i)} />
                   </td>
@@ -214,9 +229,11 @@ export function ItemsClient({ initialItems }: { initialItems: Item[] }) {
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete item?"
-        message={`This will permanently delete "${deleteTarget?.name}". This cannot be undone.`}
-        confirmLabel="Delete"
+        title={deleteTarget?.canDelete ? "Delete item?" : "Deactivate item?"}
+        message={deleteTarget?.canDelete
+          ? `This will permanently delete "${deleteTarget?.name}". This cannot be undone.`
+          : `"${deleteTarget?.name}" is used in past invoices or stock records, so it will be deactivated instead — hidden from new invoices, but kept in history.`}
+        confirmLabel={deleteTarget?.canDelete ? "Delete" : "Deactivate"}
         danger
         busy={deleting}
         onConfirm={handleDelete}

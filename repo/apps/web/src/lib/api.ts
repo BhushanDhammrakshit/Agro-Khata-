@@ -244,6 +244,8 @@ export interface Party {
   nextPoSeq?: string;
   farmerCode?: string;
   isActive: boolean;
+  // Only present on list() responses — true if never referenced by an invoice/payment (safe to hard-delete).
+  canDelete?: boolean;
 }
 
 export interface Driver {
@@ -252,6 +254,7 @@ export interface Driver {
   licenceNo?: string;
   phone?: string;
   isActive: boolean;
+  canDelete?: boolean;
 }
 
 export interface Vehicle {
@@ -260,6 +263,7 @@ export interface Vehicle {
   name?: string;
   loadCapacity?: string;
   isActive: boolean;
+  canDelete?: boolean;
 }
 
 export interface Item {
@@ -274,6 +278,7 @@ export interface Item {
   currentStock: string;
   lowStockAlertQty?: string;
   isActive: boolean;
+  canDelete?: boolean;
 }
 
 export type InvoiceStatus = "draft" | "sent" | "partially_paid" | "paid" | "overdue" | "cancelled";
@@ -535,7 +540,8 @@ export const api = {
     request<{ invoiceNo: string; poNo: string }>(`/parties/${id}/next-numbers?invoiceType=${invoiceType}`),
   createParty: (dto: Partial<Party>) => request<Party>("/parties", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/parties")),
   updateParty: (id: string, dto: Partial<Party>) => request<Party>(`/parties/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/parties")),
-  deleteParty: (id: string) => request<{ id: string }>(`/parties/${id}`, { method: "DELETE" }).finally(() => invalidate("/parties")),
+  deleteParty: (id: string) => request<{ id: string } | Party>(`/parties/${id}`, { method: "DELETE" }).finally(() => invalidate("/parties")),
+  reactivateParty: (id: string) => request<Party>(`/parties/${id}/reactivate`, { method: "POST" }).finally(() => invalidate("/parties")),
   updateFarmerCode: (id: string, farmerCode: string) =>
     request<Party>(`/parties/${id}/farmer-code`, { method: "PATCH", body: JSON.stringify({ farmerCode }) }).finally(() => invalidate("/parties")),
   listPartyPayments: (id: string) => cachedRequest<PartyPayment[]>(`/parties/${id}/payments`),
@@ -560,7 +566,9 @@ export const api = {
     salePrice: number; lowStockAlertQty: number; isActive: boolean;
   }>) => request<Item>(`/items/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/items")),
   deleteItem: (id: string) =>
-    request<{ id: string }>(`/items/${id}`, { method: "DELETE" }).finally(() => invalidate("/items")),
+    request<{ id: string } | Item>(`/items/${id}`, { method: "DELETE" }).finally(() => invalidate("/items")),
+  reactivateItem: (id: string) =>
+    request<Item>(`/items/${id}/reactivate`, { method: "POST" }).finally(() => invalidate("/items")),
 
   // Sales Invoices (to a customer)
   listSalesInvoices: (filters?: { partyId?: string; status?: InvoiceStatus }) => {
@@ -625,7 +633,9 @@ export const api = {
   updateDriver: (id: string, dto: Partial<Driver>) =>
     request<Driver>(`/drivers/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/drivers")),
   deleteDriver: (id: string) =>
-    request<{ id: string }>(`/drivers/${id}`, { method: "DELETE" }).finally(() => invalidate("/drivers")),
+    request<{ id: string } | Driver>(`/drivers/${id}`, { method: "DELETE" }).finally(() => invalidate("/drivers")),
+  reactivateDriver: (id: string) =>
+    request<Driver>(`/drivers/${id}/reactivate`, { method: "POST" }).finally(() => invalidate("/drivers")),
 
   listVehicles: () => cachedRequest<Vehicle[]>("/vehicles"),
   createVehicle: (dto: { vehicleNo: string; name?: string; loadCapacity?: string }) =>
@@ -633,7 +643,9 @@ export const api = {
   updateVehicle: (id: string, dto: Partial<Vehicle>) =>
     request<Vehicle>(`/vehicles/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/vehicles")),
   deleteVehicle: (id: string) =>
-    request<{ id: string }>(`/vehicles/${id}`, { method: "DELETE" }).finally(() => invalidate("/vehicles")),
+    request<{ id: string } | Vehicle>(`/vehicles/${id}`, { method: "DELETE" }).finally(() => invalidate("/vehicles")),
+  reactivateVehicle: (id: string) =>
+    request<Vehicle>(`/vehicles/${id}/reactivate`, { method: "POST" }).finally(() => invalidate("/vehicles")),
 
   // Warm the cache with reference + session data so it's ready across the app on load.
   prefetch: () => {

@@ -35,6 +35,12 @@ export class DriversController {
     return this.driversService.update(id, dto);
   }
 
+  @Post(':id/reactivate')
+  @Roles(...WRITE_ROLES)
+  reactivate(@Param('id') id: string) {
+    return this.driversService.reactivate(id);
+  }
+
   @Delete(':id')
   @Roles(...WRITE_ROLES)
   remove(@Param('id') id: string) {

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ActionsMenu, ActionsMenuItem } from "@/components/ui/ActionsMenu";
-import { EditIcon, DeleteIcon } from "@/components/ui/icons";
+import { EditIcon, DeleteIcon, RestoreIcon } from "@/components/ui/icons";
 import { inputClass, tableWrapClass, tdClass, thClass } from "@/components/ui/styles";
 import { PhoneInput, withPrefix, stripPrefix } from "@/components/PhoneInput";
 
@@ -72,17 +72,28 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
       setDeleteTarget(null);
       load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to delete driver.");
+      setError(err instanceof ApiError ? err.message : `Failed to ${deleteTarget.canDelete ? "delete" : "deactivate"} driver.`);
       setDeleteTarget(null);
     } finally {
       setDeleting(false);
     }
   }
 
+  async function handleReactivate(driver: Driver) {
+    try {
+      await api.reactivateDriver(driver.id);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to reactivate driver.");
+    }
+  }
+
   function menuItems(driver: Driver): ActionsMenuItem[] {
     return [
       { key: "edit", label: "Edit", icon: EditIcon, onClick: () => beginEdit(driver) },
-      { key: "delete", label: "Delete", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(driver) },
+      driver.isActive
+        ? { key: "deactivate", label: driver.canDelete ? "Delete" : "Deactivate", icon: DeleteIcon, tone: "danger", onClick: () => setDeleteTarget(driver) }
+        : { key: "reactivate", label: "Reactivate", icon: RestoreIcon, onClick: () => handleReactivate(driver) },
     ];
   }
 
@@ -192,9 +203,11 @@ export function DriversClient({ initialDrivers }: { initialDrivers: Driver[] }) 
 
       <ConfirmDialog
         open={!!deleteTarget}
-        title="Delete driver?"
-        message={`This will permanently delete "${deleteTarget?.name}". This cannot be undone.`}
-        confirmLabel="Delete"
+        title={deleteTarget?.canDelete ? "Delete driver?" : "Deactivate driver?"}
+        message={deleteTarget?.canDelete
+          ? `This will permanently delete "${deleteTarget?.name}". This cannot be undone.`
+          : `"${deleteTarget?.name}" is used on past invoices, so they will be deactivated instead — hidden from new invoices, but kept on past invoices.`}
+        confirmLabel={deleteTarget?.canDelete ? "Delete" : "Deactivate"}
         danger
         busy={deleting}
         onConfirm={handleDelete}

@@ -43,6 +43,12 @@ export class PartiesController {
     return this.partiesService.update(id, dto);
   }
 
+  @Post(':id/reactivate')
+  @Roles(...WRITE_ROLES)
+  reactivate(@Param('id') id: string) {
+    return this.partiesService.reactivate(id);
+  }
+
   @Patch(':id/farmer-code')
   @Roles(UserRole.OWNER)
   updateFarmerCode(@Param('id') id: string, @Body('farmerCode') farmerCode: string) {

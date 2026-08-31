@@ -1,4 +1,5 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { EntityManager } from 'typeorm';
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { AuditLogService } from '../common/audit/audit-log.service';
 import { Driver } from '../entities/driver.entity';
@@ -12,10 +13,23 @@ export class DriversService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  async list(): Promise<Driver[]> {
+  // Ids referenced by any sales invoice — these can only be deactivated, never hard-deleted.
+  private async getUsedDriverIds(manager: EntityManager, tenantId: string): Promise<Set<string>> {
+    const rows: { driver_id: string }[] = await manager.query(
+      `SELECT driver_id FROM sales_invoices WHERE tenant_id=$1 AND driver_id IS NOT NULL`,
+      [tenantId],
+    );
+    return new Set(rows.map((r) => r.driver_id));
+  }
+
+  async list(): Promise<(Driver & { canDelete: boolean })[]> {
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
-    return manager.getRepository(Driver).find({ where: { tenantId }, order: { name: 'ASC' } });
+    const [drivers, usedIds] = await Promise.all([
+      manager.getRepository(Driver).find({ where: { tenantId }, order: { name: 'ASC' } }),
+      this.getUsedDriverIds(manager, tenantId),
+    ]);
+    return drivers.map((driver) => ({ ...driver, canDelete: !usedIds.has(driver.id) }));
   }
 
   async findOneOrThrow(id: string): Promise<Driver> {
@@ -44,16 +58,29 @@ export class DriversService {
     return after;
   }
 
-  async remove(id: string): Promise<{ id: string }> {
+  // Hard-deletes only if never referenced elsewhere; otherwise deactivates so history stays intact.
+  async remove(id: string): Promise<{ id: string } | Driver> {
     const driver = await this.findOneOrThrow(id);
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
     const usedOnInvoices = await manager.getRepository(SalesInvoice).count({ where: { tenantId, driverId: id } });
     if (usedOnInvoices > 0) {
-      throw new ConflictException(`Cannot delete: this driver is used on ${usedOnInvoices} sales invoice(s).`);
+      await manager.getRepository(Driver).update(id, { isActive: false });
+      const after = await manager.getRepository(Driver).findOneByOrFail({ id });
+      await this.auditLog.record({ action: 'driver.deactivated', entityType: 'driver', entityId: id, before: driver, after });
+      return after;
     }
     await manager.getRepository(Driver).delete({ id, tenantId });
     await this.auditLog.record({ action: 'driver.deleted', entityType: 'driver', entityId: id, before: driver });
     return { id };
+  }
+
+  async reactivate(id: string): Promise<Driver> {
+    const before = await this.findOneOrThrow(id);
+    const manager = this.tenantContext.getManager();
+    await manager.getRepository(Driver).update(id, { isActive: true });
+    const after = await manager.getRepository(Driver).findOneByOrFail({ id });
+    await this.auditLog.record({ action: 'driver.reactivated', entityType: 'driver', entityId: id, before, after });
+    return after;
   }
 }

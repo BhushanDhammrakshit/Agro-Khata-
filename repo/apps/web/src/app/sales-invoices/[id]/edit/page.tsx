@@ -157,7 +157,7 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Customer</label>
-                <PartyCombobox partyType="customer" parties={parties} value={partyId}
+                <PartyCombobox partyType="customer" parties={parties.filter((p) => p.isActive || p.id === partyId)} value={partyId}
                   onChange={setPartyId}
                   onPartyCreated={(p) => { setParties((prev) => [...prev, p]); setPartyId(p.id); }} />
               </div>
@@ -212,7 +212,7 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Driver</label>
                 <NameCombobox
-                  entities={drivers}
+                  entities={drivers.filter((d) => d.isActive || d.id === driverId)}
                   value={driverName}
                   getLabel={(d) => d.name}
                   getSubLabel={(d) => d.phone}
@@ -231,7 +231,7 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">Vehicle</label>
                 <NameCombobox
-                  entities={vehicles}
+                  entities={vehicles.filter((v) => v.isActive || v.id === vehicleId)}
                   value={vehicleNo}
                   getLabel={(v) => v.vehicleNo}
                   getSubLabel={(v) => v.name}
@@ -257,7 +257,7 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
               {items.map((row, i) => (
                 <div key={i} className={`grid gap-2 mb-2 ${isGstInvoice ? "min-w-[540px] grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]" : "min-w-[440px] grid-cols-[2fr_1fr_1fr_1fr_auto]"}`}>
                   <ItemCombobox
-                    items={catalog}
+                    items={catalog.filter((it) => it.isActive || it.id === row.itemId)}
                     value={row.itemName}
                     uom={row.uom}
                     className={inputClass}

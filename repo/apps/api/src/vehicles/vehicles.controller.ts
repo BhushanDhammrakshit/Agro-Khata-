@@ -22,6 +22,10 @@ export class VehiclesController {
   @Roles(UserRole.OWNER, UserRole.STAFF)
   update(@Param('id') id: string, @Body() dto: UpdateVehicleDto) { return this.vehiclesService.update(id, dto); }
 
+  @Post(':id/reactivate')
+  @Roles(UserRole.OWNER, UserRole.STAFF)
+  reactivate(@Param('id') id: string) { return this.vehiclesService.reactivate(id); }
+
   @Delete(':id')
   @Roles(UserRole.OWNER, UserRole.STAFF)
   remove(@Param('id') id: string) { return this.vehiclesService.remove(id); }

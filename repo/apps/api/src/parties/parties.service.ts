@@ -1,4 +1,5 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { EntityManager } from 'typeorm';
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { AuditLogService } from '../common/audit/audit-log.service';
 import { Party, PartyType } from '../entities/party.entity';
@@ -18,13 +19,30 @@ export class PartiesService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  async list(partyType?: PartyType): Promise<Party[]> {
+  // Ids referenced by any invoice or payment — these can only be deactivated, never hard-deleted.
+  private async getUsedPartyIds(manager: EntityManager, tenantId: string): Promise<Set<string>> {
+    const rows: { party_id: string }[] = await manager.query(
+      `SELECT party_id FROM sales_invoices WHERE tenant_id=$1
+       UNION
+       SELECT party_id FROM purchase_invoices WHERE tenant_id=$1
+       UNION
+       SELECT party_id FROM party_payments WHERE tenant_id=$1`,
+      [tenantId],
+    );
+    return new Set(rows.map((r) => r.party_id));
+  }
+
+  async list(partyType?: PartyType): Promise<(Party & { canDelete: boolean })[]> {
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
-    return manager.getRepository(Party).find({
-      where: { tenantId, ...(partyType ? { partyType } : {}) },
-      order: { name: 'ASC' },
-    });
+    const [parties, usedIds] = await Promise.all([
+      manager.getRepository(Party).find({
+        where: { tenantId, ...(partyType ? { partyType } : {}) },
+        order: { name: 'ASC' },
+      }),
+      this.getUsedPartyIds(manager, tenantId),
+    ]);
+    return parties.map((party) => ({ ...party, canDelete: !usedIds.has(party.id) }));
   }
 
   async findOneOrThrow(partyId: string): Promise<Party> {
@@ -171,7 +189,8 @@ export class PartiesService {
     });
   }
 
-  async remove(partyId: string): Promise<{ id: string }> {
+  // Hard-deletes only if never referenced elsewhere; otherwise deactivates so history stays intact.
+  async remove(partyId: string): Promise<{ id: string } | Party> {
     const party = await this.findOneOrThrow(partyId);
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
@@ -181,10 +200,22 @@ export class PartiesService {
       manager.getRepository(PartyPayment).count({ where: { tenantId, partyId } }),
     ]);
     if (salesCount > 0 || purchaseCount > 0 || paymentCount > 0) {
-      throw new ConflictException('Cannot delete: this party has existing invoices or payment records.');
+      await manager.getRepository(Party).update(partyId, { isActive: false });
+      const after = await manager.getRepository(Party).findOneByOrFail({ id: partyId });
+      await this.auditLog.record({ action: 'party.deactivated', entityType: 'party', entityId: partyId, before: party, after });
+      return after;
     }
     await manager.getRepository(Party).delete({ id: partyId, tenantId });
     await this.auditLog.record({ action: 'party.deleted', entityType: 'party', entityId: partyId, before: party });
     return { id: partyId };
+  }
+
+  async reactivate(partyId: string): Promise<Party> {
+    const before = await this.findOneOrThrow(partyId);
+    const manager = this.tenantContext.getManager();
+    await manager.getRepository(Party).update(partyId, { isActive: true });
+    const after = await manager.getRepository(Party).findOneByOrFail({ id: partyId });
+    await this.auditLog.record({ action: 'party.reactivated', entityType: 'party', entityId: partyId, before, after });
+    return after;
   }
 }

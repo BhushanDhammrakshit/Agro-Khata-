@@ -36,6 +36,12 @@ export class ItemsController {
     return this.itemsService.update(id, dto);
   }
 
+  @Post(':id/reactivate')
+  @Roles(...WRITE_ROLES)
+  reactivate(@Param('id') id: string) {
+    return this.itemsService.reactivate(id);
+  }
+
   @Delete(':id')
   @Roles(...WRITE_ROLES)
   remove(@Param('id') id: string) {
