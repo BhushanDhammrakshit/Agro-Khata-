@@ -73,7 +73,7 @@ export function CustomSelect({ value, onChange, options, placeholder = "Selectâ€
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); onChange(opt.value); setOpen(false); }}
-                className={`flex w-full cursor-pointer items-center gap-2 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 ${opt.value === value ? "font-semibold text-emerald-700" : "text-slate-700"}`}
+                className={`flex w-full cursor-pointer items-center gap-2 whitespace-nowrap px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 ${opt.value === value ? "font-semibold text-emerald-700" : "text-slate-700"}`}
               >
                 {opt.value === value ? (
                   <svg className="h-3.5 w-3.5 shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">

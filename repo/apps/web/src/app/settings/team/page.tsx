@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { inputClass } from "@/components/ui/styles";
 import { CustomSelect } from "@/components/ui/CustomSelect";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 const ROLE_LABELS: Record<AuthUser["role"], string> = {
   owner: "Owner",
@@ -30,6 +31,8 @@ export default function TeamPage() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", role: "staff" as AuthUser["role"] });
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
+  const [statusTarget, setStatusTarget] = useState<TeamMember | null>(null);
+  const [statusUpdating, setStatusUpdating] = useState(false);
 
   const isOwner = me?.role === "owner";
 
@@ -61,12 +64,17 @@ export default function TeamPage() {
     }
   }
 
-  async function toggleActive(member: TeamMember) {
+  async function confirmToggleActive() {
+    if (!statusTarget) return;
+    setStatusUpdating(true);
     try {
-      const updated = await api.updateUser(member.id, { isActive: !member.isActive });
-      setMembers((prev) => prev.map((m) => (m.id === member.id ? updated : m)));
+      const updated = await api.updateUser(statusTarget.id, { isActive: !statusTarget.isActive });
+      setMembers((prev) => prev.map((m) => (m.id === statusTarget.id ? updated : m)));
+      setStatusTarget(null);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to update user.");
+    } finally {
+      setStatusUpdating(false);
     }
   }
 
@@ -194,6 +202,7 @@ export default function TeamPage() {
                     <td className="py-3 pr-4">
                       {isOwner && member.id !== me?.id && member.role !== "owner" ? (
                         <CustomSelect
+                          className="w-32"
                           value={member.role}
                           onChange={(val) => changeRole(member, val as AuthUser["role"])}
                           options={[
@@ -216,7 +225,7 @@ export default function TeamPage() {
                       <td className="py-3">
                         {member.id !== me?.id && member.role !== "owner" && (
                           <button
-                            onClick={() => toggleActive(member)}
+                            onClick={() => setStatusTarget(member)}
                             className={`inline-flex cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${
                               member.isActive
                                 ? "border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
@@ -236,6 +245,21 @@ export default function TeamPage() {
           </Card>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!statusTarget}
+        title={statusTarget?.isActive ? "Deactivate member?" : "Activate member?"}
+        message={
+          statusTarget?.isActive
+            ? `${statusTarget?.name} will no longer be able to sign in.`
+            : `${statusTarget?.name} will regain access to sign in.`
+        }
+        confirmLabel={statusTarget?.isActive ? "Deactivate" : "Activate"}
+        danger={statusTarget?.isActive}
+        busy={statusUpdating}
+        onConfirm={confirmToggleActive}
+        onCancel={() => setStatusTarget(null)}
+      />
     </AppShell>
   );
 }

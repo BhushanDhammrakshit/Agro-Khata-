@@ -13,7 +13,6 @@ import { CustomSelect } from "@/components/ui/CustomSelect";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { NameSuggestInput, NameSuggestion } from "@/components/NameSuggestInput";
 import { formatCompactINR, formatINR } from "@/lib/currency";
-import { useAppUser } from "@/lib/AppUserContext";
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -71,7 +70,6 @@ function rememberRemark(remark: string) {
 }
 
 export function TransactionsClient({ initialTransactions, payeeSuggestions, bankSuggestions }: { initialTransactions: Transaction[]; payeeSuggestions: NameSuggestion[]; bankSuggestions: string[] }) {
-  const { me } = useAppUser();
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -98,18 +96,34 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
     return Array.from(new Set([...storedRemarks, ...fromTransactions]));
   }, [storedRemarks, transactions]);
 
-  // Defaults "Name of payer" to the logged-in user, since they're the one logging the record.
-  useEffect(() => {
-    if (editingId || !me?.name) return;
-    setForm((f) => (f.payerName ? f : { ...f, payerName: me.name }));
-  }, [me, editingId]);
+  // Names typed into past transactions' payee field, merged with the
+  // customer/supplier/driver suggestions (tags from the latter take priority).
+  function mergeNameSuggestions(items: NameSuggestion[]): NameSuggestion[] {
+    const byName = new Map<string, NameSuggestion>();
+    for (const item of items) {
+      const key = item.name.toLowerCase();
+      const existing = byName.get(key);
+      if (!existing || (!existing.tag && item.tag)) byName.set(key, item);
+    }
+    return Array.from(byName.values());
+  }
+  // Payers are people logging cash/bank movements, not parties — suggestions
+  // come only from previously logged transactions, never customers/suppliers.
+  const allPayerSuggestions = useMemo(() => {
+    const names = new Set(transactions.map((t) => t.payerName).filter((n): n is string => !!n));
+    return Array.from(names, (name) => ({ name }));
+  }, [transactions]);
+  const allPayeeSuggestions = useMemo(() => {
+    const fromTransactions = transactions.map((t) => ({ name: t.payeeName })).filter((s) => s.name);
+    return mergeNameSuggestions([...payeeSuggestions, ...fromTransactions]);
+  }, [transactions, payeeSuggestions]);
 
   function load() {
     api.listTransactions().then(setTransactions).catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load transactions."));
   }
 
   function resetForm() {
-    setForm({ ...emptyForm, payerName: me?.name ?? "" });
+    setForm({ ...emptyForm });
     setEditingId(null);
   }
 
@@ -201,7 +215,14 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Name of payer</label>
-              <input required placeholder="Who paid" value={form.payerName} onChange={(e) => setForm((f) => ({ ...f, payerName: e.target.value }))} className={inputClass} />
+              <NameSuggestInput
+                required
+                placeholder="Who paid"
+                value={form.payerName}
+                onChange={(v) => setForm((f) => ({ ...f, payerName: v }))}
+                suggestions={allPayerSuggestions}
+                className={inputClass}
+              />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Name of payee</label>
@@ -210,7 +231,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
                 placeholder="Who received"
                 value={form.payeeName}
                 onChange={(v) => setForm((f) => ({ ...f, payeeName: v }))}
-                suggestions={payeeSuggestions}
+                suggestions={allPayeeSuggestions}
                 className={inputClass}
               />
             </div>
