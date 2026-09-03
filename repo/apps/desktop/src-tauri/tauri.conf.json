@@ -1,17 +1,17 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "KAG Mall",
+  "productName": "VajaBaki",
   "version": "0.1.0",
-  "identifier": "com.kagmall.desktop",
+  "identifier": "com.vajabaki.desktop",
   "app": {
     "windows": [
       {
-        "title": "KAG Mall",
+        "title": "VajaBaki",
         "url": "https://vajabaki.com/dashboard",
         "width": 1280,
         "height": 800,
         "resizable": true,
-        "userAgent": "KAGMallDesktop/1.0"
+        "userAgent": "VajaBakiDesktop/1.0"
       }
     ]
   },

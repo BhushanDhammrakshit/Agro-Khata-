@@ -99,7 +99,7 @@ export class AuthController {
 
   // identifies the Tauri desktop shell via its configured User-Agent string
   private isDesktopClient(req: Request): boolean {
-    return (req.headers['user-agent'] ?? '').includes('KAGMallDesktop');
+    return (req.headers['user-agent'] ?? '').includes('VajaBakiDesktop');
   }
 
   private setAccessTokenCookie(res: Response, accessToken: string, longLived = false) {
