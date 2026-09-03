@@ -7,11 +7,12 @@ import {
   NotFoundException,
   Patch,
   Post,
+  Req,
   Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -47,21 +48,33 @@ export class AuthController {
 
   @Post('password/login')
   @HttpCode(HttpStatus.OK)
-  async passwordLogin(@Body() dto: PasswordLoginDto, @Res({ passthrough: true }) res: Response) {
+  async passwordLogin(
+    @Req() req: Request,
+    @Body() dto: PasswordLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const longLived = this.isDesktopClient(req);
     const { accessToken, user } = await this.authService.passwordLogin(
       dto.email,
       dto.tenantId,
       dto.password,
+      longLived,
     );
-    this.setAccessTokenCookie(res, accessToken);
+    this.setAccessTokenCookie(res, accessToken, longLived);
     return { user };
   }
 
   @Post('otp/verify')
   @HttpCode(HttpStatus.OK)
-  async verifyOtp(@Body() dto: VerifyOtpDto, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, user } = await this.authService.verifyOtp(dto.email, dto.otp, dto.tenantId);
-    this.setAccessTokenCookie(res, accessToken);
+  async verifyOtp(@Req() req: Request, @Body() dto: VerifyOtpDto, @Res({ passthrough: true }) res: Response) {
+    const longLived = this.isDesktopClient(req);
+    const { accessToken, user } = await this.authService.verifyOtp(
+      dto.email,
+      dto.otp,
+      dto.tenantId,
+      longLived,
+    );
+    this.setAccessTokenCookie(res, accessToken, longLived);
     return { user };
   }
 
@@ -69,23 +82,35 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async switchCompany(
+    @Req() req: Request,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: SwitchCompanyDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, user: switchedUser } = await this.authService.switchCompany(user.email, dto.tenantId);
-    this.setAccessTokenCookie(res, accessToken);
+    const longLived = this.isDesktopClient(req);
+    const { accessToken, user: switchedUser } = await this.authService.switchCompany(
+      user.email,
+      dto.tenantId,
+      longLived,
+    );
+    this.setAccessTokenCookie(res, accessToken, longLived);
     return { user: switchedUser };
   }
 
-  private setAccessTokenCookie(res: Response, accessToken: string) {
+  // identifies the Tauri desktop shell via its configured User-Agent string
+  private isDesktopClient(req: Request): boolean {
+    return (req.headers['user-agent'] ?? '').includes('KAGMallDesktop');
+  }
+
+  private setAccessTokenCookie(res: Response, accessToken: string, longLived = false) {
     const isProd = process.env.NODE_ENV === 'production';
+    const maxAge = longLived ? 30 * 24 * 60 * 60 * 1000 : 12 * 60 * 60 * 1000;
     res.cookie(ACCESS_TOKEN_COOKIE, accessToken, {
       httpOnly: true,
       // 'none' is required for cross-site cookies (separate frontend/API domains in prod).
       sameSite: isProd ? 'none' : 'lax',
       secure: isProd,
-      maxAge: 12 * 60 * 60 * 1000,
+      maxAge,
     });
   }
 

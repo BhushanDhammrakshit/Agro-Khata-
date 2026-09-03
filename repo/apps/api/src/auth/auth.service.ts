@@ -48,6 +48,7 @@ export class AuthService {
     email: string,
     tenantId: string,
     password: string,
+    longLived = false,
   ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
     const manager = this.tenantContext.getManager();
     await this.tenantContext.setTenantId(tenantId);
@@ -64,7 +65,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid company, email, or password.');
     }
 
-    return this.completeLogin(user);
+    return this.completeLogin(user, longLived);
   }
 
   async requestOtp(email: string, tenantId?: string): Promise<{ message: string }> {
@@ -111,6 +112,7 @@ export class AuthService {
     email: string,
     code: string,
     tenantId?: string,
+    longLived = false,
   ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
     const manager = this.tenantContext.getManager();
     const companies = await this.listCompanies(email);
@@ -144,7 +146,7 @@ export class AuthService {
     }
 
     await manager.getRepository(OtpRequest).update(otpRequest.id, { consumedAt: new Date() });
-    return this.completeLogin(user);
+    return this.completeLogin(user, longLived);
   }
 
   async setPassword(userId: string, password: string): Promise<{ message: string }> {
@@ -159,6 +161,7 @@ export class AuthService {
   async switchCompany(
     email: string,
     tenantId: string,
+    longLived = false,
   ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
     const target = await this.preAuthDataSource.manager
       .getRepository(User)
@@ -167,11 +170,12 @@ export class AuthService {
       throw new UnauthorizedException('You do not have access to that company.');
     }
     await this.tenantContext.setTenantId(tenantId);
-    return this.completeLogin(target);
+    return this.completeLogin(target, longLived);
   }
 
   private async completeLogin(
     user: User,
+    longLived = false,
   ): Promise<{ accessToken: string; user: Partial<User> & { hasPassword: boolean } }> {
     const manager = this.tenantContext.getManager();
     await manager.getRepository(User).update(user.id, { lastLoginAt: new Date() });
@@ -184,7 +188,8 @@ export class AuthService {
       .where('user.id = :id', { id: user.id })
       .getOne();
     const payload = { sub: user.id, tenantId: user.tenantId, role: user.role, email: user.email };
-    const accessToken = await this.jwtService.signAsync(payload);
+    // desktop app clients get a 30-day session instead of the web default
+    const accessToken = await this.jwtService.signAsync(payload, longLived ? { expiresIn: '30d' } : undefined);
 
     return {
       accessToken,

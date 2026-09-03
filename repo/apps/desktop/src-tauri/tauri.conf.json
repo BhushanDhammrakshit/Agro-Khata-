@@ -7,10 +7,11 @@
     "windows": [
       {
         "title": "KAG Mall",
-        "url": "https://vajabaki.com/",
+        "url": "https://vajabaki.com/dashboard",
         "width": 1280,
         "height": 800,
-        "resizable": true
+        "resizable": true,
+        "userAgent": "KAGMallDesktop/1.0"
       }
     ]
   },
