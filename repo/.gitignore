@@ -9,3 +9,9 @@ build/
 .DS_Store
 coverage/
 .vscode/
+
+# Tauri Android project (regenerated via `tauri android init`) and signing secrets
+apps/mobile/src-tauri/gen/
+apps/desktop/src-tauri/gen/
+*.jks
+*.keystore

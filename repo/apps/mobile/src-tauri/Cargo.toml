@@ -1,0 +1,21 @@
+[package]
+name = "vajabaki-mobile"
+version = "0.1.0"
+description = "VajaBaki mobile shell"
+edition = "2021"
+
+[lib]
+name = "vajabaki_mobile_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[[bin]]
+name = "vajabaki-mobile"
+path = "src/main.rs"
