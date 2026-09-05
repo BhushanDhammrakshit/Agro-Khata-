@@ -4,13 +4,7 @@
   "version": "0.1.0",
   "identifier": "com.vajabaki.mobile",
   "app": {
-    "windows": [
-      {
-        "title": "VajaBaki",
-        "url": "https://vajabaki.com/dashboard",
-        "userAgent": "VajaBakiMobile/1.0"
-      }
-    ]
+    "windows": []
   },
   "bundle": {
     "active": true,

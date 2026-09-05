@@ -54,9 +54,12 @@ export default function TransactionsReportPage() {
   }, [from, to, payerName, payeeName, bankName, paymentMode]);
 
   const grandTotal = rows.reduce((s, r) => s + parseFloat(r.amount), 0);
+  const [downloading, setDownloading] = useState(false);
 
-  function handleDownload() {
-    downloadStyledExcel({
+  async function handleDownload() {
+    try {
+      setDownloading(true);
+      await downloadStyledExcel({
       filename: `transactions-report-${from}-to-${to}.xlsx`,
       sheetName: "Transactions",
       title: "Transactions Report",
@@ -80,7 +83,10 @@ export default function TransactionsReportPage() {
         remark: r.remark ?? "",
       })),
       totals: { amount: grandTotal },
-    });
+      });
+    } finally {
+      setDownloading(false);
+    }
   }
 
   return (
@@ -88,12 +94,19 @@ export default function TransactionsReportPage() {
       <div className="mb-6 flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <DateRangeFilter from={from} to={to} onFrom={setFrom} onTo={setTo} />
-          <button onClick={handleDownload}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 sm:w-auto">
-            <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
-            </svg>
-            Export Excel
+          <button onClick={handleDownload} disabled={downloading} aria-busy={downloading}
+            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+            {downloading ? (
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="9" opacity="0.25" />
+                <path strokeLinecap="round" d="M21 12a9 9 0 0 0-9-9" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+              </svg>
+            )}
+            {downloading ? "Preparing..." : "Export Excel"}
           </button>
         </div>
 
