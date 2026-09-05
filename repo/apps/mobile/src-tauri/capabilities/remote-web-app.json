@@ -1,0 +1,9 @@
+{
+  "identifier": "remote-web-app",
+  "description": "Lets the VajaBaki web app loaded in the webview call this shell's own commands (file saving/sharing). Android's WebView cannot download files on its own.",
+  "windows": ["main"],
+  "remote": {
+    "urls": ["https://vajabaki.com/*", "https://*.vajabaki.com/*"]
+  },
+  "permissions": ["core:default", "allow-save-file"]
+}
