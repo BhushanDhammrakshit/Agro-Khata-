@@ -1,17 +1,14 @@
+import { deliverFile, type FileDelivery } from "@/lib/file-delivery";
+
 /** Downloads an array of objects as a .csv file that Excel opens natively. */
-export function downloadCsv(filename: string, headers: string[], rows: (string | number)[][]) {
+export function downloadCsv(filename: string, headers: string[], rows: (string | number)[][]): Promise<FileDelivery> {
   const escape = (v: string | number) => {
     const s = String(v ?? "");
     return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines = [headers, ...rows].map((row) => row.map(escape).join(",")).join("\r\n");
   const blob = new Blob(["\uFEFF" + lines], { type: "text/csv;charset=utf-8;" }); // BOM for Excel
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  return deliverFile(blob, filename);
 }
 
 export type ExcelColumn = {
@@ -32,7 +29,7 @@ export async function downloadStyledExcel(opts: {
   columns: ExcelColumn[];
   rows: Record<string, string | number>[];
   totals?: Record<string, number>;
-}) {
+}): Promise<FileDelivery> {
   const ExcelJS = (await import("exceljs")).default;
   const { filename, sheetName, title, subtitle, columns, rows, totals } = opts;
 
@@ -101,11 +98,6 @@ export async function downloadStyledExcel(opts: {
 
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  return deliverFile(blob, filename);
 }
 

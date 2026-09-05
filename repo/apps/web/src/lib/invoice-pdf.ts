@@ -3,22 +3,12 @@
 import { api, ApiError, Driver } from "@/lib/api";
 import { buildSalesBillHtml } from "@/lib/bill-templates/sales-bill";
 import { buildPurchaseBillHtml } from "@/lib/bill-templates/purchase-bill";
+import { deliverFile, isShareAbort, type FileDelivery, type FileDeliveryStatus } from "@/lib/file-delivery";
 
 type InvoiceKind = "sales" | "purchase";
 
 function sanitizeFileName(name: string) {
   return name.replace(/[<>:"/\\|?*]+/g, "-").replace(/\s+/g, " ").trim();
-}
-
-function downloadBlob(blob: Blob, fileName: string) {
-  const objectUrl = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = objectUrl;
-  anchor.download = fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(objectUrl);
 }
 
 /**
@@ -196,10 +186,10 @@ async function buildInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<In
   return { blob, ...meta };
 }
 
-export async function downloadInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<void> {
+export async function downloadInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<FileDelivery> {
   try {
     const { blob, fileName } = await takeCachedInvoicePdf(kind, invoiceId);
-    downloadBlob(blob, fileName);
+    return await deliverFile(blob, fileName);
   } catch (error) {
     if (error instanceof ApiError) {
       throw new Error(error.message);
@@ -214,36 +204,18 @@ export async function downloadHtmlAsPdf(
   fileName: string,
   orientation: "portrait" | "landscape" = "portrait",
   marginMm = 10,
-): Promise<void> {
+): Promise<FileDelivery> {
   const blob = await renderHtmlToPdfBlob(html, orientation, marginMm);
-  downloadBlob(blob, fileName);
+  return deliverFile(blob, fileName);
 }
 
-export async function shareInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<"shared" | "downloaded" | "cancelled"> {
+export async function shareInvoicePdf(kind: InvoiceKind, invoiceId: string): Promise<FileDeliveryStatus> {
   try {
     const { blob, fileName, title, totalAmount } = await takeCachedInvoicePdf(kind, invoiceId);
-    const text = `${title} - ₹${totalAmount}`;
-
-    if (typeof navigator !== "undefined" && navigator.share && typeof File !== "undefined") {
-      const file = new File([blob], fileName, { type: "application/pdf" });
-      if (typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ title, text, files: [file] });
-          return "shared";
-        } catch (shareError) {
-          if (shareError instanceof DOMException && shareError.name === "AbortError") {
-            return "cancelled";
-          }
-          // The share sheet can fail intermittently (e.g. user-activation expired while the
-          // PDF was being generated) — fall back to a direct download so the user still gets the file.
-        }
-      }
-    }
-
-    downloadBlob(blob, fileName);
-    return "downloaded";
+    const { status } = await deliverFile(blob, fileName, { title, text: `${title} - ₹${totalAmount}` });
+    return status;
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
+    if (isShareAbort(error)) {
       return "cancelled";
     }
     if (error instanceof ApiError) {
