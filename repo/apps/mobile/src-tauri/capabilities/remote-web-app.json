@@ -5,5 +5,5 @@
   "remote": {
     "urls": ["https://vajabaki.com/*", "https://*.vajabaki.com/*"]
   },
-  "permissions": ["core:default", "allow-save-file"]
+  "permissions": ["core:default", "save-file"]
 }

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://schema.tauri.app/acl/v2/permission.json",
+  "identifier": "save-file",
+  "description": "Permission for the save-file command",
+  "default": false,
+  "permissions": [
+    {
+      "identifier": "allow-save-file",
+      "description": "Allows the web app to save a generated file to the device's Downloads folder and optionally open the share sheet.",
+      "commands": [
+        {
+          "name": "save_file"
+        }
+      ]
+    }
+  ]
+}
