@@ -115,6 +115,10 @@ export default function PrintInvoicePage({ params }: { params: Promise<{ id: str
                       <td style={{ border: "1px solid #000", borderLeft: "none", padding: "3px 5px" }}>Invoice Date</td>
                       <td style={{ border: "1px solid #000", padding: "3px 5px" }}>{invoice.invoiceDate}</td>
                     </tr>
+                    {tenant.fssaiNo && <tr>
+                      <td style={{ border: "1px solid #000", borderLeft: "none", padding: "3px 5px" }}>FSSAI No.</td>
+                      <td style={{ border: "1px solid #000", padding: "3px 5px" }}>{tenant.fssaiNo}</td>
+                    </tr>}
                     <tr>
                       <td style={{ border: "1px solid #000", borderLeft: "none", padding: "3px 5px" }}>PO NO</td>
                       <td style={{ border: "1px solid #000", padding: "3px 5px" }}>{invoice.poNo ?? ""}</td>

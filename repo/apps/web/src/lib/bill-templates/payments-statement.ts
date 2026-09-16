@@ -134,8 +134,9 @@ export function buildPaymentsStatementBody(
     </tr>
 
     <tr class="strip">
-      <td colspan="3"><div class="k">Period</div><div class="v b">${dmy(from)} to ${dmy(to)}</div></td>
-      <td colspan="4"><div class="k">Supplier</div><div class="v b">${esc(partyName) || "All Suppliers"}</div></td>
+      <td colspan="${tenant.fssaiNo ? 2 : 3}"><div class="k">Period</div><div class="v b">${dmy(from)} to ${dmy(to)}</div></td>
+      ${tenant.fssaiNo ? `<td colspan="2"><div class="k">FSSAI No.</div><div class="v b">${esc(tenant.fssaiNo)}</div></td>` : ""}
+      <td colspan="${tenant.fssaiNo ? 3 : 4}"><div class="k">Supplier</div><div class="v b">${esc(partyName) || "All Suppliers"}</div></td>
     </tr>
 
     ${body}

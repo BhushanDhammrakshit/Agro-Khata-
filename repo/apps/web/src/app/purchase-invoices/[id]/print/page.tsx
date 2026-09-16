@@ -127,6 +127,7 @@ export default function PrintPurchaseBillPage({ params }: { params: Promise<{ id
               {/* Date + place of supply */}
               <td style={{ borderTop: "none", borderLeft: "none", verticalAlign: "top", width: "26%", padding: "5px 8px", border: "1px solid #000" }}>
                 <div><strong>Date: </strong><strong>{invoice.invoiceDate}</strong></div>
+                {tenant.fssaiNo && <div><strong>FSSAI No: </strong><strong>{tenant.fssaiNo}</strong></div>}
                 {invoice.placeOfSupply && (
                   <div><strong>Place of Supply: </strong><strong>{invoice.placeOfSupply}</strong></div>
                 )}

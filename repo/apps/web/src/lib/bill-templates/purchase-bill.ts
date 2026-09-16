@@ -131,8 +131,9 @@ export function buildPurchaseBillBody(invoice: Invoice, tenant: TenantSummary, p
 
     <tr class="strip">
       <td colspan="2"><div class="k">Bill Date</div><div class="v b">${dmy(invoice.invoiceDate)}</div></td>
-      <td colspan="2"><div class="k">Due Date</div><div class="v b">${dmy(invoice.dueDate) || "&mdash;"}</div></td>
-      <td colspan="2"><div class="k">Payment Mode</div><div class="v b">${esc(paymentMode)}</div></td>
+      ${tenant.fssaiNo ? `<td colspan="2"><div class="k">FSSAI No.</div><div class="v b">${esc(tenant.fssaiNo)}</div></td>` : ""}
+      <td colspan="${tenant.fssaiNo ? 1 : 2}"><div class="k">Due Date</div><div class="v b">${dmy(invoice.dueDate) || "&mdash;"}</div></td>
+      <td colspan="${tenant.fssaiNo ? 1 : 2}"><div class="k">Payment Mode</div><div class="v b">${esc(paymentMode)}</div></td>
     </tr>
 
     <tr class="party">

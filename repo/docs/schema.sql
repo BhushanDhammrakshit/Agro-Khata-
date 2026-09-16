@@ -81,6 +81,7 @@ CREATE TABLE tenants (
   contact_email   TEXT,
   pan             TEXT,                          -- no GST anywhere per business rules
   logo_url        TEXT,
+  fssai_no        TEXT,
   default_language TEXT NOT NULL DEFAULT 'en',   -- 'en' | 'mr'
   is_active       BOOLEAN NOT NULL DEFAULT true,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),

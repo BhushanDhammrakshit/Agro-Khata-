@@ -134,9 +134,10 @@ export function buildSalesBillBody(invoice: Invoice, tenant: TenantSummary, part
 
     <tr class="strip">
       <td colspan="2"><div class="k">Invoice Date</div><div class="v b">${dmy(invoice.invoiceDate)}</div></td>
+      ${tenant.fssaiNo ? `<td colspan="2"><div class="k">FSSAI No.</div><div class="v b">${esc(tenant.fssaiNo)}</div></td>` : ""}
       <td colspan="2"><div class="k">PO No. / Date</div><div class="v b">${[esc(invoice.poNo), dmy(invoice.poDate)].filter(Boolean).join(" &middot; ") || "&mdash;"}</div></td>
-      <td colspan="2"><div class="k">ASN No.</div><div class="v b">${esc(invoice.asnNo) || "&mdash;"}</div></td>
-      <td colspan="2"><div class="k">Vehicle No.</div><div class="v b">${esc(invoice.vehicleNo) || "&mdash;"}</div></td>
+      <td colspan="${tenant.fssaiNo ? 1 : 2}"><div class="k">ASN No.</div><div class="v b">${esc(invoice.asnNo) || "&mdash;"}</div></td>
+      <td colspan="${tenant.fssaiNo ? 1 : 2}"><div class="k">Vehicle No.</div><div class="v b">${esc(invoice.vehicleNo) || "&mdash;"}</div></td>
     </tr>
 
     <tr class="party">

@@ -29,6 +29,9 @@ export class Tenant {
   @Column({ nullable: true })
   gstin?: string;
 
+  @Column({ name: 'fssai_no', nullable: true })
+  fssaiNo?: string;
+
   @Column({ name: 'bank_name', nullable: true })
   bankName?: string;
 

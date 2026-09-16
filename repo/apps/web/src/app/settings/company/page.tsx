@@ -12,6 +12,7 @@ const fields: { key: keyof TenantSummary; label: string; type?: string; placehol
   { key: "contactEmail",    label: "Email",              type: "email", placeholder: "info@company.com" },
   { key: "pan",             label: "PAN",                placeholder: "ABCDE1234F" },
   { key: "gstin",           label: "GSTIN",              placeholder: "27ABCDE1234F1Z5" },
+  { key: "fssaiNo",         label: "FSSAI Number",        placeholder: "21521179000840" },
   { key: "bankName",        label: "Bank Name",          placeholder: "State Bank of India" },
   { key: "bankAccount",     label: "Bank Account No.",   placeholder: "1234567890" },
   { key: "bankIfsc",        label: "Bank IFSC",          placeholder: "SBIN0001234" },

@@ -8,6 +8,7 @@ export class UpdateTenantDto {
   @IsOptional() @IsEmail() contactEmail?: string;
   @IsOptional() @IsString() pan?: string;
   @IsOptional() @IsString() gstin?: string;
+  @IsOptional() @IsString() fssaiNo?: string;
   @IsOptional() @IsString() bankName?: string;
   @IsOptional() @IsString() bankAccount?: string;
   @IsOptional() @IsString() bankIfsc?: string;

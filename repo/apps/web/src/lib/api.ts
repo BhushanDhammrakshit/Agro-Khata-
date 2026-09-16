@@ -93,6 +93,7 @@ export interface TenantSummary {
   contactEmail?: string;
   pan?: string;
   gstin?: string;
+  fssaiNo?: string;
   bankName?: string;
   bankAccount?: string;
   bankIfsc?: string;
