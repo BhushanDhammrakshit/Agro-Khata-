@@ -28,5 +28,10 @@
         "installMode": "currentUser"
       }
     }
+  },
+  "plugins": {
+    "fs": {
+      "scope": ["$DOWNLOADS/**", "$HOME/**"]
+    }
   }
 }

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "remote-web-app",
+  "description": "Lets the VajaBaki web app loaded in the desktop webview call this shell's native file-saving command.",
+  "windows": ["main"],
+  "remote": {
+    "urls": ["https://vajabaki.com/*", "https://*.vajabaki.com/*"]
+  },
+  "permissions": ["core:default", "save-file"]
+}
