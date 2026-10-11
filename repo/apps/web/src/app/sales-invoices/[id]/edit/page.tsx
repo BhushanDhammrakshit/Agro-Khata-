@@ -41,6 +41,7 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
   const [poNo, setPoNo] = useState("");
   const [poDate, setPoDate] = useState("");
   const [asnNo, setAsnNo] = useState("");
+  const [grnNo, setGrnNo] = useState("");
   const [driverName, setDriverName] = useState("");
   const [vehicleNo, setVehicleNo] = useState("");
   const [isGstInvoice, setIsGstInvoice] = useState(false);
@@ -69,6 +70,7 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
         setPoNo(inv.poNo ?? "");
         setPoDate(inv.poDate ?? "");
         setAsnNo(inv.asnNo ?? "");
+        setGrnNo(inv.grnNo ?? "");
         setDriverName(inv.driverName ?? "");
         setDriverId(inv.driverId ?? "");
         setVehicleNo(inv.vehicleNo ?? "");
@@ -105,6 +107,7 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
         isGstInvoice, isInterState,
         poNo: poNo || undefined, poDate: poDate || undefined,
         asnNo: asnNo || undefined,
+        grnNo: grnNo || undefined,
         driverName: driverName || undefined, vehicleNo: vehicleNo || undefined,
         driverId: driverId || undefined,
         vehicleId: vehicleId || undefined,
@@ -202,6 +205,10 @@ export default function EditSalesInvoicePage({ params }: { params: Promise<{ id:
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">ASN No.</label>
                 <input value={asnNo} onChange={(e) => setAsnNo(e.target.value)} placeholder="e.g. ASN-001" className={inputClass} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">GRN Number</label>
+                <input value={grnNo} onChange={(e) => setGrnNo(e.target.value)} placeholder="e.g. GrnCode614456" className={inputClass} />
               </div>
             </div>
           </Card>

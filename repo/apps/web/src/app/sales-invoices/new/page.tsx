@@ -39,6 +39,7 @@ export default function NewSalesInvoicePage() {
   const [poNo, setPoNo] = useState("");
   const [poDate, setPoDate] = useState(new Date().toISOString().slice(0, 10));
   const [asnNo, setAsnNo] = useState("");
+  const [grnNo, setGrnNo] = useState("");
   const [driverName, setDriverName] = useState("");
   const [vehicleNo, setVehicleNo] = useState("");
   const [isGstInvoice, setIsGstInvoice] = useState(false);
@@ -81,6 +82,7 @@ export default function NewSalesInvoicePage() {
         isGstInvoice, isInterState,
         poNo: poNo || undefined, poDate: poDate || undefined,
         asnNo: asnNo || undefined,
+        grnNo: grnNo || undefined,
         driverName: driverName || undefined, vehicleNo: vehicleNo || undefined,
         driverId: driverId || undefined,
         vehicleId: vehicleId || undefined,
@@ -155,6 +157,10 @@ export default function NewSalesInvoicePage() {
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">ASN No.</label>
                 <input value={asnNo} onChange={(e) => setAsnNo(e.target.value)} placeholder="e.g. ASN-001" className={inputClass} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">GRN Number</label>
+                <input value={grnNo} onChange={(e) => setGrnNo(e.target.value)} placeholder="e.g. GrnCode614456" className={inputClass} />
               </div>
             </div>
           </Card>
