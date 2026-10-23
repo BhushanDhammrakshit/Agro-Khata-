@@ -158,6 +158,8 @@ export interface ExpenseReportRow {
   vehicle_no?: string;
 }
 
+export type TransactionSuggestionField = "payerName" | "payeeName" | "bankName" | "remark";
+
 export interface TransactionReportRow {
   id: string;
   transaction_date: string;
@@ -661,6 +663,8 @@ export const api = {
   listTransactions: (page = 1) =>
     cachedRequest<unknown>(`/transactions?page=${page}`, LIST_TTL)
       .then((response) => normalizeTransactionPage(response, page)),
+  suggestTransactionNames: (field: TransactionSuggestionField, query: string) =>
+    request<{ name: string }[]>(`/transactions/suggestions?field=${field}&q=${encodeURIComponent(query)}`),
   createTransaction: (dto: CreateTransactionDto) =>
     request<Transaction>("/transactions", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/transactions")),
   updateTransaction: (id: string, dto: CreateTransactionDto) =>

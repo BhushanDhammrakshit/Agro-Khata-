@@ -50,6 +50,15 @@ const emptyForm = {
   remark: "",
 };
 
+const fetchPayerSuggestions = (query: string) =>
+  api.suggestTransactionNames("payerName", query).then((items) => items.map(({ name }) => ({ name })));
+const fetchPayeeSuggestions = (query: string) =>
+  api.suggestTransactionNames("payeeName", query).then((items) => items.map(({ name }) => ({ name })));
+const fetchBankSuggestions = (query: string) =>
+  api.suggestTransactionNames("bankName", query).then((items) => items.map(({ name }) => ({ name })));
+const fetchRemarkSuggestions = (query: string) =>
+  api.suggestTransactionNames("remark", query).then((items) => items.map(({ name }) => ({ name })));
+
 const REMARK_STORAGE_KEY = "vajabaki:transaction-remarks";
 
 function loadStoredRemarks(): string[] {
@@ -240,6 +249,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
                 value={form.payerName}
                 onChange={(v) => setForm((f) => ({ ...f, payerName: v }))}
                 suggestions={allPayerSuggestions}
+                fetchSuggestions={fetchPayerSuggestions}
                 className={inputClass}
               />
             </div>
@@ -251,6 +261,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
                 value={form.payeeName}
                 onChange={(v) => setForm((f) => ({ ...f, payeeName: v }))}
                 suggestions={allPayeeSuggestions}
+                fetchSuggestions={fetchPayeeSuggestions}
                 className={inputClass}
               />
             </div>
@@ -261,6 +272,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
                 value={form.bankName}
                 onChange={(v) => setForm((f) => ({ ...f, bankName: v }))}
                 suggestions={allBankSuggestions}
+                fetchSuggestions={fetchBankSuggestions}
                 className={inputClass}
               />
             </div>
@@ -283,6 +295,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
                 value={form.remark}
                 onChange={(v) => setForm((f) => ({ ...f, remark: v }))}
                 suggestions={remarkSuggestions}
+                fetchSuggestions={fetchRemarkSuggestions}
                 className={inputClass}
               />
             </div>

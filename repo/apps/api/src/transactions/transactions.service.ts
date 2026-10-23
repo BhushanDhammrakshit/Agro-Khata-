@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { AuditLogService } from '../common/audit/audit-log.service';
 import { Transaction } from '../entities/transaction.entity';
@@ -6,6 +10,13 @@ import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 
 const TRANSACTIONS_PAGE_SIZE = 50;
+const TRANSACTION_SUGGESTION_LIMIT = 20;
+const SUGGESTION_COLUMNS = new Map([
+  ['payerName', 'payerName'],
+  ['payeeName', 'payeeName'],
+  ['bankName', 'bankName'],
+  ['remark', 'remark'],
+]);
 
 @Injectable()
 export class TransactionsService {
@@ -27,6 +38,43 @@ export class TransactionsService {
       take: TRANSACTIONS_PAGE_SIZE,
     });
     return { rows, total, page, pageSize: TRANSACTIONS_PAGE_SIZE };
+  }
+
+  async suggestions(
+    field: string,
+    query?: string,
+  ): Promise<{ name: string }[]> {
+    const column = SUGGESTION_COLUMNS.get(field);
+    if (!column) {
+      throw new BadRequestException(
+        'Unsupported transaction suggestion field.',
+      );
+    }
+
+    const normalizedQuery = query?.trim() ?? '';
+    if (normalizedQuery.length < 2) return [];
+    if (normalizedQuery.length > 100) {
+      throw new BadRequestException(
+        'Suggestion query must be 100 characters or fewer.',
+      );
+    }
+
+    const tenantId = this.tenantContext.getTenantIdOrThrow();
+    const escapedPrefix = `${normalizedQuery.replace(/[!%_]/g, '!$&')}%`;
+    return this.tenantContext
+      .getManager()
+      .getRepository(Transaction)
+      .createQueryBuilder('transaction')
+      .select(`DISTINCT transaction.${column}`, 'name')
+      .where('transaction.tenantId = :tenantId', { tenantId })
+      .andWhere(`transaction.${column} IS NOT NULL`)
+      .andWhere(`transaction.${column} <> ''`)
+      .andWhere(`LOWER(transaction.${column}) LIKE LOWER(:query) ESCAPE '!'`, {
+        query: escapedPrefix,
+      })
+      .orderBy('name', 'ASC')
+      .limit(TRANSACTION_SUGGESTION_LIMIT)
+      .getRawMany<{ name: string }>();
   }
 
   async create(dto: CreateTransactionDto): Promise<Transaction> {

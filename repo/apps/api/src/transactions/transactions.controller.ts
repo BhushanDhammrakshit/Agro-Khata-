@@ -1,4 +1,16 @@
-import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -15,6 +27,11 @@ export class TransactionsController {
   @Get()
   list(@Query('page', new DefaultValuePipe('1'), ParseIntPipe) page: number) {
     return this.transactionsService.list(page);
+  }
+
+  @Get('suggestions')
+  suggestions(@Query('field') field: string, @Query('q') query?: string) {
+    return this.transactionsService.suggestions(field, query);
   }
 
   @Post()
