@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api, ApiError, Transaction, PaymentMode } from "@/lib/api";
+import { api, ApiError, Transaction, TransactionPage, PaymentMode } from "@/lib/api";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -69,8 +69,11 @@ function rememberRemark(remark: string) {
   window.localStorage.setItem(REMARK_STORAGE_KEY, JSON.stringify(updated));
 }
 
-export function TransactionsClient({ initialTransactions, payeeSuggestions, bankSuggestions }: { initialTransactions: Transaction[]; payeeSuggestions: NameSuggestion[]; bankSuggestions: string[] }) {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+export function TransactionsClient({ initialTransactions, payeeSuggestions, bankSuggestions }: { initialTransactions: TransactionPage; payeeSuggestions: NameSuggestion[]; bankSuggestions: string[] }) {
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions.rows);
+  const [page, setPage] = useState(initialTransactions.page);
+  const [total, setTotal] = useState(initialTransactions.total);
+  const [loadingPage, setLoadingPage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -118,8 +121,24 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
     return mergeNameSuggestions([...payeeSuggestions, ...fromTransactions]);
   }, [transactions, payeeSuggestions]);
 
-  function load() {
-    api.listTransactions().then(setTransactions).catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load transactions."));
+  async function load(targetPage: number) {
+    setLoadingPage(true);
+    setError(null);
+    try {
+      const result = await api.listTransactions(targetPage);
+      const lastPage = Math.max(1, Math.ceil(result.total / result.pageSize));
+      if (targetPage > lastPage) {
+        await load(lastPage);
+        return;
+      }
+      setTransactions(result.rows);
+      setTotal(result.total);
+      setPage(targetPage);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to load transactions.");
+    } finally {
+      setLoadingPage(false);
+    }
   }
 
   function resetForm() {
@@ -160,7 +179,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
       else await api.createTransaction(dto);
       if (dto.remark) rememberRemark(dto.remark);
       resetForm();
-      load();
+      await load(1);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : `Failed to ${editingId ? "update" : "log"} transaction.`);
     } finally {
@@ -175,7 +194,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
       await api.deleteTransaction(deleteTarget.id);
       if (editingId === deleteTarget.id) resetForm();
       setDeleteTarget(null);
-      load();
+      await load(1);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to delete transaction.");
       setDeleteTarget(null);
@@ -278,12 +297,12 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <div className="flex flex-col gap-3 sm:hidden">
+        <div className={`flex flex-col gap-3 sm:hidden ${loadingPage ? "opacity-60" : ""}`}>
           {transactions.map((t, index) => (
             <article key={t.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-slate-400">#{index + 1} · {formatDate(t.transactionDate)}</p>
+                  <p className="text-xs font-medium text-slate-400">#{(page - 1) * 50 + index + 1} · {formatDate(t.transactionDate)}</p>
                   <p className="mt-0.5 truncate text-base font-semibold text-slate-900">{t.payerName} → {t.payeeName}</p>
                 </div>
                 <ActionsMenu items={menuItems(t)} />
@@ -308,7 +327,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
           {transactions.length === 0 && <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">No transactions logged yet.</p>}
         </div>
 
-        <div className={`${tableWrapClass} hidden sm:block`}>
+        <div className={`${tableWrapClass} hidden sm:block ${loadingPage ? "opacity-60" : ""}`}>
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr>
@@ -326,7 +345,7 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
             <tbody>
               {transactions.map((t, index) => (
                 <tr key={t.id} className="hover:bg-slate-50">
-                  <td className={tdClass}>{index + 1}</td>
+                  <td className={tdClass}>{(page - 1) * 50 + index + 1}</td>
                   <td className={tdClass}>{formatDate(t.transactionDate)}</td>
                   <td className={tdClass}>{t.payerName}</td>
                   <td className={tdClass}>{t.bankName ?? "—"}</td>
@@ -342,6 +361,21 @@ export function TransactionsClient({ initialTransactions, payeeSuggestions, bank
             </tbody>
           </table>
           {transactions.length === 0 && <p className="p-4 text-sm text-slate-500">No transactions logged yet.</p>}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-500">
+            {total === 0 ? "No transactions" : `Showing ${(page - 1) * 50 + 1}–${Math.min(page * 50, total)} of ${total}`}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="secondary" disabled={page <= 1 || loadingPage} onClick={() => void load(page - 1)}>
+              Previous
+            </Button>
+            <span className="text-sm text-slate-600">Page {page} of {Math.max(1, Math.ceil(total / 50))}</span>
+            <Button type="button" variant="secondary" disabled={page >= Math.ceil(total / 50) || loadingPage} onClick={() => void load(page + 1)}>
+              Next
+            </Button>
+          </div>
         </div>
       </div>
 

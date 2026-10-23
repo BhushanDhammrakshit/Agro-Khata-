@@ -465,6 +465,13 @@ export interface Transaction {
   createdAt: string;
 }
 
+export interface TransactionPage {
+  rows: Transaction[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface CreateTransactionDto {
   transactionDate: string;
   payerName: string;
@@ -619,7 +626,7 @@ export const api = {
     request<{ id: string }>(`/expenses/${id}`, { method: "DELETE" }).finally(() => invalidate("/expenses", "/reports/dashboard")),
 
   // Transactions (standalone, freeform payer/payee ledger)
-  listTransactions: () => cachedRequest<Transaction[]>("/transactions", LIST_TTL),
+  listTransactions: (page = 1) => cachedRequest<TransactionPage>(`/transactions?page=${page}`, LIST_TTL),
   createTransaction: (dto: CreateTransactionDto) =>
     request<Transaction>("/transactions", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/transactions")),
   updateTransaction: (id: string, dto: CreateTransactionDto) =>

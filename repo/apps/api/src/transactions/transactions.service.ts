@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { TenantContextService } from '../common/tenant-context/tenant-context.service';
 import { AuditLogService } from '../common/audit/audit-log.service';
 import { Transaction } from '../entities/transaction.entity';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+
+const TRANSACTIONS_PAGE_SIZE = 50;
 
 @Injectable()
 export class TransactionsService {
@@ -12,13 +14,19 @@ export class TransactionsService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  async list(): Promise<Transaction[]> {
+  async list(page: number) {
+    if (!Number.isSafeInteger(page) || page < 1) {
+      throw new BadRequestException('Page must be a positive integer.');
+    }
     const manager = this.tenantContext.getManager();
     const tenantId = this.tenantContext.getTenantIdOrThrow();
-    return manager.getRepository(Transaction).find({
+    const [rows, total] = await manager.getRepository(Transaction).findAndCount({
       where: { tenantId },
       order: { transactionDate: 'DESC', createdAt: 'DESC' },
+      skip: (page - 1) * TRANSACTIONS_PAGE_SIZE,
+      take: TRANSACTIONS_PAGE_SIZE,
     });
+    return { rows, total, page, pageSize: TRANSACTIONS_PAGE_SIZE };
   }
 
   async create(dto: CreateTransactionDto): Promise<Transaction> {

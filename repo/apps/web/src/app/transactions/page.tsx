@@ -13,7 +13,7 @@ export default async function TransactionsPage() {
   const [transactions, parties, drivers] = await Promise.all([
     serverApi.listTransactions().catch((err) => {
       if (err?.status === 401) redirect("/login");
-      return [];
+      return { rows: [], total: 0, page: 1, pageSize: 50 };
     }),
     serverApi.listParties().catch(() => []),
     serverApi.listDrivers().catch(() => []),
