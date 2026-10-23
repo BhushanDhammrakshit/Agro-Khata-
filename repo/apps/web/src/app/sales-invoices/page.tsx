@@ -9,10 +9,14 @@ import { INVOICE_STATUS_TONE, formatStatusLabel } from "@/lib/status";
 import { SalesInvoiceRowActions } from "./SalesInvoiceRowActions";
 
 export default async function SalesInvoicesPage() {
-  const invoices = await serverApi.listSalesInvoices().catch((err) => {
-    if (err?.status === 401) redirect("/login");
-    return [];
-  });
+  let invoices: Awaited<ReturnType<typeof serverApi.listSalesInvoices>> = [];
+  let loadFailed = false;
+  try {
+    invoices = await serverApi.listSalesInvoices();
+  } catch (err) {
+    if ((err as { status?: number })?.status === 401) redirect("/login");
+    loadFailed = true;
+  }
 
   return (
     <AppShell
@@ -34,7 +38,8 @@ export default async function SalesInvoicesPage() {
             actions={<SalesInvoiceRowActions invoice={inv} compact />}
           />
         ))}
-        {invoices?.length === 0 && <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">No sales invoices yet.</p>}
+        {loadFailed && <p className="rounded-lg border border-red-200 bg-white p-4 text-sm text-red-700">Unable to load sales invoices. Check the API connection and database schema, then reload.</p>}
+        {!loadFailed && invoices.length === 0 && <p className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">No sales invoices yet.</p>}
       </div>
 
       <div className={`${tableWrapClass} hidden sm:block`}>
@@ -66,7 +71,8 @@ export default async function SalesInvoicesPage() {
             ))}
           </tbody>
         </table>
-        {invoices?.length === 0 && <p className="p-4 text-sm text-slate-500">No sales invoices yet.</p>}
+        {loadFailed && <p className="p-4 text-sm text-red-700">Unable to load sales invoices. Check the API connection and database schema, then reload.</p>}
+        {!loadFailed && invoices.length === 0 && <p className="p-4 text-sm text-slate-500">No sales invoices yet.</p>}
       </div>
     </AppShell>
   );

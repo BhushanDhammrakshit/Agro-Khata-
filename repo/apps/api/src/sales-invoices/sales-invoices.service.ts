@@ -106,6 +106,7 @@ export class SalesInvoicesService {
         poNo: dto.poNo,
         poDate: dto.poDate,
         asnNo: dto.asnNo,
+        grnNo: dto.grnNo,
         status: InvoiceStatus.SENT,
         createdBy: userId,
       }),
@@ -279,6 +280,7 @@ export class SalesInvoicesService {
       poNo: dto.poNo,
       poDate: dto.poDate,
       asnNo: dto.asnNo,
+      grnNo: dto.grnNo,
       ...(paidAmount > 0 ? { status: paidAmount >= totalAmount ? InvoiceStatus.PAID : InvoiceStatus.PARTIALLY_PAID } : {}),
     });
 

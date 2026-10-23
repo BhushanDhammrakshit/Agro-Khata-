@@ -69,6 +69,10 @@ export class CreateSalesInvoiceDto {
   @IsString()
   asnNo?: string;
 
+  @IsOptional()
+  @IsString()
+  grnNo?: string;
+
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

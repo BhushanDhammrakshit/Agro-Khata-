@@ -342,6 +342,7 @@ export interface Invoice {
   poNo?: string;
   poDate?: string;
   asnNo?: string;
+  grnNo?: string;
   items?: InvoiceItem[];
   payments?: InvoicePayment[];
 }
@@ -363,6 +364,10 @@ export interface CreateInvoiceDto {
   poDate?: string;
   asnNo?: string;
   items: InvoiceLineItemInput[];
+}
+
+export interface CreateSalesInvoiceDto extends CreateInvoiceDto {
+  grnNo?: string;
 }
 
 export interface CreatePaymentDto {
@@ -584,9 +589,9 @@ export const api = {
     return cachedRequest<Invoice[]>(`/sales-invoices${params ? `?${params}` : ""}`, LIST_TTL);
   },
   getSalesInvoice: (id: string) => request<Invoice>(`/sales-invoices/${id}`),
-  createSalesInvoice: (dto: CreateInvoiceDto) =>
+  createSalesInvoice: (dto: CreateSalesInvoiceDto) =>
     request<Invoice>("/sales-invoices", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/sales-invoices", "/reports/dashboard")),
-  updateSalesInvoice: (id: string, dto: CreateInvoiceDto) =>
+  updateSalesInvoice: (id: string, dto: CreateSalesInvoiceDto) =>
     request<Invoice>(`/sales-invoices/${id}`, { method: "PATCH", body: JSON.stringify(dto) }).finally(() => invalidate("/sales-invoices", "/reports/dashboard")),
   deleteSalesInvoice: (id: string) =>
     request<{ id: string }>(`/sales-invoices/${id}`, { method: "DELETE" }).finally(() => invalidate("/sales-invoices", "/reports/dashboard", "/items")),

@@ -76,6 +76,9 @@ export class SalesInvoice {
   @Column({ name: 'asn_no', nullable: true })
   asnNo?: string;
 
+  @Column({ name: 'grn_no', nullable: true })
+  grnNo?: string;
+
   @Column({ name: 'created_by', nullable: true })
   createdBy?: string;
 
