@@ -477,6 +477,33 @@ export interface TransactionPage {
   pageSize: number;
 }
 
+export function normalizeTransactionPage(response: unknown, requestedPage = 1): TransactionPage {
+  const pageSize = 50;
+  if (Array.isArray(response)) {
+    const start = (requestedPage - 1) * pageSize;
+    return {
+      rows: response.slice(start, start + pageSize) as Transaction[],
+      total: response.length,
+      page: requestedPage,
+      pageSize,
+    };
+  }
+
+  if (typeof response === "object" && response !== null) {
+    const value = response as Record<string, unknown>;
+    if (Array.isArray(value.rows)) {
+      return {
+        rows: value.rows as Transaction[],
+        total: typeof value.total === "number" ? value.total : value.rows.length,
+        page: typeof value.page === "number" ? value.page : requestedPage,
+        pageSize: typeof value.pageSize === "number" ? value.pageSize : pageSize,
+      };
+    }
+  }
+
+  throw new Error("Invalid transactions response from the server.");
+}
+
 export interface CreateTransactionDto {
   transactionDate: string;
   payerName: string;
@@ -631,7 +658,9 @@ export const api = {
     request<{ id: string }>(`/expenses/${id}`, { method: "DELETE" }).finally(() => invalidate("/expenses", "/reports/dashboard")),
 
   // Transactions (standalone, freeform payer/payee ledger)
-  listTransactions: (page = 1) => cachedRequest<TransactionPage>(`/transactions?page=${page}`, LIST_TTL),
+  listTransactions: (page = 1) =>
+    cachedRequest<unknown>(`/transactions?page=${page}`, LIST_TTL)
+      .then((response) => normalizeTransactionPage(response, page)),
   createTransaction: (dto: CreateTransactionDto) =>
     request<Transaction>("/transactions", { method: "POST", body: JSON.stringify(dto) }).finally(() => invalidate("/transactions")),
   updateTransaction: (id: string, dto: CreateTransactionDto) =>

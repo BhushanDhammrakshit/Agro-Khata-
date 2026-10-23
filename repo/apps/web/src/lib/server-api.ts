@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import type {
   AuthUser, TenantSummary, DashboardKpis, Invoice, Party, PartyType,
-  Item, Expense, Driver, Vehicle, TransactionPage,
+  Item, Expense, Driver, Vehicle,
 } from "./api";
 
 const API_URL = (
@@ -43,5 +43,5 @@ export const serverApi = {
   listExpenses:      () => serverGet<Expense[]>("/expenses"),
   listDrivers:       () => serverGet<Driver[]>("/drivers"),
   listVehicles:      () => serverGet<Vehicle[]>("/vehicles"),
-  listTransactions: (page = 1) => serverGet<TransactionPage>(`/transactions?page=${page}`),
+  listTransactions: (page = 1) => serverGet<unknown>(`/transactions?page=${page}`),
 };

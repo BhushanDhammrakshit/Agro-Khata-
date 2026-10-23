@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { serverApi } from "@/lib/server-api";
+import { normalizeTransactionPage } from "@/lib/api";
 import type { NameSuggestion } from "@/components/NameSuggestInput";
 import { TransactionsClient } from "./TransactionsClient";
 
@@ -11,10 +12,12 @@ function partyTag(partyType: "customer" | "supplier" | "both") {
 
 export default async function TransactionsPage() {
   const [transactions, parties, drivers] = await Promise.all([
-    serverApi.listTransactions().catch((err) => {
-      if (err?.status === 401) redirect("/login");
-      return { rows: [], total: 0, page: 1, pageSize: 50 };
-    }),
+    serverApi.listTransactions()
+      .then((response) => normalizeTransactionPage(response))
+      .catch((err) => {
+        if (err?.status === 401) redirect("/login");
+        return { rows: [], total: 0, page: 1, pageSize: 50 };
+      }),
     serverApi.listParties().catch(() => []),
     serverApi.listDrivers().catch(() => []),
   ]);
