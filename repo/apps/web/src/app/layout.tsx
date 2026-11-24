@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, Lora } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import { AppUserProvider } from "@/lib/AppUserContext";
@@ -8,15 +8,15 @@ import { ThemeProvider } from "@/lib/ThemeProvider";
 
 // Runs before hydration so the correct theme class is set immediately (no flash of the wrong theme).
 // Pre-auth pages (landing/login/register) are always light — theme is a per-user preference, only applied once logged in.
-const THEME_INIT_SCRIPT = `(function(){try{var p=window.location.pathname;if(p==="/"||p==="/login"||p==="/register"||p==="/contact"){return;}var t=localStorage.getItem("vajabaki-theme");if(!t){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}if(t==="dark"){document.documentElement.classList.add("dark");}}catch(e){}})();`;
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("vajabaki-theme");if(!t){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.classList.toggle("dark",t==="dark");}catch(e){}})();`;
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const manrope = Manrope({
+  variable: "--font-ui",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const lora = Lora({
+  variable: "--font-editorial",
   subsets: ["latin"],
 });
 
@@ -84,7 +84,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${manrope.variable} ${lora.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

@@ -16,9 +16,9 @@ const ROLE_LABELS: Record<AuthUser["role"], string> = {
 };
 
 const ROLE_BADGE: Record<AuthUser["role"], string> = {
-  owner: "bg-emerald-100 text-emerald-700",
-  staff: "bg-blue-100 text-blue-700",
-  viewer: "bg-slate-100 text-slate-600",
+  owner: "bg-[#C8DDD1] text-[#2C6661] dark:bg-[#29453B] dark:text-[#B8D2C3]",
+  staff: "bg-[#D9E4EA] text-[#315A78] dark:bg-[#314657] dark:text-[#BDD2DE]",
+  viewer: "bg-[#E8E1CF] text-[#42506C] dark:bg-[#34364A] dark:text-[#C7C1B3]",
 };
 
 export default function TeamPage() {
@@ -217,7 +217,7 @@ export default function TeamPage() {
                       )}
                     </td>
                     <td className="py-3 pr-4">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${member.isActive ? "bg-green-50 text-green-700 dark:bg-green-950/50 dark:text-green-400" : "bg-red-50 text-red-500 dark:bg-red-950/50 dark:text-red-400"}`}>
+                      <span className={`inline-flex rounded-none border border-current/10 px-2.5 py-1 text-xs font-bold ${member.isActive ? "bg-[#C8DDD1] text-[#2C6661] dark:bg-[#29453B] dark:text-[#B8D2C3]" : "bg-[#F0C9C2] text-[#87382F] dark:bg-[#573638] dark:text-[#E7AAA0]"}`}>
                         {member.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
@@ -228,8 +228,8 @@ export default function TeamPage() {
                             onClick={() => setStatusTarget(member)}
                             className={`inline-flex cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors ${
                               member.isActive
-                                ? "border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
-                                : "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                                ? "border-[#DFC1B9] text-[#87382F] hover:bg-[#F0C9C2] dark:border-[#71544F] dark:text-[#E7AAA0] dark:hover:bg-[#573638]"
+                                : "border-[#B8CDBE] text-[#2C6661] hover:bg-[#C8DDD1] dark:border-[#557064] dark:text-[#B8D2C3] dark:hover:bg-[#29453B]"
                             }`}
                           >
                             {member.isActive ? "Deactivate" : "Activate"}

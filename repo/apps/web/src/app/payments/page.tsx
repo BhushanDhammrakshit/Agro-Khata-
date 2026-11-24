@@ -84,10 +84,10 @@ export default function PaymentsPage() {
   return (
     <AppShell title="Payments">
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
-        <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden text-sm w-fit">
+        <div className="flex border border-[var(--color-border)] bg-[var(--color-paper-light)] overflow-hidden text-sm w-fit dark:bg-[var(--color-surface-dark)]">
           {(["customer", "supplier"] as const).map((d) => (
             <button key={d} onClick={() => setDirection(d)}
-              className={`px-5 py-2 font-medium capitalize transition-colors ${direction === d ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+              className={`px-5 py-2 font-bold capitalize transition-colors ${direction === d ? "bg-[var(--color-accent)] text-[#1E1F2B] dark:bg-[var(--color-accent-dark-theme)]" : "text-[var(--color-ink-soft)] hover:bg-[var(--color-paper)]"}`}>
               {d === "customer" ? "Received from customer" : "Paid to supplier"}
             </button>
           ))}

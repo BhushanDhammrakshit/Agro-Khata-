@@ -44,7 +44,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={busy}
-            className="cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="cursor-pointer rounded-none border border-[var(--color-border)] bg-[var(--color-paper-light)] px-4 py-2 text-sm font-bold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:bg-[var(--color-paper)] disabled:cursor-not-allowed disabled:opacity-60 dark:hover:border-[var(--color-accent-dark-theme)] dark:hover:bg-[var(--color-elevated-dark)]"
           >
             {cancelLabel}
           </button>
@@ -53,8 +53,10 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={busy}
             aria-busy={busy}
-            className={`cursor-pointer rounded-lg px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60 ${
-              danger ? "bg-red-600 hover:bg-red-700" : "bg-emerald-600 hover:bg-emerald-700"
+            className={`cursor-pointer rounded-none px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60 ${
+              danger
+                ? "border border-[#87382F] bg-[#87382F] text-white hover:bg-[#A74636] dark:border-[#D99080] dark:bg-[#573638] dark:text-[#F0C3BA] dark:hover:bg-[#664144]"
+                : "border border-[var(--color-accent)] bg-[var(--color-accent)] text-[#1E1F2B] hover:bg-[var(--color-accent-dark)] dark:border-[var(--color-accent-dark-theme)] dark:bg-[var(--color-accent-dark-theme)] dark:hover:bg-[var(--color-accent-strong-dark)]"
             }`}
           >
             {busy ? "Please wait…" : confirmLabel}

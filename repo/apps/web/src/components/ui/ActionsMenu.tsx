@@ -42,7 +42,7 @@ export function ActionsMenu({ items }: { items: ActionsMenuItem[] }) {
         aria-haspopup="menu"
         aria-expanded={open}
         title="More actions"
-        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-none border border-transparent text-[var(--color-ink-soft)] hover:border-[var(--color-border)] hover:bg-[var(--color-paper)] hover:text-[var(--color-ink)] dark:text-[var(--color-ink-soft-dark)] dark:hover:border-[var(--color-border-dark)] dark:hover:bg-[var(--color-elevated-dark)] dark:hover:text-[var(--color-ink-dark)]"
       >
         <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5" fill="currentColor">
           <path d="M10 5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm0 6.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3ZM10 18a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z" />
@@ -62,7 +62,7 @@ export function ActionsMenu({ items }: { items: ActionsMenuItem[] }) {
             maxHeight: rect.maxHeight,
             zIndex: 9999,
           }}
-          className="overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+          className="overflow-auto border border-[var(--color-border)] bg-[var(--color-paper-light)] py-1 shadow-none dark:border-[var(--color-border-dark)] dark:bg-[var(--color-surface-dark)]"
         >
           {items.map((item) => (
             <li key={item.key}>
@@ -72,8 +72,8 @@ export function ActionsMenu({ items }: { items: ActionsMenuItem[] }) {
                 disabled={item.disabled}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => { setOpen(false); item.onClick(); }}
-                className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 ${
-                  item.tone === "danger" ? "text-red-600" : "text-slate-700"
+                className={`flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-[var(--color-paper)] disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-[var(--color-elevated-dark)] ${
+                  item.tone === "danger" ? "text-[#87382F] dark:text-[#E7AAA0] dark:hover:bg-[#573638]" : "text-[var(--color-ink-soft)] dark:text-[var(--color-ink-soft-dark)]"
                 }`}
               >
                 <span className="shrink-0">{item.icon}</span>

@@ -86,12 +86,12 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
           setVisibleMonth(selectedDate ?? new Date());
           setIsOpen((open) => !open);
         }}
-        className={`flex w-full cursor-pointer items-center justify-between rounded-lg border border-slate-300 bg-white text-left text-slate-900 transition-colors hover:border-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${size === "sm" ? "px-2.5 py-1.5 text-sm" : "px-3 py-2 text-sm"} ${className}`}
+        className={`flex w-full cursor-pointer items-center justify-between rounded-none border border-[var(--color-border)] bg-[var(--color-paper-light)] text-left text-[var(--color-ink)] transition-colors hover:border-[var(--color-accent)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20 ${size === "sm" ? "px-2.5 py-1.5 text-sm" : "px-3 py-2 text-sm"} ${className}`}
       >
         <span className={selectedDate ? "" : "text-slate-400"}>
           {selectedDate ? dateFormatter.format(selectedDate) : "Select date"}
         </span>
-        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[var(--color-accent)]" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" />
         </svg>
       </button>
@@ -110,12 +110,12 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
             maxHeight: rect.maxHeight,
             zIndex: 9999,
           }}
-          className="overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10"
+          className="overflow-y-auto border border-[var(--color-border)] bg-[var(--color-paper-light)] shadow-none dark:bg-[var(--color-elevated-dark)]"
         >
-          <div className="flex items-center justify-between bg-emerald-600 px-3 py-2.5">
-            <button type="button" aria-label="Previous month" onClick={() => moveMonth(-1)} className="grid h-7 w-7 cursor-pointer place-items-center rounded-md text-white/90 transition-colors hover:bg-white/20">‹</button>
-            <p className="text-sm font-semibold text-white">{monthFormatter.format(visibleMonth)}</p>
-            <button type="button" aria-label="Next month" onClick={() => moveMonth(1)} className="grid h-7 w-7 cursor-pointer place-items-center rounded-md text-white/90 transition-colors hover:bg-white/20">›</button>
+          <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-accent)] px-3 py-2.5 dark:bg-[var(--color-accent-dark-theme)]">
+            <button type="button" aria-label="Previous month" onClick={() => moveMonth(-1)} className="grid h-7 w-7 cursor-pointer place-items-center text-[#FFFFFF] transition-colors hover:bg-black/10 dark:text-[#1E1F2B] dark:hover:bg-[var(--color-accent-strong-dark)]">‹</button>
+            <p className="text-sm font-bold text-[#FFFFFF] dark:text-[#1E1F2B]">{monthFormatter.format(visibleMonth)}</p>
+            <button type="button" aria-label="Next month" onClick={() => moveMonth(1)} className="grid h-7 w-7 cursor-pointer place-items-center text-[#FFFFFF] transition-colors hover:bg-black/10 dark:text-[#1E1F2B] dark:hover:bg-[var(--color-accent-strong-dark)]">›</button>
           </div>
 
           <div className="p-3">
@@ -128,10 +128,10 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
                   onClick={() => selectDate(date)}
                   className={`h-8 cursor-pointer rounded-full text-xs font-medium transition-colors ${
                     selectedDate && isSameDay(date, selectedDate)
-                      ? "bg-emerald-600 text-white shadow-sm"
+                      ? "bg-[var(--color-accent)] text-[#FFFFFF] dark:bg-[var(--color-accent-dark-theme)] dark:text-[#1E1F2B]"
                       : isSameDay(date, new Date())
-                        ? "border border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                        : "text-slate-700 hover:bg-slate-100"
+                        ? "border border-[var(--color-accent)] text-[var(--color-accent-dark)] hover:bg-[var(--color-paper)]"
+                        : "text-[var(--color-ink-soft)] hover:bg-[var(--color-paper)]"
                   }`}
                 >
                   {date.getDate()}
@@ -140,7 +140,7 @@ export function DatePicker({ value, onChange, required = false, size = "md", cla
             </div>
 
             <div className="mt-3 flex justify-end border-t border-slate-100 pt-2">
-              <button type="button" onClick={() => selectDate(new Date())} className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40">Today</button>
+              <button type="button" onClick={() => selectDate(new Date())} className="cursor-pointer px-2.5 py-1.5 text-xs font-bold text-[var(--color-accent-dark)] hover:bg-[var(--color-paper)]">Today</button>
             </div>
           </div>
         </div>

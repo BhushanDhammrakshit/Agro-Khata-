@@ -18,7 +18,7 @@ export default async function PurchaseInvoicesPage() {
     <AppShell
       title="Purchase Invoices"
       actions={
-        <Link href="/purchase-invoices/new" className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700">
+        <Link href="/purchase-invoices/new" className="inline-flex items-center gap-2 rounded-none border border-[var(--color-accent)] bg-[var(--color-accent)] px-4 py-2 text-sm font-bold text-[#1E1F2B] hover:bg-[var(--color-accent-dark)] dark:border-[var(--color-accent-dark-theme)] dark:bg-[var(--color-accent-dark-theme)] dark:text-[#1E1F2B]">
           + New invoice
         </Link>
       }

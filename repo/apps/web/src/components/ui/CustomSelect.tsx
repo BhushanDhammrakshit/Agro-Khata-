@@ -45,7 +45,7 @@ export function CustomSelect({ value, onChange, options, placeholder = "Selectâ€
         type="button"
         disabled={disabled}
         onClick={() => open ? setOpen(false) : openDropdown()}
-        className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-left text-sm text-slate-900 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+        className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-none border border-[var(--color-border)] bg-[var(--color-paper-light)] px-3 py-2 text-left text-sm text-[var(--color-ink)] transition focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20 disabled:cursor-not-allowed disabled:bg-[var(--color-paper)] disabled:text-[var(--color-muted)]"
       >
         <span className={`truncate ${!selected ? "text-slate-400" : ""}`}>
           {selected ? selected.label : placeholder}
@@ -66,14 +66,14 @@ export function CustomSelect({ value, onChange, options, placeholder = "Selectâ€
             maxHeight: rect.maxHeight,
             zIndex: 9999,
           }}
-          className="overflow-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+          className="overflow-auto border border-[var(--color-border)] bg-[var(--color-paper-light)] py-1 shadow-none dark:bg-[var(--color-elevated-dark)]"
         >
           {options.map((opt) => (
             <li key={opt.value}>
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); onChange(opt.value); setOpen(false); }}
-                className={`flex w-full cursor-pointer items-center gap-2 whitespace-nowrap px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-slate-50 ${opt.value === value ? "font-semibold text-emerald-700" : "text-slate-700"}`}
+                className={`flex w-full cursor-pointer items-center gap-2 whitespace-nowrap px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-[var(--color-paper)] dark:hover:bg-[var(--color-elevated-dark)] ${opt.value === value ? "font-bold text-[var(--color-accent-dark)] dark:text-[var(--color-accent-strong-dark)]" : "text-[var(--color-ink-soft)] dark:text-[var(--color-ink-soft-dark)]"}`}
               >
                 {opt.value === value ? (
                   <svg className="h-3.5 w-3.5 shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">

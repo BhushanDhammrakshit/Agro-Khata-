@@ -4,20 +4,83 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --color-bg-light: #F4EDDA;
+  --color-surface-light: #FBF7EC;
+  --color-elevated-light: #EEE3C5;
+  --color-ink-light: #17233F;
+  --color-ink-soft-light: #42506C;
+  --color-accent-light: #A8642A;
+  --color-border-light: #CDBF9D;
+
+  --color-ledger-bg: #F4EDDA;
+  --color-paper: #EEE3C5;
+  --color-paper-light: #FBF7EC;
+  --color-ink: #17233F;
+  --color-ink-soft: #42506C;
+  --color-accent: #A8642A;
+  --color-accent-dark: #7D4923;
+  --color-teal: #3E6B63;
+  --color-border: #CDBF9D;
+  --color-line: #E2D7BE;
+  --color-muted: #777664;
+  --color-paid: #B9D3C2;
+  --color-pending: #E4BDA0;
+  --color-overdue: #A74636;
+  --color-danger: #A74636;
+  --color-info: #315A78;
+  --shadow-ledger: 5px 5px 0 rgba(23,35,63,.11);
+  --type-headline: clamp(2rem, 4vw, 3.5rem);
+  --type-section: clamp(1.5rem, 2.5vw, 2.25rem);
+  --type-body: 0.9375rem;
+  --type-data: 1.125rem;
+  --type-label: 0.75rem;
+  --background: var(--color-ledger-bg);
+  --foreground: var(--color-ink);
 }
 
 .dark {
-  --background: #000000;
-  --foreground: #e4e4e7;
+  --color-bg-dark: #1E1F2B;
+  --color-surface-dark: #272838;
+  --color-elevated-dark: #323348;
+  --color-ink-dark: #ECE6D8;
+  --color-ink-soft-dark: #C7C1B3;
+  --color-muted-dark: #AAA59A;
+  --color-accent-dark-theme: #D18A4D;
+  --color-accent-strong-dark: #E1A56F;
+  --color-teal-dark: #87B09F;
+  --color-border-dark: #45465B;
+  --color-line-dark: #393A4D;
+  --color-paid-dark: #86AC96;
+  --color-pending-dark: #D1A574;
+  --color-overdue-dark: #D99080;
+  --color-info-dark: #9AB6C8;
+  --color-danger-dark: #D99080;
+
+  --color-ledger-bg: var(--color-bg-dark);
+  --color-paper: var(--color-elevated-dark);
+  --color-paper-light: var(--color-surface-dark);
+  --color-ink: var(--color-ink-dark);
+  --color-ink-soft: var(--color-ink-soft-dark);
+  --color-accent: var(--color-accent-dark-theme);
+  --color-accent-dark: var(--color-accent-strong-dark);
+  --color-teal: var(--color-teal-dark);
+  --color-border: var(--color-border-dark);
+  --color-line: var(--color-line-dark);
+  --color-muted: var(--color-muted-dark);
+  --color-paid: var(--color-paid-dark);
+  --color-pending: var(--color-pending-dark);
+  --color-overdue: var(--color-overdue-dark);
+  --color-danger: var(--color-danger-dark);
+  --color-info: var(--color-info-dark);
+  --background: var(--color-bg-dark);
+  --foreground: var(--color-ink-dark);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-ui);
 }
 
 body {
@@ -26,10 +89,10 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-/* Site-wide thin scrollbar matching the emerald accent theme. */
+/* Ledger scrollbar: warm indigo in dark mode, earthy clay in light mode. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #10b981 transparent;
+  scrollbar-color: var(--color-accent) var(--color-ledger-bg);
 }
 
 *::-webkit-scrollbar {
@@ -38,34 +101,35 @@ body {
 }
 
 *::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--color-ledger-bg);
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #10b981;
-  border-radius: 9999px;
-  border: 2px solid transparent;
+  background-color: var(--color-accent);
+  border-radius: 3px;
+  border: 2px solid var(--color-ledger-bg);
   background-clip: padding-box;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: #059669;
+  background-color: var(--color-accent-dark);
 }
 
 .dark * {
-  scrollbar-color: #34d399 #0d0d0f;
+  scrollbar-color: var(--color-accent-dark-theme) var(--color-bg-dark);
 }
 
 .dark *::-webkit-scrollbar-track {
-  background: #0d0d0f;
+  background: var(--color-bg-dark);
 }
 
 .dark *::-webkit-scrollbar-thumb {
-  background-color: #34d399;
+  background-color: var(--color-accent-dark-theme);
+  border-color: var(--color-bg-dark);
 }
 
 .dark *::-webkit-scrollbar-thumb:hover {
-  background-color: #10b981;
+  background-color: var(--color-accent-strong-dark);
 }
 
 /* Retrofit dark mode across pages that only use plain (non `dark:`-prefixed)
@@ -73,26 +137,60 @@ body {
    Selectors match on the literal Tailwind class name, scoped under `.dark`,
    so any element already carrying its own explicit `dark:` override keeps
    winning wherever one was added on purpose (e.g. AppShell/Badge accents). */
-.dark .bg-white { background-color: #0d0d0f; }
-.dark .bg-slate-50 { background-color: #000000; }
-.dark .bg-slate-100 { background-color: #1c1c1f; }
-.dark .hover\:bg-slate-50:hover { background-color: #18181b; }
-.dark .hover\:bg-slate-100:hover { background-color: #232326; }
+.dark .bg-white { background-color: var(--color-surface-dark); }
+.dark .bg-slate-50 { background-color: var(--color-bg-dark); }
+.dark .bg-slate-100 { background-color: var(--color-elevated-dark); }
+.dark .hover\:bg-slate-50:hover { background-color: var(--color-elevated-dark); }
+.dark .hover\:bg-slate-100:hover { background-color: #393A4D; }
+.dark .bg-emerald-50,
+.dark .hover\:bg-emerald-50:hover,
+.dark .dark\:bg-emerald-950\/40 { background-color: #2E3B38; }
+.dark .bg-emerald-100,
+.dark .hover\:bg-emerald-100:hover { background-color: #385448; }
+.dark .bg-blue-50 { background-color: #2E3B47; }
+.dark .hover\:bg-blue-100:hover { background-color: #374C5C; }
+.dark .bg-orange-50 { background-color: #49372A; }
+.dark .hover\:bg-orange-100:hover { background-color: #59422F; }
+.dark .bg-red-50,
+.dark .bg-red-100 { background-color: #4A3536; }
 
-.dark .text-slate-900 { color: #fafafa; }
-.dark .text-slate-800 { color: #f4f4f5; }
-.dark .text-slate-700 { color: #e4e4e7; }
-.dark .text-slate-600 { color: #d4d4d8; }
-.dark .text-slate-500 { color: #a1a1aa; }
-.dark .text-slate-400 { color: #9ca3af; }
+.dark .text-slate-900,
+.dark .text-slate-800 { color: var(--color-ink-dark); }
+.dark .text-slate-700,
+.dark .text-slate-600 { color: var(--color-ink-soft-dark); }
+.dark .text-slate-500,
+.dark .text-slate-400 { color: var(--color-muted-dark); }
+.dark .text-emerald-700,
+.dark .text-emerald-600,
+.dark .hover\:text-emerald-700:hover,
+.dark .hover\:text-emerald-800:hover,
+.dark .text-emerald-400 { color: var(--color-accent-strong-dark); }
+.dark .text-blue-700,
+.dark .text-blue-800,
+.dark .text-blue-600,
+.dark .text-blue-300 { color: var(--color-info-dark); }
+.dark .text-orange-700,
+.dark .text-orange-800,
+.dark .text-orange-600,
+.dark .text-orange-300 { color: var(--color-accent-strong-dark); }
+.dark .text-red-600,
+.dark .text-red-700,
+.dark .text-red-400,
+.dark .text-red-300 { color: var(--color-overdue-dark); }
 
-.dark .border-slate-100 { border-color: #262629; }
-.dark .border-slate-200 { border-color: #2c2c30; }
-.dark .border-slate-300 { border-color: #3f3f46; }
+.dark .border-slate-100 { border-color: var(--color-line-dark); }
+.dark .border-slate-200,
+.dark .border-slate-300 { border-color: var(--color-border-dark); }
+.dark .border-emerald-100,
+.dark .border-emerald-200,
+.dark .hover\:border-emerald-400:hover { border-color: var(--color-accent-dark-theme); }
+.dark .border-blue-100 { border-color: #536778; }
+.dark .border-orange-100 { border-color: #735E48; }
+.dark .border-red-100 { border-color: #71544F; }
 
-.dark .disabled\:bg-slate-50:disabled { background-color: #17171a; }
-.dark .disabled\:text-slate-400:disabled { color: #52525b; }
-.dark .placeholder\:text-slate-400::placeholder { color: #6b6b70; }
+.dark .disabled\:bg-slate-50:disabled { background-color: var(--color-elevated-dark); }
+.dark .disabled\:text-slate-400:disabled { color: #777789; }
+.dark .placeholder\:text-slate-400::placeholder { color: var(--color-muted-dark); }
 
 /* Invoice/bill previews must always render exactly like the printed PDF —
    never dark-themed. Wrap that markup in `.invoice-light` to opt it, and
@@ -127,3 +225,199 @@ table {
     font-size: 16px !important;
   }
 }
+
+/* VajaBaki application design system */
+body {
+  background: var(--color-ledger-bg);
+  color: var(--color-ink);
+  font-family: var(--font-ui), Arial, sans-serif;
+  font-size: var(--type-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, .editorial-title {
+  font-family: var(--font-editorial), Georgia, serif;
+  letter-spacing: -0.025em;
+}
+
+h1 { font-size: var(--type-headline); }
+h2 { font-size: var(--type-section); }
+
+.numeric,
+td.numeric,
+th.numeric,
+[class*="text-xl"][class*="break-words"],
+[class*="text-2xl"][class*="break-words"] {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Shared surface colors replace the old green/slate SaaS palette across all screens. */
+.bg-white { background-color: var(--color-paper-light) !important; }
+.bg-slate-50 { background-color: var(--color-ledger-bg) !important; }
+.bg-slate-100 { background-color: var(--color-paper) !important; }
+.hover\:bg-slate-50:hover { background-color: #F1E8D1 !important; }
+.hover\:bg-slate-100:hover { background-color: #E8DBBA !important; }
+.bg-emerald-50,
+.hover\:bg-emerald-50:hover,
+.dark\:bg-emerald-950\/40 { background-color: #E6EEE6 !important; }
+.bg-emerald-100,
+.hover\:bg-emerald-100:hover { background-color: var(--color-paid) !important; }
+.bg-emerald-600 { background-color: var(--color-ink) !important; }
+.hover\:bg-emerald-700:hover { background-color: var(--color-ink-soft) !important; }
+.bg-blue-50 { background-color: #E7EDF1 !important; }
+.hover\:bg-blue-100:hover { background-color: #D9E4EA !important; }
+.bg-orange-50 { background-color: #F2DFC9 !important; }
+.hover\:bg-orange-100:hover { background-color: #E8CBAA !important; }
+.bg-red-50 { background-color: #F1DAD4 !important; }
+.bg-red-100 { background-color: #F0C9C2 !important; }
+
+.text-slate-900,
+.text-slate-800 { color: var(--color-ink) !important; }
+.text-slate-700,
+.text-slate-600 { color: var(--color-ink-soft) !important; }
+.text-slate-500,
+.text-slate-400 { color: var(--color-muted) !important; }
+.text-emerald-700,
+.text-emerald-600,
+.hover\:text-emerald-700:hover,
+.hover\:text-emerald-800:hover { color: var(--color-accent-dark) !important; }
+.text-emerald-400 { color: var(--color-accent) !important; }
+.text-blue-700,
+.text-blue-800,
+.text-blue-600,
+.text-blue-300 { color: var(--color-info) !important; }
+.text-orange-700,
+.text-orange-800,
+.text-orange-600,
+.text-orange-300 { color: var(--color-accent-dark) !important; }
+.text-red-600,
+.text-red-700,
+.text-red-400,
+.text-red-300 { color: var(--color-overdue) !important; }
+
+.border-slate-100 { border-color: var(--color-line) !important; }
+.border-slate-200,
+.border-slate-300 { border-color: var(--color-border) !important; }
+.border-emerald-100,
+.border-emerald-200,
+.hover\:border-emerald-400:hover { border-color: var(--color-accent) !important; }
+.border-blue-100 { border-color: #C6D5DF !important; }
+.border-orange-100 { border-color: #DFC29F !important; }
+.border-red-100 { border-color: #DFC1B9 !important; }
+
+.rounded-xl,
+.rounded-2xl,
+.rounded-lg,
+.rounded-full { border-radius: 0 !important; }
+.shadow-sm,
+.shadow-md,
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl { box-shadow: none !important; }
+
+/* Ledger/list styles: borders and alignment first, decoration second. */
+table { width: 100%; min-width: 680px; border-collapse: collapse; }
+thead th {
+  height: 42px;
+  background: var(--color-paper);
+  color: var(--color-ink-soft);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--type-label);
+  font-weight: 800;
+  white-space: nowrap;
+}
+tbody td {
+  height: 52px;
+  border-bottom: 1px solid var(--color-line);
+  color: var(--color-ink);
+  vertical-align: middle;
+}
+tbody tr:hover td { background: rgba(238,227,197,.38); }
+th:last-child, td:last-child { text-align: right; }
+td.numeric, th.numeric { text-align: right; font-variant-numeric: tabular-nums lining-nums; }
+
+input, select, textarea {
+  border-radius: 0 !important;
+  background-color: var(--color-paper-light);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-ink) !important;
+  box-shadow: 0 0 0 2px rgba(168,100,42,.16) !important;
+}
+
+/* Keep dark-mode toggle usable without reverting logged-in screens to black SaaS chrome. */
+.dark {
+  color-scheme: dark;
+}
+
+/* Dark status and action corrections shared across every screen. */
+.dark .bg-emerald-600 {
+  background-color: var(--color-accent-dark-theme) !important;
+  color: #1E1F2B !important;
+}
+.dark .hover\:bg-emerald-700:hover {
+  background-color: var(--color-accent-strong-dark) !important;
+  color: #1E1F2B !important;
+}
+
+.dark table,
+.dark thead,
+.dark tbody,
+.dark tfoot {
+  background: transparent;
+}
+.dark thead th {
+  background: var(--color-elevated-dark);
+  color: var(--color-ink-soft-dark);
+  border-bottom-color: var(--color-border-dark);
+}
+.dark tbody td,
+.dark tfoot td {
+  background: var(--color-surface-dark);
+  color: var(--color-ink-dark);
+  border-bottom-color: var(--color-line-dark);
+}
+.dark tbody tr:hover td {
+  background: var(--color-elevated-dark);
+}
+
+.dark .invoice-light,
+.dark .invoice-light tbody td,
+.dark .invoice-light thead th,
+.dark .invoice-light tfoot td {
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* Consistent hover states across every dark-theme button and menu.
+   Hover surfaces are one lightness step above the surface; text remains warm and legible. */
+.dark .hover\:bg-slate-50:hover { background-color: var(--color-elevated-dark) !important; }
+.dark .hover\:bg-slate-100:hover { background-color: var(--color-elevated-dark) !important; }
+.dark .hover\:text-slate-800:hover,
+.dark .hover\:text-slate-900:hover { color: var(--color-ink-dark) !important; }
+.dark .hover\:bg-emerald-50:hover,
+.dark .hover\:bg-emerald-100:hover,
+.dark .hover\:bg-emerald-950\/40:hover,
+.dark .hover\:bg-emerald-950\/70:hover { background-color: var(--color-elevated-dark) !important; }
+.dark .hover\:text-emerald-300:hover,
+.dark .hover\:text-emerald-400:hover { color: var(--color-accent-strong-dark) !important; }
+.dark .hover\:border-emerald-400:hover,
+.dark .hover\:border-emerald-900:hover { border-color: var(--color-accent-dark-theme) !important; }
+.dark .hover\:bg-red-50:hover,
+.dark .hover\:bg-red-950\/40:hover,
+.dark .hover\:bg-red-950\/50:hover { background-color: #573638 !important; }
+.dark .hover\:text-red-400:hover,
+.dark .hover\:text-red-700:hover { color: #E7AAA0 !important; }
+.dark .hover\:border-red-900:hover { border-color: #71544F !important; }
+
+/* Floating menus and dropdowns always use the ledger surface hierarchy. */
+.dark [role="menu"],
+.dark [role="listbox"],
+.dark [role="dialog"]:not(.invoice-light) {
+  background-color: var(--color-elevated-dark);
+  border-color: var(--color-border-dark);
+  box-shadow: none;
+}
+

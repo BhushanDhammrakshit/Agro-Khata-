@@ -29,7 +29,7 @@ function OutstandingReport() {
         <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden text-sm">
           {(["receivable", "payable"] as const).map(t => (
             <button key={t} onClick={() => setType(t)}
-              className={`cursor-pointer px-3 py-2 font-medium capitalize transition-colors sm:px-4 ${type === t ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+              className={`cursor-pointer px-3 py-2 font-bold capitalize transition-colors sm:px-4 ${type === t ? "bg-[var(--color-accent)] text-[#1E1F2B] dark:bg-[var(--color-accent-dark-theme)]" : "text-[var(--color-ink-soft)] hover:bg-[var(--color-paper)]"}`}>
               <span className="hidden sm:inline">{t === "receivable" ? "Receivable (from customers)" : "Payable (to suppliers)"}</span>
               <span className="sm:hidden">{t === "receivable" ? "Receivable" : "Payable"}</span>
             </button>

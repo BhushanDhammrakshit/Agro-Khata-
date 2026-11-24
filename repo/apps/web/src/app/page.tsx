@@ -1,9 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { en } from "@/lib/i18n/dictionaries/en";
 import { ForceLightTheme } from "@/components/ForceLightTheme";
 import { landingFont } from "@/lib/landing-font";
-import { FeatureIcon } from "./landing-icons";
+import "./landing.css";
 
 const SITE_URL = "https://www.vajabaki.com";
 
@@ -14,136 +13,178 @@ const structuredData = {
   url: SITE_URL,
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
-  description: en.landing.subheading,
+  description: "GST invoicing and party ledger software for mandi traders, agro vendors and small businesses.",
   offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
 };
 
 export default function Home() {
-  const { landing } = en;
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-white">
+    <div className="landing-page">
       <ForceLightTheme />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-
-      {/* Decorative gradient blobs, behind all content */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-40 left-1/2 h-96 w-[36rem] -translate-x-1/2 rounded-full bg-emerald-200/40 blur-3xl" />
-        <div className="absolute top-72 -right-32 h-80 w-80 rounded-full bg-teal-200/40 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-emerald-100/60 blur-3xl" />
-      </div>
-
-      <header className="sticky top-0 z-10 border-b border-slate-200/70 bg-white/70 backdrop-blur-md">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-3">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="relative h-9 w-9 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-              <Image src="/VajaBaki.png" alt="VajaBaki logo" fill className="object-contain p-1" />
-            </div>
-            <span className={`${landingFont.className} text-xl font-extrabold tracking-tight text-slate-900`}>{landing.title}</span>
+      <header className="landing-header">
+        <div className="landing-container header-inner">
+          <Link href="/" className="brand" aria-label="VajaBaki home">
+            <div className="brand-mark"><Image src="/VajaBaki.png" alt="" fill sizes="42px" /></div>
+            <span className={`${landingFont.className} brand-name`}>VajaBaki</span>
           </Link>
-          <nav className="flex items-center gap-1 sm:gap-2">
-            <Link href="/contact?type=contact" className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 sm:inline-block">{landing.contactUs}</Link>
-            <Link href="/contact?type=feedback" className="hidden rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 sm:inline-block">{landing.feedback}</Link>
-            <Link href="/login" className="rounded-lg px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">{landing.login}</Link>
-            <Link href="/register" className="rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-700">{landing.register}</Link>
+          <nav className="desktop-nav" aria-label="Main navigation">
+            <Link href="#features">Features</Link>
+            <Link href="#how-it-works">How it works</Link>
+            <Link href="/contact?type=contact">Support</Link>
           </nav>
+          <div className="header-actions">
+            <Link href="/login" className="login-link">Log in</Link>
+            <Link href="/register" className="button button-small">Start billing free</Link>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center gap-24 px-6 pt-20 pb-24 text-center">
-        <div className="grid w-full items-center gap-12 text-center lg:grid-cols-2 lg:text-left">
-          <div className="flex flex-col items-center gap-6 lg:items-start">
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-medium text-emerald-700">
-              {landing.badge}
-            </span>
-            <h1 className="max-w-xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              {landing.heading}
-            </h1>
-            <p className="max-w-xl text-base text-slate-600 sm:text-lg">{landing.subheading}</p>
-            <div className="mt-2 flex flex-wrap justify-center gap-3 lg:justify-start">
-              <Link
-                href="/register"
-                className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-emerald-600/30"
-              >
-                {landing.register}
-              </Link>
-              <Link
-                href="/login"
-                className="rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50"
-              >
-                {landing.login}
-              </Link>
-            </div>
-          </div>
-          <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-            <Image
-              src="/hero-illustration.svg"
-              alt="Preview of the VajaBaki invoicing and party ledger dashboard"
-              width={560}
-              height={440}
-              priority
-              className="w-full drop-shadow-xl"
-            />
-          </div>
-        </div>
-
-        <section aria-labelledby="features-heading" className="w-full">
-          <h2 id="features-heading" className="text-2xl font-bold text-slate-900 sm:text-3xl">{landing.featuresHeading}</h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-slate-600">{landing.featuresSubheading}</p>
-          <div className="mt-10 grid gap-5 text-left sm:grid-cols-2 lg:grid-cols-3">
-            {landing.features.map((feature) => (
-              <div
-                key={feature.title}
-                className="group rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-600/10"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition group-hover:bg-emerald-600 group-hover:text-white">
-                  <FeatureIcon icon={feature.icon} />
-                </div>
-                <h3 className="mt-4 font-semibold text-slate-900">{feature.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{feature.description}</p>
+      <main>
+        <section className="hero">
+          <div className="landing-container hero-grid">
+            <div className="hero-copy">
+              <p className="market-label"><span className="market-dot" />Built for mandis & agro businesses</p>
+              <h1>Make GST bills quickly. Know who still owes you.</h1>
+              <p className="hero-lead">
+                Keep the day&apos;s sales, party balances, GST records and cash
+                entries together — so the counter moves fast and nothing is forgotten.
+              </p>
+              <div className="hero-actions">
+                <Link href="/register" className="button button-primary">Create your first bill <span aria-hidden="true">→</span></Link>
+                <Link href="#how-it-works" className="text-link">See how it works</Link>
               </div>
-            ))}
+              <div className="trust-row">
+                <span><strong>GST</strong> ready bills</span>
+                <span><strong>Mobile</strong> friendly</span>
+                <span><strong>No</strong> credit card</span>
+              </div>
+            </div>
+
+            <div className="ledger-stage" aria-label="Sample GST invoice and party balance">
+              <div className="weight-slip">WEIGHT 1,240 kg <span>Lot 27</span></div>
+              <article className="invoice-sheet">
+                <div className="invoice-top">
+                  <div>
+                    <p className="invoice-kicker">TAX INVOICE</p>
+                    <h2>Shree Agro Traders</h2>
+                    <p>APMC Yard · Nashik</p>
+                  </div>
+                  <div className="gst-seal"><span>GST</span>27AAACS1234A1Z8</div>
+                </div>
+                <div className="invoice-meta">
+                  <div><span>Bill no.</span><strong>VB-01842</strong></div>
+                  <div><span>Party</span><strong>Patil Mandi Depot</strong></div>
+                  <div><span>Date</span><strong>23 Nov 2026</strong></div>
+                </div>
+                <table className="invoice-table">
+                  <thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+                  <tbody>
+                    <tr><td>Onion · Nashik</td><td>1,240 kg</td><td>₹28</td><td>₹34,720</td></tr>
+                    <tr><td>Labour</td><td>—</td><td>—</td><td>₹450</td></tr>
+                  </tbody>
+                </table>
+                <div className="invoice-total">
+                  <div><span>CGST 2.5%</span><strong>₹879</strong></div>
+                  <div><span>SGST 2.5%</span><strong>₹879</strong></div>
+                  <div className="grand-total"><span>Bill total</span><strong>₹36,928</strong></div>
+                </div>
+                <div className="invoice-status">GST READY</div>
+              </article>
+
+              <aside className="balance-card">
+                <div className="balance-head">
+                  <span>Patil Mandi Depot</span>
+                  <span className="balance-state">Pending</span>
+                </div>
+                <p>Still to receive</p>
+                <strong>₹12,450</strong>
+                <div className="balance-track"><span /></div>
+                <div className="balance-foot"><span>₹24,478 received</span><span>Due 30 Nov</span></div>
+              </aside>
+            </div>
           </div>
         </section>
 
-        <section className="grid w-full max-w-4xl items-center gap-8 overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-600 to-teal-600 px-8 py-12 text-left text-white shadow-xl shadow-emerald-600/20 sm:grid-cols-[1fr_auto]">
-          <div>
-            <h2 className="text-2xl font-bold sm:text-3xl">{landing.ctaHeading}</h2>
-            <p className="mt-2 max-w-md text-sm text-emerald-50 sm:text-base">{landing.ctaSubheading}</p>
-            <Link
-              href="/register"
-              className="mt-6 inline-flex rounded-xl bg-white px-6 py-3 text-sm font-semibold text-emerald-700 shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-50"
-            >
-              {landing.register}
-            </Link>
+        <section className="core-section" id="features">
+          <div className="landing-container">
+            <div className="section-heading">
+              <p>Day-to-day work, in the right order</p>
+              <h2>Bill the sale. Remember the balance.</h2>
+            </div>
+            <div className="core-grid">
+              <article className="core-card invoice-card">
+                <div className="card-label">1 · Sell goods</div>
+                <h3>GST bills without the paperwork chase</h3>
+                <p>Create sales and purchase bills with the right tax, party and item details — in a few taps.</p>
+                <div className="mini-bill">
+                  <div className="mini-bill-top"><span>INVOICE</span><strong>VB-01842</strong></div>
+                  <div className="mini-row"><span>Potato · 800 kg</span><strong>₹21,600</strong></div>
+                  <div className="mini-row"><span>GST</span><strong>₹1,080</strong></div>
+                  <div className="mini-row mini-total"><span>Total</span><strong>₹22,680</strong></div>
+                </div>
+              </article>
+
+              <article className="core-card ledger-card">
+                <div className="card-label">2 · Collect payment</div>
+                <h3>See who still owes you money</h3>
+                <p>Open one party&apos;s page and see every unpaid bill, payment received and due date.</p>
+                <div className="party-list">
+                  <div className="party-row"><div className="party-avatar">PM</div><div><strong>Patil Mandi Depot</strong><span>3 unpaid bills</span></div><b>₹12,450</b></div>
+                  <div className="party-row"><div className="party-avatar green">KS</div><div><strong>Kisan Supply Co.</strong><span>Settled yesterday</span></div><b className="settled">₹0</b></div>
+                </div>
+              </article>
+            </div>
+
+            <div className="secondary-strip" aria-label="Additional features">
+              <article><div className="secondary-icon">T</div><div><h3>Keep every vehicle record</h3><p>Drivers, registration details and invoice-linked trips.</p></div></article>
+              <article><div className="secondary-icon">||</div><div><h3>Run more than one company</h3><p>Separate firms and branch records under one login.</p></div></article>
+              <article><div className="secondary-icon">↗</div><div><h3>Know the month&apos;s numbers</h3><p>Sales, purchases and pending amounts in clear reports.</p></div></article>
+            </div>
           </div>
-          <Image
-            src="/cta-illustration.svg"
-            alt="VajaBaki mobile app preview"
-            width={220}
-            height={280}
-            className="mx-auto hidden w-40 sm:block"
-          />
+        </section>
+
+        <section className="workflow" id="how-it-works">
+          <div className="landing-container">
+            <div className="workflow-title">
+              <p>One simple routine</p>
+              <h2>From weighing to collection</h2>
+            </div>
+            <div className="workflow-grid">
+              <article><span className="step-number">01</span><h3>Add the party</h3><p>Name, GST number and phone — saved once for every future bill.</p></article>
+              <article><span className="step-number">02</span><h3>Make the bill</h3><p>Choose goods, quantity and tax. Print or share it before the goods move.</p></article>
+              <article><span className="step-number">03</span><h3>Record the payment</h3><p>Enter cash or bank received and see the balance update immediately.</p></article>
+            </div>
+          </div>
+        </section>
+
+        <section className="closing-cta">
+          <div className="landing-container cta-inner">
+            <div>
+              <p>Ready for the next business day</p>
+              <h2>Start with one bill. Leave the register open.</h2>
+            </div>
+            <Link href="/register" className="button button-primary">Register your company <span aria-hidden="true">→</span></Link>
+          </div>
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white py-8 text-center text-sm text-slate-500">
-        <Link href="/" className="inline-flex items-center gap-2">
-          <div className="relative h-7 w-7 overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-slate-200">
-            <Image src="/VajaBaki.png" alt="VajaBaki logo" fill className="object-contain p-0.5" />
+      <footer className="landing-footer">
+        <div className="landing-container footer-inner">
+          <Link href="/" className="brand" aria-label="VajaBaki home">
+            <div className="brand-mark"><Image src="/VajaBaki.png" alt="" fill sizes="36px" /></div>
+            <span className={`${landingFont.className} brand-name`}>VajaBaki</span>
+          </Link>
+          <p>Billing and ledger software for agro traders, mandis and vendors.</p>
+          <div className="footer-links">
+            <Link href="/login">Log in</Link>
+            <Link href="/contact?type=contact">Contact</Link>
+            <Link href="/contact?type=feedback">Feedback</Link>
           </div>
-          <span className={`${landingFont.className} text-base font-extrabold tracking-tight text-slate-900`}>{landing.title}</span>
-        </Link>
-        <p className="mt-3">{landing.footerTagline}</p>
-        <p className="mt-2">
-          &copy; {new Date().getFullYear()} VajaBaki ·{" "}
-          <Link href="/login" className="underline hover:text-slate-700">{landing.login}</Link> ·{" "}
-          <Link href="/register" className="underline hover:text-slate-700">{landing.register}</Link> ·{" "}
-          <Link href="/contact?type=contact" className="underline hover:text-slate-700">{landing.contactUs}</Link> ·{" "}
-          <Link href="/contact?type=feedback" className="underline hover:text-slate-700">{landing.feedback}</Link>
-        </p>
+        </div>
       </footer>
     </div>
   );

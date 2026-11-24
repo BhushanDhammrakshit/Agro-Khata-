@@ -197,8 +197,8 @@ function Sidebar({
     const active = href === "/dashboard" ? pathname === href : pathname?.startsWith(href);
     return (
       <Link key={href} href={href} title={label}
-        className={`group flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition-colors
-          ${active ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" : "text-slate-600 hover:bg-slate-100"}`}>
+        className={`group flex items-center gap-3 border-l-2 px-2 py-2 text-sm font-bold transition-colors
+          ${active ? "border-[var(--color-accent)] bg-[var(--color-paper)] text-[var(--color-ink)]" : "border-transparent text-[var(--color-ink-soft)] hover:bg-[var(--color-paper)]"}`}>
         {icon && <span className="shrink-0"><SvgIcon d={icon} /></span>}
         <span className={effectiveCollapsed ? "hidden" : "truncate"}>{label}</span>
       </Link>
@@ -361,7 +361,7 @@ export function AppShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-[var(--color-ledger-bg)]">
       {mobileOpen && (
         <div className="fixed inset-0 z-30 bg-black/40 sm:hidden" onClick={() => setMobileOpen(false)} />
       )}
@@ -380,7 +380,7 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <header
-          className="sticky top-0 z-30 border-b border-slate-200 bg-white"
+          className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-[var(--color-paper-light)]"
           style={{ paddingTop: "env(safe-area-inset-top)" }}
         >
           <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-3.5">

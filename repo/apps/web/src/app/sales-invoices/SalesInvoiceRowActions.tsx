@@ -133,8 +133,8 @@ export function SalesInvoiceRowActions({ invoice, compact = false }: SalesInvoic
           aria-label="Download invoice PDF"
           title="Download PDF"
           className={compact
-            ? "flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-            : "cursor-pointer rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"}
+            ? "flex h-10 w-10 cursor-pointer items-center justify-center rounded-none border border-transparent text-[var(--color-ink-soft)] hover:border-[var(--color-border)] hover:bg-[var(--color-paper)] hover:text-[var(--color-ink)] disabled:cursor-not-allowed disabled:opacity-60 dark:hover:border-[var(--color-border-dark)] dark:hover:bg-[var(--color-elevated-dark)] dark:hover:text-[var(--color-ink-dark)]"
+            : "cursor-pointer rounded-none border border-[var(--color-border)] bg-[var(--color-paper-light)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:bg-[var(--color-paper)] disabled:cursor-not-allowed disabled:opacity-60 dark:hover:border-[var(--color-accent-dark-theme)] dark:hover:bg-[var(--color-elevated-dark)]"}
         >
           {compact ? (
             isDownloading ? (

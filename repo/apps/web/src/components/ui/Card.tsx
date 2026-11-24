@@ -1,3 +1,3 @@
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`rounded-xl border border-slate-200 bg-white p-5 shadow-sm ${className}`}>{children}</div>;
+  return <div className={`border border-[var(--color-border)] bg-[var(--color-paper-light)] p-5 ${className}`}>{children}</div>;
 }
