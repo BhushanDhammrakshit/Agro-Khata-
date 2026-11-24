@@ -241,6 +241,34 @@
   color: var(--ink);
 }
 
+.dark .button {
+  background: #ECE6D8;
+  border-color: #ECE6D8;
+  color: #1E1F2B;
+  box-shadow: 4px 4px 0 var(--mustard);
+}
+
+.dark .button:hover {
+  background: #F7F1E5;
+  box-shadow: 6px 6px 0 var(--mustard);
+}
+
+.dark .button-primary {
+  background: var(--saffron);
+  border-color: var(--saffron-dark);
+  color: #1E1F2B;
+  box-shadow: 5px 5px 0 #45465B;
+}
+
+.dark .button-primary:hover {
+  background: var(--saffron-dark);
+  box-shadow: 7px 7px 0 #45465B;
+}
+
+.dark .text-link {
+  color: var(--ink);
+}
+
 .dark .ledger-stage:before {
   border-color: rgba(209,138,77,.24);
   background: repeating-radial-gradient(circle, rgba(209,138,77,.08) 0 1px, transparent 1px 10px);
@@ -251,18 +279,56 @@
   border-color: #B68155;
 }
 
-.dark .core-section,
-.dark .closing-cta,
-.dark .workflow,
-.dark .invoice-card,
-.dark .ledger-card,
-.dark .closing-cta {
-  /* Handled by the base surfaces below to keep hierarchy consistent. */
+.dark .invoice-total,
+.dark .invoice-meta,
+.dark .invoice-table th,
+.dark .invoice-table td {
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+.dark .invoice-status {
+  color: var(--teal);
+  border-color: var(--teal);
+}
+
+.dark .balance-card {
+  background: #323348;
+  color: var(--ink);
+  border-color: var(--border);
+  box-shadow: 8px 8px 0 var(--saffron);
+}
+
+.dark .balance-card p,
+.dark .balance-foot {
+  color: var(--ink-soft);
+}
+
+.dark .balance-track {
+  background: #45465B;
+}
+
+.dark .mini-bill {
+  border-color: var(--border);
+  box-shadow: 7px 7px 0 rgba(209,165,116,.28);
+}
+
+.dark .mini-bill-top {
+  border-color: var(--ink);
+}
+
+.dark .mini-row {
+  border-color: var(--border);
 }
 
 .dark .core-section { background: var(--paper); }
+.dark .invoice-card { background: #323348; }
 .dark .ledger-card { background: #323348; }
 .dark .workflow { background: #252838; border-color: var(--border); }
 .dark .closing-cta { background: #323348; color: var(--ink); }
 .dark .secondary-strip { border-color: var(--border); }
 .dark .secondary-strip article + article { border-color: var(--border); }
+.dark .workflow-grid { border-color: var(--ink); }
+.dark .landing-footer {
+  background: var(--paper-light);
+}

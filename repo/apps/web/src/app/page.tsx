@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ForceLightTheme } from "@/components/ForceLightTheme";
 import { landingFont } from "@/lib/landing-font";
 import "./landing.css";
 
@@ -20,7 +19,6 @@ const structuredData = {
 export default function Home() {
   return (
     <div className="landing-page">
-      <ForceLightTheme />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
